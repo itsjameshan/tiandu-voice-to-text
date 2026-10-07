@@ -50,3 +50,11 @@
 - `pipeline/align.py`：字错率明细（错字、漏字、多字）和"识别结果逐段对齐到参考文本"（给"数据校对"页用）；视频里的例子"雾隐行舟旅行社"→"雾影行走旅行社"算出 2/7。
 - `pipeline/features.py`、`tools/show_spectrogram.py`：只用 numpy 算语谱图和 MFCC（预加重、汉明窗、梅尔滤波、对数、DCT），画波形、语谱图、MFCC 三联图（30 分钟录音约 4.4 秒）；默认存到 `outputs/spectrograms/`。
 - 测试：数据池 54 个、对齐与特征 24 个，全部通过。
+
+## Task 16、Task 18 · 验收表与冻结、标注转换、测评与对比（cer、hotwords、numbers）
+
+- `pipeline/annotations.py`、`tools/labels_to_csv.py`：读 Audacity 标签（UTF-8、带 BOM、GBK、UTF-16 都能读，跳过频率行），转成说话人表（start,end,speaker）或片段表（start,end,label，"消费施压"存成"威胁消费"）；有错一条也不写，并说明第几个标签什么问题。
+- `pipeline/pool.py`（扩展）、`tools/check_pool.py`、`tools/freeze_pool.py`：验收表（已交、命名、质检、入池后的不同校对人数、说话人标注覆盖秒数、片段标注、是否通过）和各组汇总；冻结版本前重算验收表，原子地写进 `versions/<版本>/`，录音只记指纹不复制；版本按自然顺序排序（v10 在 v9 后面）。
+- `pipeline/evaluation.py`、`tools/evaluate.py`、`tools/compare.py`：字错率（错字、漏字、多字，按录音条件和组汇总）、专名正确率与过度纠正、数字提取（按类型）；识别结果按"录音 + 上游做法 + 参数"缓存，只换下游做法时不重新识别；`--method` 可写多次，`--hotword on/off`、`--files`、`--no-cache`；报告开头写明数据池版本、做法、参数和局限说明。云端只用改名的测试音频检验流程，没有报告任何字错率数字。
+- `reports/g1`—`g8/README.md`：各组报告模板。
+- 集成小修：10 分钟达标用未取整的秒数判断；文档补上测热词要加 `--hotword on`、过度纠正的计数规则、复录与验收表说明。

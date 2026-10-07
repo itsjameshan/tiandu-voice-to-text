@@ -28,12 +28,13 @@ python\python.exe tools\evaluate.py cer --pool D:\data_pool --out reports\g1
 ## 二、专名正确率、过度纠正 —— 第 5 组
 
 ```bat
-python\python.exe tools\evaluate.py hotwords --pool D:\data_pool --method hotword=g5 --out reports\g5
+python\python.exe tools\evaluate.py hotwords --pool D:\data_pool --method hotword=g5 --hotword on --out reports\g5
 ```
 
 - **专名正确率**：参考文本里出现的热词（`data/hotwords.txt` 里的虚构旅行社、店名、地名、行话），在识别结果里也出现了的比例。
-- **过度纠正**：参考文本里人物**故意说错或简称**的名字（`data/hotword_variants.csv`，如把"松风晚渡"说成"松风行舟"），被热词纠错"改正"成了正确名称的次数。这是错误——工具应该忠实记录人说了什么。
-- 开关热词纠错各跑一次，比较两个指标。
+- **过度纠正**：参考文本里人物**故意说错或简称**的名字（`data/hotword_variants.csv`，如把"松风晚渡"说成"松风行舟"），本来识别对了，却被热词纠错改掉了（改成正确名称、或者改成正确名称的简称）的次数。这是错误——工具应该忠实记录人说了什么。精确的计数规则写在每份 `hotwords.md` 报告的"说明"一节里。
+- **热词纠错默认是关着的**：测热词时一定要加 `--hotword on`，否则测出来的是"没纠错"的结果。开（`--hotword on`）、关（`--hotword off`）各跑一次，比较两个指标。
+- 识别结果会缓存在数据池的 `asr_cache` 里，只换热词做法时不用重新识别，很快；想全部重新识别就加 `--no-cache`。
 
 ## 三、数字提取正确率 —— 第 4 组
 
@@ -87,6 +88,10 @@ python\python.exe tools\compare.py --slot denoise --method g1 --metric cer --poo
 ```
 
 在同一份数据上先用基线跑、再用你们的做法跑，生成 `compare_cer.md` 和 `.csv`：每行一个分组项（全体、Q、N、F……），列出基线、改进、差值。这张表直接放进报告的"对比数据"一节。
+
+第 5 组比较热词做法时加 `--hotword on`：`python\python.exe tools\compare.py --slot hotword --method g5 --metric hotwords --pool D:\data_pool --hotword on --out reports\g5`。
+
+所有测评命令都可以加 `--files G1-S1-Q G1-S1-N` 只测几段录音（先试一下、很快），确认没问题再全部跑。全部 72 段录音识别一遍，在普通电脑上大约要几十分钟。
 
 | 组 | `--slot` | `--metric` |
 |---|---|---|

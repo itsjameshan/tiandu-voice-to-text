@@ -13,9 +13,10 @@
     每次替换记进段落的 corrections（[{"from": 原来的字, "to": 热词, "start": 段落开始时间}]）。
 
 怎么测（数据池路径换成老师给的）
-    python tools/evaluate.py hotwords --pool 数据池路径 --out reports/g5
-    python tools/compare.py --slot hotword --method g5 --metric hotwords --pool 数据池路径 --out reports/g5
-    注意：基线只有在热词纠错打开时才工作（config.yaml 的 hotword.enabled，或网页上的"热词纠错"开关）。
+    python tools/evaluate.py hotwords --pool 数据池路径 --hotword on --out reports/g5
+    python tools/compare.py --slot hotword --method g5 --metric hotwords --pool 数据池路径 --hotword on --out reports/g5
+    注意：基线只有在热词纠错打开时才工作，所以测评时一定要加 --hotword on
+    （网页上是"热词纠错"开关，config.yaml 里是 hotword.enabled）。
 
 注意
     - 热词表在 data/hotwords.txt（121 个），网页上可以临时编辑。

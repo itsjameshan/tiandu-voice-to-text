@@ -38,7 +38,7 @@
 2. **只换一个组的做法**，各组确认自己的改进在完整流程里依然有效（各组自己的 `compare.py` 结果应该能复现）。
 3. **全部换成各组做法**再跑一次，看整体效果：
    ```bat
-   python\python.exe tools\evaluate.py cer --pool D:\data_pool --method denoise=g1 --method enhance=g2 --method hotword=g5 --out reports\integration\all
+   python\python.exe tools\evaluate.py cer --pool D:\data_pool --method denoise=g1 --method enhance=g2 --method hotword=g5 --hotword on --out reports\integration\all
    ```
    各组做法放在一起时可能互相影响（例如第 1 组的降噪让第 3 组的说话人分离变差），这是很好的讨论题，写进各组报告的"局限"一节。
 4. 第 6、7 组的模型 A、B 在同一份数据上对比；第 8 组在全部做法下测一次误报率。
