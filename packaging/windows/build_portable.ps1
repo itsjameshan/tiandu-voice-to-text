@@ -59,6 +59,26 @@ $code = $LASTEXITCODE
 Pop-Location
 if ($code -ne 0) { throw "自检没有通过" }
 
+Write-Host "== 6b. 启动网页工具，确认能打开（用便携 Python）"
+$proc = Start-Process -FilePath (Join-Path $PyDir "python.exe") -ArgumentList @("app.py", "--host", "127.0.0.1", "--port", "7861") `
+    -WorkingDirectory $Pkg -PassThru -NoNewWindow -RedirectStandardOutput (Join-Path $Dist "app_stdout.log") `
+    -RedirectStandardError (Join-Path $Dist "app_stderr.log")
+$ok = $false
+for ($i = 0; $i -lt 90; $i++) {
+    Start-Sleep -Seconds 2
+    try {
+        $resp = Invoke-WebRequest -Uri "http://127.0.0.1:7861/" -UseBasicParsing -TimeoutSec 5
+        if ($resp.StatusCode -eq 200) { $ok = $true; break }
+    } catch { }
+    if ($proc.HasExited) { break }
+}
+if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
+if (-not $ok) {
+    Get-Content (Join-Path $Dist "app_stderr.log") -ErrorAction SilentlyContinue | Select-Object -Last 40
+    throw "网页工具没有启动成功"
+}
+Write-Host "网页工具能正常打开"
+
 Write-Host "== 7. 清理并打包"
 foreach ($d in @("outputs", "tmp", "data_pool")) {
     $p = Join-Path $Pkg $d
