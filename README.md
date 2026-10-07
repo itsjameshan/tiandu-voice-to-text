@@ -255,14 +255,14 @@ python -m venv .venv
 ```bat
 :: 在便携包文件夹里打开命令行运行（联网安装的话把 python\python.exe 换成 .venv\Scripts\python.exe）
 
-:: 字错率，按录音条件、按组汇总
-python\python.exe tools\evaluate.py cer --pool D:\data_pool
+:: 字错率，按录音条件、按组汇总（基线，结果写进 reports\g1）
+python\python.exe tools\evaluate.py cer --pool D:\data_pool --out reports\g1
 
-:: 同样的测评，但降噪改用第 1 组的做法
-python\python.exe tools\evaluate.py cer --pool D:\data_pool --method denoise=g1
+:: 同样的测评，但降噪改用第 1 组的做法（结果放子文件夹 after，不盖掉基线）
+python\python.exe tools\evaluate.py cer --pool D:\data_pool --method denoise=g1 --out reports\g1\after
 
-:: 一条命令得到"基线 vs 第 1 组做法"的对比表，写进 reports\g1
-python\python.exe tools\compare.py --slot denoise --method g1 --metric cer --pool D:\data_pool --out reports\g1
+:: 一条命令得到"基线 vs 第 1 组做法"的对比表
+python\python.exe tools\compare.py --slot denoise --method g1 --metric cer --pool D:\data_pool --out reports\g1\denoise
 ```
 
 | 子命令 | 指标 | 主要给谁用 |
@@ -270,11 +270,13 @@ python\python.exe tools\compare.py --slot denoise --method g1 --metric cer --poo
 | `cer` | 字错率（错字、漏字、多字） | 全员；第 1、2 组 |
 | `hotwords` | 专名正确率、过度纠正次数 | 第 5 组 |
 | `numbers` | 数字提取正确率（按类型：金额、电话、证号……） | 第 4 组 |
-| `speakers` | 说话人标错的时长比例 | 第 3 组 |
+| `speakers` | 说话人标错的时长比例（`--speakers auto` 自动判断人数 / `ref` 设对人数） | 第 3 组 |
 | `classify` | 各类准确率、召回率、混淆矩阵、误报率 | 第 6、7、8 组 |
-| `clips` | 片段起止误差、误报率 | 第 8 组 |
+| `clips` | 片段起止误差、没配上的片段、和标注都不重叠的工具片段（片段层面的误报） | 第 8 组 |
 
 - `tools/compare.py` 在同一份数据上分别跑基线和指定做法，输出对比表（基线、改进、差值），直接放进报告。
+- 识别结果缓存在数据池的 `asr_cache` 里：同一段录音、同样的做法只识别一次，第二次测评、换识别之后的做法（热词、说话人、分类、片段）都很快。
+- 基线和本组做法的结果放不同的文件夹（基线 `reports\gN`，本组做法 `reports\gN\after`），否则会互相覆盖；各组的具体命令见本组任务书。
 - 第 6、7 组训练分类模型：`python tools/train_classifier.py --model g6 --eval logo`（需要 TensorFlow，用机房自带的 Python 即可）。"按组留一"指用 7 个组的台词训练、测剩下 1 个组，轮 8 次——相当于"用别的同学写的句子来测"，比随机划分更诚实。
 - 每个指标怎么算、怎么看，见 [测评指南](docs/guides/evaluation.md)。
 
