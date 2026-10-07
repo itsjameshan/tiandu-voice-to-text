@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- 红线全部照 `CLAUDE.md`：只用虚构材料；不做语音合成；处理录音不联网、不调云 API；永远不设 `share=True`；`GRADIO_ANALYTICS_ENABLED=False`；标签只能是 `data/labels.json` 中 flag=true 的 5 个"疑似·类别"或空字符串；界面、初稿、导出文件不出现"违规""违法""执法级准确率""可作为法律证据"；Word/JSON/ZIP 写明由人工智能技术自动生成。
+- 红线全部照 `CLAUDE.md`：只用虚构材料；不做语音合成；处理录音不联网、不调云 API；永远不设 `share=True`；`GRADIO_ANALYTICS_ENABLED=False`；标签只能是 `data/labels.json` 中 flag=true 的 5 个类别的 `output`（"疑似·购物安排""疑似·费用""疑似·行程变更""疑似·服务态度""疑似·消费施压"）或空字符串；类别名"威胁消费"在数据和代码里不变，只在显示时写成"消费施压"（老师 2026-10-07 决定）；界面、初稿、导出文件不出现"违规""违法""执法级准确率""可作为法律证据"；Word/JSON/ZIP 写明由人工智能技术自动生成。
 - 通知语固定为：`识别可能有误；所有标注均为疑似、待核查，必须人工复核`（`pipeline.schema.NOTICE`）。
 - 界面顶部横幅固定为：`仅限虚构演示材料，请勿上传真实投诉录音或含个人信息的录音｜识别可能有误，所有标注均为"疑似、待核查"，必须人工复核｜不作为任何定性依据`。
 - 新文件和目录名只用 ASCII；文档、界面、注释用中文；代码标识符用英文。
@@ -93,7 +93,7 @@
   - `load_scripts() -> list[dict]`（24 个，每个带 `group:int`）、`get_script(script_id: str) -> dict`（不存在抛 `KeyError`）
   - `load_lines() -> list[dict]`：`numbers`、`hotwords` 拆成去重保序的列表，`group`、`line_no`、`effective_chars` 为 int
   - `script_reference_text(script_id: str) -> str`：该剧本全部台词 `text` 按顺序用 `\n` 连接（不含 `direction`）
-  - `LABEL_NAMES: list[str]`（7 个，`labels.json` 顺序）、`FLAG_LABELS: list[str]`（5 个）、`label_output(category: str) -> str`（flag 类返回 `疑似·类别`，否则 `""`；未知类别抛 `ValueError`）
+  - `LABEL_NAMES: list[str]`（7 个，`labels.json` 顺序）、`FLAG_LABELS: list[str]`（5 个类别名）、`FLAG_OUTPUTS: list[str]`（5 个显示标签，取自 labels.json 的 `output`）、`DISPLAY_NAMES: dict[str, str]`（类别名 → 显示名，取自 labels.json 的 `display`，威胁消费 → 消费施压，其余与类别名相同）、`label_output(category: str) -> str`（flag 类返回 labels.json 的 `output`，即 `疑似·` + 显示名；否则 `""`；未知类别抛 `ValueError`）
   - `load_hotwords() -> list[str]`、`load_hotword_variants() -> list[dict]`、`load_fictional_names() -> list[dict]`、`load_recording_plan() -> list[dict]`（72 行，`expected_minutes` 为 float）
 
 - [ ] **Step 1: 写失败的测试**
@@ -101,7 +101,7 @@
   - `test_csv_headers_and_order`：写出的 CSV 首行前 5 列为 `开始时间（秒）,结束时间（秒）,说话人,文字内容,标签`；文件以 BOM 开头；读回与写入相等。
   - `test_new_segment_defaults`：`new_segment(1.234, 2.0)` → start 1.23、speaker 未知、review 未复核、label ""。
   - `test_load_scripts`：24 个，id 从 G1-S1 到 G8-S3；`len(load_lines()) == 1055`。
-  - `test_label_output`：`label_output("费用") == "疑似·费用"`；`label_output("正常讲解") == ""`；`label_output("违规")` 抛 ValueError。
+  - `test_label_output`：`label_output("费用") == "疑似·费用"`；`label_output("威胁消费") == "疑似·消费施压"`；`label_output("正常讲解") == ""`；`label_output("违规")` 抛 ValueError；`len(FLAG_OUTPUTS) == 5`。
   - `test_reference_text_excludes_direction`：G1-S1 参考文本不含 `（用车载扩音器）`，行数 53。
   - `test_recording_plan`：72 行，文件名都匹配 `^G[1-8]-S[1-3]-[QNF]\.wav$`。
 - [ ] **Step 2: 运行确认失败**
@@ -267,7 +267,7 @@
 - [ ] **Step 1: 写失败的测试**
   - `test_cer_norm`：`normalize_for_cer("ＡＢ，你好 12！")` == `"AB你好12"`。
   - `test_classification_norm_consistent`：`normalize_for_classification("两千八百块")` 与 `normalize_for_classification("2800块")` 相等（都是 `#块`）；`"等一下"` 不变成 `#`。
-  - `test_labels_only_legal`（参数化 lines.csv 前 200 句）：`classify_segments` 输出的 label 都在 `{""} ∪ {"疑似·"+x for x in FLAG_LABELS}`。
+  - `test_labels_only_legal`（参数化 lines.csv 前 200 句）：`classify_segments` 输出的 label 都在 `{""} ∪ set(FLAG_OUTPUTS)`。
   - `test_keywords_not_copied_from_lines`：每个关键词长度 ≤ 6，且不等于任何一句台词去标点后的全文。
   - `test_rules_baseline_report`：在 1055 句上算各类召回率并打印，不设下限；`正常讲解`的误报率（被标成任何疑似类的比例）打印出来。
   - `test_tf_model_fallback`：`cfg` 指向空目录时选 `tf_model` → 结果与 baseline 相同且发出 warning。
