@@ -6,10 +6,6 @@ import sys
 import pytest
 from conftest import ROOT
 
-# 直接运行 .venv/bin/pytest 时仓库根目录不一定在 sys.path 里，先加进去才能 import pipeline
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
 from pipeline import schema
 from pipeline.schema import (
     FIELDS,

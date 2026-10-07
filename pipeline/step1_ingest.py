@@ -133,8 +133,10 @@ def quality_check(samples, original_sr: int, cfg: dict, expected_seconds: float 
                     "请确认录音中间没有中断"
                 )
 
-    # 5. 原始采样率太低
-    if original_sr < qc["min_sample_rate"]:
+    # 5. 原始采样率太低（读不出采样率时 probe 给出 0）
+    if original_sr <= 0:
+        problems.append("读不出原始采样率，文件可能不完整或格式特殊，请用手机自带的录音机重新导出或重录")
+    elif original_sr < qc["min_sample_rate"]:
         problems.append(
             f"原始采样率只有 {original_sr} Hz，低于 {qc['min_sample_rate']} Hz，声音细节不够，"
             "请用手机自带的录音机、选高音质重录"

@@ -6,16 +6,10 @@ import hashlib
 import os
 import shutil
 import stat
-import sys
 
 import numpy as np
 import pytest
 import soundfile as sf
-from conftest import ROOT
-
-# 让 pytest 能找到项目里的 pipeline 包（pyproject.toml 的 pytest 配置加上 pythonpath = ["."] 后可以删掉这两行）
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 
 from pipeline import audio
 from pipeline.audio import (
@@ -271,3 +265,25 @@ def test_ingest_twice_same_work_dir(make_audio, work_dir, cfg):
 def test_ingest_missing_file(tmp_path, work_dir, cfg):
     with pytest.raises(FileNotFoundError):
         ingest(tmp_path / "missing.m4a", work_dir, cfg)
+
+
+def test_remove_tree_deletes_read_only_files(tmp_path):
+    """原始文件被设为只读后，remove_tree 也能把整个文件夹删掉（Windows 上 shutil.rmtree 会失败）。"""
+    folder = tmp_path / "work"
+    (folder / "original").mkdir(parents=True)
+    f = folder / "original" / "a.wav"
+    f.write_bytes(b"x")
+    os.chmod(f, stat.S_IREAD)
+    audio.remove_tree(folder)
+    assert not folder.exists()
+    audio.remove_tree(folder)  # 不存在时什么也不做
+
+
+def test_qc_unknown_sample_rate():
+    """读不出原始采样率（0）时提示"读不出"，而不是说"只有 0 Hz"。"""
+    from pipeline.config import load_config
+
+    samples = (0.1 * np.sin(np.linspace(0, 2000, SR * 3))).astype("float32")
+    problems = quality_check(samples, 0, load_config())
+    assert any("读不出" in p for p in problems)
+    assert not any("0 Hz" in p for p in problems)

@@ -24,6 +24,7 @@ import logging
 import os
 import re
 import shutil
+import stat
 import subprocess
 from pathlib import Path
 
@@ -184,3 +185,19 @@ def sha256_file(path) -> str:
 def has_non_ascii(path) -> bool:
     """路径里有没有中文等非英文字符。例如 "C:/Users/张三/x" 返回 True，"D:/asr/x" 返回 False。"""
     return not str(path).isascii()
+
+
+def remove_tree(path) -> None:
+    """删除整个文件夹，连只读文件一起删（入池时原始文件被设为只读，Windows 上直接删会报错）。
+
+    文件夹不存在时什么也不做。
+    """
+    path = Path(path)
+    if not path.exists():
+        return
+
+    def _make_writable_and_retry(func, target, _exc_info):
+        os.chmod(target, stat.S_IWRITE | stat.S_IREAD)
+        func(target)
+
+    shutil.rmtree(path, onerror=_make_writable_and_retry)

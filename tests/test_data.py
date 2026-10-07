@@ -6,14 +6,12 @@ import sys
 import pytest
 from conftest import ROOT
 
-# 直接运行 .venv/bin/pytest 时仓库根目录不一定在 sys.path 里，先加进去才能 import pipeline
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
 from pipeline import data
 from pipeline.data import (
     DATA_DIR,
+    DISPLAY_NAMES,
     FLAG_LABELS,
+    FLAG_OUTPUTS,
     LABEL_NAMES,
     get_script,
     label_output,
@@ -43,6 +41,8 @@ def test_load_scripts():
 
 def test_label_output():
     assert label_output("费用") == "疑似·费用"
+    # 老师决定：威胁消费在界面和初稿上显示为“消费施压”，数据里的类别名不变
+    assert label_output("威胁消费") == "疑似·消费施压"
     assert label_output("正常讲解") == ""
     with pytest.raises(ValueError):
         label_output("违规")
@@ -109,8 +109,11 @@ def test_reference_text_matches_lines_csv():
 def test_labels():
     assert LABEL_NAMES == ["购物安排", "费用", "行程变更", "服务态度", "威胁消费", "正常讲解", "其他"]
     assert FLAG_LABELS == ["购物安排", "费用", "行程变更", "服务态度", "威胁消费"]
-    for name in FLAG_LABELS:
-        assert label_output(name) == "疑似·" + name
+    assert FLAG_OUTPUTS == ["疑似·购物安排", "疑似·费用", "疑似·行程变更", "疑似·服务态度", "疑似·消费施压"]
+    assert DISPLAY_NAMES["威胁消费"] == "消费施压"
+    assert DISPLAY_NAMES["费用"] == "费用"
+    for name, output in zip(FLAG_LABELS, FLAG_OUTPUTS):
+        assert label_output(name) == output
     assert label_output("其他") == ""
     with pytest.raises(ValueError):
         label_output("")

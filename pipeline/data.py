@@ -24,11 +24,12 @@ import json
 from functools import lru_cache
 from pathlib import Path
 
+from pipeline.schema import LIST_SEP  # 与统一中间格式共用同一个分隔符"；"
+
 # 仓库根目录下的 data/
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 
 # 列表型字段（如 numbers、hotwords）里多个值之间用全角分号分隔
-LIST_SEP = "；"
 
 
 # ---------------- 读文件的小工具（带缓存） ----------------
@@ -119,19 +120,27 @@ def _load_labels() -> list[dict]:
 # 7 个类别名称，顺序同 labels.json
 LABEL_NAMES: list[str] = [item["name"] for item in _load_labels()]
 
-# 会被标成"疑似·类别"的 5 个类别（flag=true）
+# 会被标成"疑似·…"的 5 个类别（flag=true）
 FLAG_LABELS: list[str] = [item["name"] for item in _load_labels() if item["flag"]]
+
+# 5 个合法的显示标签，如"疑似·费用"（取自 labels.json 的 output）
+FLAG_OUTPUTS: list[str] = [item["output"] for item in _load_labels() if item["flag"]]
+
+# 类别名 → 界面和初稿上显示的名称。老师决定"威胁消费"显示为"消费施压"，其余不变
+DISPLAY_NAMES: dict[str, str] = {item["name"]: item["display"] for item in _load_labels()}
 
 
 def label_output(category: str) -> str:
-    """类别 → 段落里的标签：前 5 类返回 "疑似·类别"，正常讲解和其他返回 ""。
+    """类别 → 段落里的标签：前 5 类返回 labels.json 里的 output（如"疑似·费用""疑似·消费施压"），
+    正常讲解和其他返回 ""。
 
-    不在 7 个类别里的名称（例如"违规"）一律抛 ValueError，保证标签只会是合法的几种。
+    不在 7 个类别里的名称（例如"投诉"）一律抛 ValueError，保证标签只会是合法的几种。
     """
     if category not in LABEL_NAMES:
         raise ValueError(f"未知的类别：{category!r}，只能是：{'、'.join(LABEL_NAMES)}")
-    if category in FLAG_LABELS:
-        return "疑似·" + category
+    for item in _load_labels():
+        if item["name"] == category and item["flag"]:
+            return item["output"]
     return ""
 
 

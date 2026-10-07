@@ -19,7 +19,7 @@
 """
 import csv
 import json
-from pathlib import Path
+from pathlib import Path, PurePath
 
 # 五个必有字段，顺序固定
 FIELDS = ["start", "end", "speaker", "text", "label"]
@@ -85,10 +85,12 @@ def new_segment(start: float, end: float, **extra) -> dict:
 # ---------------- JSON ----------------
 
 def _json_default(value):
-    """json 不认识的类型怎么写：numpy 的数字（如 float32）转成普通数字，其余（如 Path）转成文字。"""
-    if hasattr(value, "item"):
-        return value.item()
-    return str(value)
+    """json 不认识的类型怎么写：numpy 的数字和数组转成普通数字和列表，路径转成文字，其余报错。"""
+    if hasattr(value, "tolist"):
+        return value.tolist()
+    if isinstance(value, PurePath):
+        return str(value)
+    raise TypeError(f"不能写进 JSON 的类型：{type(value).__name__}")
 
 
 def write_json(path, segments: list[dict], meta: dict) -> None:
@@ -118,6 +120,9 @@ def _cell_text(key: str, value) -> str:
     """把一个字段的值变成 CSV 单元格里的文字。"""
     if value is None:
         return ""
+    if isinstance(value, str):
+        # 已经是连接好的文字（例如界面表格里编辑过的"2800元；15:40"），原样写出
+        return value
     if key in LIST_FIELDS:
         return LIST_SEP.join(str(v) for v in value)
     if key == "corrections":

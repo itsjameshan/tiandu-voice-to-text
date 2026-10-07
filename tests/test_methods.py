@@ -10,10 +10,6 @@ import pytest
 import yaml
 from conftest import ROOT
 
-# 让 pytest 能找到项目里的 pipeline 包（pyproject.toml 的 pytest 配置加上 pythonpath = ["."] 后可以删掉这两行）
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
 from pipeline import methods
 from pipeline.config import load_config
 

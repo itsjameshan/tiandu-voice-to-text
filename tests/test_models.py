@@ -5,16 +5,11 @@
 """
 import importlib.util
 import io
-import sys
 import tarfile
 from pathlib import Path
 
 import pytest
 from conftest import ROOT, requires_models
-
-# 让 pytest 能找到项目里的 pipeline 包
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 
 from pipeline.config import load_config
 from pipeline.models import MODEL_SPECS, missing_models, model_path

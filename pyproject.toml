@@ -1,7 +1,7 @@
 [tool.ruff]
 line-length = 120
 target-version = "py310"
-extend-exclude = ["handoff", ".venv", "models", "data_pool", "outputs", "tmp", "dist"]
+extend-exclude = ["handoff", ".venv", "models/sherpa-onnx-*", "data_pool", "outputs", "tmp", "dist"]
 
 [tool.ruff.lint]
 # 只查最基本的问题：语法错误、未定义的名字、没用到的导入等，不强求代码风格
@@ -9,6 +9,7 @@ select = ["E9", "F"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]   # 让测试能直接 import pipeline
 addopts = "-ra"
 markers = [
     "models: 需要已下载的模型（没有模型时自动跳过）",

@@ -59,6 +59,4 @@ def load_config(path: str | Path | None = None, overrides: dict | None = None) -
         if not p.is_absolute():
             p = ROOT / p
         paths[key] = os.path.abspath(p)
-    if paths:
-        cfg["paths"] = paths
     return cfg

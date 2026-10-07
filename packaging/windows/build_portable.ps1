@@ -8,6 +8,9 @@ param(
 )
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"   # 关掉进度条，下载快很多
+$env:PYTHONUTF8 = "1"                      # Python 输出中文时用 UTF-8，避免打印报错
+$env:PYTHONIOENCODING = "utf-8"
+$env:GRADIO_ANALYTICS_ENABLED = "False"
 
 $Root = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $Dist = Join-Path $Root $OutDir
@@ -51,8 +54,6 @@ if ($LASTEXITCODE -ne 0) { throw "下载模型失败" }
 
 Write-Host "== 6. 自检（用便携 Python 处理测试音频）"
 Push-Location $Pkg
-$env:GRADIO_ANALYTICS_ENABLED = "False"
-$env:PYTHONUTF8 = "1"
 & (Join-Path $PyDir "python.exe") "tools\selfcheck.py"
 $code = $LASTEXITCODE
 Pop-Location
