@@ -47,8 +47,8 @@ python\python.exe tools\evaluate.py cer --pool D:\data_pool --out reports\g1
 
 ```bat
 python\python.exe tools\evaluate.py cer --pool D:\data_pool --method denoise=g1 --out reports\g1\after
-:: 如果也改了端点检测：
-python\python.exe tools\evaluate.py cer --pool D:\data_pool --method denoise=g1 --method vad=g1 --out reports\g1\after
+:: 如果也改了端点检测（一次只换一个槽位，单独测）：
+python\python.exe tools\evaluate.py cer --pool D:\data_pool --method vad=g1 --out reports\g1\after_vad
 ```
 
 | 分组项 | 字错率 | 错字 | 漏字 | 多字 |

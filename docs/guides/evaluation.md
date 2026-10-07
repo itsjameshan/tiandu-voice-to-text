@@ -8,7 +8,7 @@
 4. **如实写**：变差了也写；剧本数据上的结果不代表真实场景。
 
 命令都在便携包文件夹里运行（`python\python.exe tools\...`），`--pool` 填数据池路径。加 `--out reports\gN` 把结果存进本组报告文件夹。
-**基线和改进做法的结果放不同的文件夹**：基线放 `reports\gN`，本组做法（带 `--method`）放 `reports\gN\after`，放在同一个文件夹会互相覆盖；`compare.py` 写的是 `compare_*.md`，可以和基线放在一起。有几种基线的组按本组报告模板分文件夹：第 5 组热词纠错关、开两次基线放 `reports\g5\off`、`reports\g5\on`；第 6、7 组关键词规则基线放 `reports\gN\baseline`。
+**基线和改进做法的结果放不同的文件夹**：基线放 `reports\gN`，本组做法（带 `--method`）放 `reports\gN\after`，放在同一个文件夹会互相覆盖；`compare.py` 写的是 `compare_*.md`，可以和基线放在一起。有几种基线或几种做法的组按本组任务书和报告模板分文件夹：第 1 组降噪做法放 `reports\g1\after`、端点检测做法放 `reports\g1\after_vad`；第 3 组人数自动、设对两次基线放 `reports\g3\auto`、`reports\g3\ref`；第 5 组热词纠错关、开两次基线放 `reports\g5\off`、`reports\g5\on`；第 6、7 组关键词规则基线放 `reports\gN\baseline`，`--method classify=gN` 只是加载检查，放 `reports\gN\check`（模型成绩看训练报告）。
 
 ## 一、字错率（CER）—— 全员；第 1、2 组主指标
 
@@ -103,7 +103,7 @@ python\python.exe tools\evaluate.py clips --pool D:\data_pool --method clips=g8 
 ## 七、一条命令出对比表
 
 ```bat
-python\python.exe tools\compare.py --slot denoise --method g1 --metric cer --pool D:\data_pool --out reports\g1
+python\python.exe tools\compare.py --slot denoise --method g1 --metric cer --pool D:\data_pool --out reports\g1\denoise
 ```
 
 在同一份数据上先用基线跑、再用你们的做法跑，生成 `compare_cer.md` 和 `.csv`：每行一个分组项（全体、Q、N、F……），列出基线、改进、差值。这张表直接放进报告的"对比数据"一节。
