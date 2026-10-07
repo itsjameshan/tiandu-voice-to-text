@@ -177,6 +177,9 @@ def test_extract_from_display_text():
     # 显示模式：SenseVoice 已经把数字转成阿拉伯数字，只做格式统一和提取
     text = "导游证号YN00003721，电话0871 0000 6688，下午3点40集合，一共2800块。"
     assert extract_numbers(text) == ["YN-0000-3721", "0871-0000-6688", "15:40", "2800元"]
+    # SenseVoice 自带 zh.wav 在显示模式下的识别结果（见 docs/progress.md）
+    assert extract_numbers("开放时间早上9点至下午5点。") == ["9:00", "17:00"]
+    assert extract_numbers("合同HT20260000118，订单DD 0000 5566") == ["HT-20260000-118", "DD-0000-5566"]
 
 
 def test_extract_dates():
@@ -203,6 +206,36 @@ def test_extract_durations_and_quantities():
     assert extract_numbers(spoken_to_digits("一般七个工作日到账")) == ["7个工作日"]
     assert extract_numbers(spoken_to_digits("A区是第一排到第十排")) == ["第1排", "第10排"]
     assert extract_numbers(spoken_to_digits("景区要扣百分之十的手续费")) == ["10%"]
+
+
+def test_bare_numbers_are_money():
+    # 口语里说价钱常常不说"块"，基线把不带单位的两位以上的数当成金额
+    assert extract_numbers(spoken_to_digits("这只标价十八万八千八，标签在这儿")) == ["188800元"]
+    assert extract_numbers(spoken_to_digits("熟普外面卖六百八，今天收四百八")) == ["680元", "480元"]
+    assert extract_numbers(spoken_to_digits("差不多的熟普才两百多。")) == ["200多元"]
+    # 带了别的单位的数不算钱
+    assert extract_numbers(spoken_to_digits("我爸今年七十二岁了")) == []
+    assert extract_numbers(spoken_to_digits("开店十二周年")) == []
+    # 一位数不算（"一、二、三"是在点人数）
+    assert extract_numbers(spoken_to_digits("好，一、二、三，三个人")) == ["3人"]
+
+
+def test_day_before_you_chuan():
+    assert extract_numbers(spoken_to_digits("十五号游船，每人一百二")) == ["15日", "120元"]
+
+
+def test_liang_before_measure_word():
+    # cn2an 有时不转"两"（"两盒""两家"原样保留），基线补一条规则
+    assert extract_numbers(spoken_to_digits("买两盒送一个手提袋")) == ["2盒", "1个"]
+    assert extract_numbers(spoken_to_digits("你把两家搞混了")) == ["2家"]
+    assert "2000" in spoken_to_digits("两千")
+
+
+def test_names_not_converted():
+    # 名称里的"拾""七"不能转成数字
+    assert spoken_to_digits("拾光滇程旅行社出") == "拾光滇程旅行社出"
+    assert extract_entities(spoken_to_digits("鹿鸣七彩旅行社的马导")) == ["鹿鸣七彩旅行社"]
+    assert "收拾" in spoken_to_digits("大家先回房间收拾一下")
 
 
 def test_extract_numbers_dedup_keeps_order():
