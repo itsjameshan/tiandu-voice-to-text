@@ -31,6 +31,8 @@
     Silero VAD 切段 + 按顺序编号。只要念的时候停顿够长、中间没有杂音，就能一次切对。
 可改进方向：
     - 段数不对时自动调 min_silence_duration 再试几次；
+    - 段数总是偏少（轻声的字没检测到）时，在 VAD_OVERRIDES 里加 "threshold": 0.4 试试
+      （越小越灵敏，但杂音也更容易被当成一个字）；
     - 用每段的音量、时长找出"可能切错"的段（比如一个字特别长，可能是两个字连在一起了）；
     - 切好后用 tools/show_spectrogram.py 看几段的语谱图，比较不同数字的样子有什么不同。
 测评指标：
@@ -54,7 +56,9 @@ DIGITS = 10
 REPEATS = 5
 EXPECTED_SEGMENTS = DIGITS * REPEATS
 
-# 端点检测参数：只改这两个，其余（threshold 等）沿用 config.yaml 的 vad
+# 端点检测参数：只改这两个，其余（threshold 等）沿用 config.yaml 的 vad。
+# 这组参数还没在真人念的数字录音上试过（开发环境不能用真人录音）：老师课前先拿一份真实录音试一次，
+# 段数经常偏少时可以加 "threshold": 0.4。
 VAD_OVERRIDES = {"vad": {"min_speech_duration": 0.1, "min_silence_duration": 0.4}}
 
 # 每段前后各多留多少秒（端点检测可能把轻的字头、字尾切掉，如"四"的 s、"七"的 q）
@@ -124,10 +128,14 @@ def main(argv=None) -> int:
         print(f"找不到录音文件：{src}")
         return 1
 
-    from pipeline.audio import SR, convert_to_wav, read_wav
-    from pipeline.config import load_config
+    try:
+        from pipeline.audio import SR, convert_to_wav, read_wav
+        from pipeline.config import load_config
 
-    cfg = load_config(overrides=VAD_OVERRIDES)
+        cfg = load_config(overrides=VAD_OVERRIDES)
+    except Exception as e:  # noqa: BLE001  例如 config.yaml 写错了、缺少库：用中文说原因，不打印一大串报错
+        print(f"读配置失败：{e}")
+        return 1
     out_dir = Path(args.out) if args.out else Path(cfg["paths"]["data_pool"]) / "digits"
     tmp_root = Path(cfg["paths"]["tmp"])  # 项目内的 tmp/：避免临时文件落到含中文的系统临时文件夹
     tmp_root.mkdir(parents=True, exist_ok=True)

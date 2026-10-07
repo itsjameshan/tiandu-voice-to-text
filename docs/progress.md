@@ -88,3 +88,10 @@
   这次构建在 GitHub 的 Windows 机器上自检全部通过（测试音频 56.9 秒，用时 13.9 秒，实时率 0.24；这是 GitHub 机器的数字，机房要另测），网页工具能正常打开；
   zip 415.6 MB，公开下载地址：https://github.com/itsjameshan/tiandu-voice-to-text/releases/download/v0.1.0-pre/tiandu-portable-win64-v0.1.0-pre.zip（未登录也能下载）。
   这一版还不含"数据校对""录音质检"两页和说话人、分类、片段三项测评（正在做，做完发 v0.2.0-pre）。
+
+- 任务 21 完成（第 3 周选做的数字小实验 `tools/tf_lab/`：split_digits 切数字、mfcc_compare 对照 numpy 和 tf.signal 的 MFCC、train_digits 小卷积网络按说话人留出测试）。
+  测试：开发环境（没有 TensorFlow）29 通过、4 跳过；临时 TensorFlow 2.21 环境 29 通过、4 跳过（跳过的是要 sherpa-onnx 的切分测试），两边合起来 33 个测试都跑过。
+  合成信号（440 Hz 纯音 + 静音，不是语音）上 numpy 版和 TensorFlow 版 MFCC 的平均相关系数 1.0000。
+  已知问题：split_digits 的端点检测参数（threshold 0.5、最短语音 0.1 秒、最短静音 0.4 秒）没在真人数字录音上验证过；用测试音频剪出的数字长度片段只检出 40/50。
+  已写进第 0 周清单，请老师课前用一份真实录音试一次。机房 Python 没有 matplotlib 时 mfcc_compare 只出相关系数、不画图。
+  审查后的小改动：`pipeline.ascii_name`、`pipeline.features.use_chinese_font` 改成公开函数（工具脚本要用）；TensorFlow 装坏时打印原因；split_digits 读配置失败时用中文提示。

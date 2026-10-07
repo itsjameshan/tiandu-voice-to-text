@@ -1,13 +1,17 @@
 """选做实验 · MFCC 对照：同一段录音，用 numpy 和 TensorFlow 各算一遍 MFCC，看结果是不是一样。
 
 用法（在项目文件夹里运行）：
-    python tools/tf_lab/mfcc_compare.py 录音.wav                  图片存到 outputs/tf_lab/录音_mfcc_compare.png
-    python tools/tf_lab/mfcc_compare.py 录音.m4a --out 图.png      指定图片保存位置
+    python tools/tf_lab/mfcc_compare.py data_pool/digits/3/0123_1.wav   图片存到 outputs/tf_lab/3_0123_1_mfcc_compare.png
+    python tools/tf_lab/mfcc_compare.py 切好的.wav --out 图.png           指定图片保存位置
 
-没装 TensorFlow 的 Python（例如便携包的 Python）也能运行，只算、只画 numpy 版；
-用机房自带的 Python 运行（装了 TensorFlow），就能看到两种算法的对照。
-本脚本还要用 matplotlib（画图）、soundfile（读录音）、PyYAML（读 config.yaml）；
-机房的 Python 缺哪个，脚本会提示，按提示 pip install 即可（例如 pip install matplotlib soundfile PyYAML）。
+用哪个 Python：
+    - 机房自带的 Python（装了 TensorFlow）：能看到两种算法的对照。它可能没有 ffmpeg、soundfile、PyYAML，
+      所以请对照 split_digits.py 切好的文件（16000 Hz、单声道、16 位的 WAV）——这种文件用 Python 自带的
+      wave 模块直接读，不需要 ffmpeg 和 soundfile；读不了 config.yaml 时，图片存到项目文件夹的 outputs/tf_lab/。
+      画图要用 matplotlib；没有它时照样打印相关系数，只是不画图。
+    - 便携包的 Python（没装 TensorFlow）：什么格式的录音都能读（m4a、mp3 等先用 ffmpeg 转格式），
+      只算、只画 numpy 版。
+    机房电脑重启会还原、上课不联网，所以缺什么库都不要自己装；需要的话请老师在第 0 周统一准备。
 
 MFCC（梅尔频率倒谱系数）是什么：把一小段声音（25 毫秒的一"帧"）压缩成 13 个数，
 很多识别模型（包括本实验的小网络）都用它做输入。两种算法的步骤一一对应（对应教材项目 2）：
@@ -41,6 +45,7 @@ import argparse
 import functools
 import sys
 import tempfile
+import wave
 from pathlib import Path
 
 import numpy as np
@@ -49,6 +54,9 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+# 先把项目文件夹加进 sys.path 才能导入 pipeline；pipeline.audio 导入时只用 numpy（soundfile、ffmpeg 在函数里才用）
+from pipeline.audio import SR, FfmpegNotFound  # noqa: E402
+
 # 和 pipeline/features.py 的 mfcc 用同样的参数
 N_MFCC = 13
 N_MELS = 40
@@ -56,8 +64,13 @@ N_FFT = 400  # 每帧 400 个采样点（25 毫秒）
 HOP = 160  # 每隔 160 个采样点（10 毫秒）取一帧
 EPS = 1e-10  # 取对数前加的一个很小的数，避免 log(0)
 
-# 缺少某个库时提示怎么装：导入时的名字 → pip install 时的名字（只列两者不一样的）
-PIP_NAMES = {"yaml": "PyYAML"}
+# 文件不是 16000 Hz 单声道 16 位的 WAV、这个 Python 又转不了格式时的提示
+CONVERT_HINT = (
+    "这个文件不是 16000 Hz、单声道、16 位的 WAV，要先用 ffmpeg 转格式、再用 soundfile 读；"
+    "便携包的 Python 都有，机房自带的 Python 不一定有。\n"
+    "办法：对照 split_digits.py 切好的 WAV（例如 data_pool\\digits\\3\\0123_1.wav），"
+    "或者用便携包的 Python 运行本脚本（只画 numpy 版）。"
+)
 
 
 def tf_mfcc(samples, sr, n_mfcc=N_MFCC, n_mels=N_MELS, n_fft=N_FFT, hop=HOP) -> np.ndarray:
@@ -98,6 +111,64 @@ def mean_correlation(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.mean(values)) if values else float("nan")
 
 
+def project_dirs() -> tuple[Path, Path]:
+    """返回 (outputs 文件夹, tmp 文件夹)，来自 config.yaml 的 paths。
+
+    机房自带的 Python 可能没装 PyYAML、读不了 config.yaml，这时用项目文件夹里的 outputs/ 和 tmp/。
+    """
+    try:
+        from pipeline.config import load_config
+
+        paths = load_config()["paths"]
+        return Path(paths["outputs"]), Path(paths["tmp"])
+    except ImportError:
+        return ROOT / "outputs", ROOT / "tmp"
+
+
+def default_out_path(src: Path, outputs_dir: Path) -> Path:
+    """默认的图片位置：<outputs>/tf_lab/<文件名>_mfcc_compare.png。
+
+    - 文件名里的中文、空格换成英文字符（Windows 上路径最好只有英文），例如 录音.m4a → audio_mfcc_compare.png；
+    - split_digits.py 切好的文件放在数字文件夹里（digits/3/0123_1.wav、digits/8/0123_1.wav），
+      不同数字的文件名一样，所以前面加上数字（3_0123_1_mfcc_compare.png），免得图片互相覆盖。
+    """
+    from pipeline import ascii_name  # 和流程输出文件夹用同一条改名规则
+
+    stem = ascii_name(src.stem)
+    if len(src.parent.name) == 1 and src.parent.name.isdigit():
+        stem = f"{src.parent.name}_{stem}"
+    return outputs_dir / "tf_lab" / f"{stem}_mfcc_compare.png"
+
+
+def try_read_wav16(path: Path):
+    """是 16000 Hz、单声道、16 位的 WAV（split_digits.py 切出来的就是）就直接读出来，返回 -1 到 1 的 float32 数组；
+    不是这种文件时返回 None。
+
+    只用 Python 自带的 wave 模块，不需要 ffmpeg、soundfile，所以机房自带的 Python 也能读。
+    """
+    if path.suffix.lower() != ".wav":
+        return None
+    try:
+        with wave.open(str(path), "rb") as f:
+            if f.getframerate() != SR or f.getnchannels() != 1 or f.getsampwidth() != 2:
+                return None
+            data = f.readframes(f.getnframes())
+    except (wave.Error, EOFError):  # wave 模块读不了的 WAV（例如 32 位浮点）：交给 ffmpeg 转
+        return None
+    return np.frombuffer(data, dtype="<i2").astype(np.float32) / 32768.0
+
+
+def convert_and_read(src: Path, tmp_root: Path) -> np.ndarray:
+    """其他格式：先用 ffmpeg 转成 16000 Hz 单声道 WAV（临时文件放项目内的 tmp/，用完删），再用 soundfile 读。"""
+    from pipeline.audio import convert_to_wav, read_wav
+
+    tmp_root.mkdir(parents=True, exist_ok=True)  # 项目内的 tmp/：避免临时文件落到含中文的系统临时文件夹
+    with tempfile.TemporaryDirectory(dir=tmp_root) as tmp_dir:
+        wav = Path(tmp_dir) / "audio_16k.wav"
+        convert_to_wav(src, wav)
+        return read_wav(wav)
+
+
 def _standardize(feats: np.ndarray) -> np.ndarray:
     """每一维减去平均值、除以标准差（画图用：红色偏大、蓝色偏小）。返回 [维数, 帧数]，方便画成"横轴是时间"。"""
     feats = feats.T
@@ -111,9 +182,9 @@ def plot_compare(results: list[tuple[str, np.ndarray]], sr: int, path: Path, tit
     matplotlib.use("Agg")  # 只画图片、不弹窗口
     from matplotlib.figure import Figure
 
-    from pipeline.features import _use_chinese_font  # 找一个中文字体，图上的中文才不会变成方框
+    from pipeline.features import use_chinese_font  # 找一个中文字体，图上的中文才不会变成方框
 
-    _use_chinese_font()
+    use_chinese_font()
     fig = Figure(figsize=(10, 3.2 * len(results) + 0.6), layout="constrained")
     axes = fig.subplots(len(results), 1, sharex=True, squeeze=False)[:, 0]
     fig.suptitle(title)
@@ -133,12 +204,10 @@ def main(argv=None) -> int:
         sys.stdout.reconfigure(errors="replace")  # 命令行窗口显示不了的字用 ? 代替，不让程序因此出错
 
     parser = argparse.ArgumentParser(description="同一段录音用 numpy 和 TensorFlow 各算一遍 MFCC，画图对照。")
-    parser.add_argument("audio", help="录音文件（任何格式）")
+    parser.add_argument("audio", help="录音文件（机房自带的 Python 请用 split_digits.py 切好的 WAV）")
     parser.add_argument("--out", help="图片保存路径（默认：outputs/tf_lab/<文件名>_mfcc_compare.png）")
     args = parser.parse_args(argv)
 
-    from pipeline.audio import SR, convert_to_wav, read_wav
-    from pipeline.config import load_config
     from pipeline.features import mfcc
 
     src = Path(args.audio)
@@ -147,32 +216,45 @@ def main(argv=None) -> int:
         return 1
 
     try:
-        cfg = load_config()
-        out = Path(args.out) if args.out else Path(cfg["paths"]["outputs"]) / "tf_lab" / f"{src.stem}_mfcc_compare.png"
-        if not out.suffix:
-            out = out.with_suffix(".png")
-        tmp_root = Path(cfg["paths"]["tmp"])  # 项目内的 tmp/：避免临时文件落到含中文的系统临时文件夹
-        tmp_root.mkdir(parents=True, exist_ok=True)
-        with tempfile.TemporaryDirectory(dir=tmp_root) as tmp_dir:
-            wav = Path(tmp_dir) / "audio_16k.wav"
-            convert_to_wav(src, wav)
-            samples = read_wav(wav)
-        numpy_feats = mfcc(samples, SR, n_mfcc=N_MFCC, n_mels=N_MELS, n_fft=N_FFT, hop=HOP)
-    except ImportError as e:  # 机房的 Python 可能没装 PyYAML（读 config.yaml 用）或 soundfile（读 WAV 用）
-        print(f"缺少 {e.name}：请先运行 pip install {PIP_NAMES.get(e.name, e.name)} 再试。")
+        outputs_dir, tmp_root = project_dirs()
+    except Exception as e:  # noqa: BLE001  例如 config.yaml 写错了：用中文说原因，不打印一大串报错
+        print(f"读配置失败：{e}")
         return 1
-    except Exception as e:  # noqa: BLE001  命令行工具：把错误原因用中文打印出来，不打印一大串报错
-        print(f"处理失败：{e}")
-        return 1
+    out = Path(args.out) if args.out else default_out_path(src, outputs_dir)
+    if not out.suffix:
+        out = out.with_suffix(".png")
+
+    # 读录音：切好的 WAV 直接读；其他格式先用 ffmpeg 转、再用 soundfile 读
+    samples = try_read_wav16(src)
+    if samples is None:
+        try:
+            samples = convert_and_read(src, tmp_root)
+        except ImportError as e:  # 缺 soundfile 等库（有的 ImportError 不带库名，这时打印原话）
+            print(f"读不了这个录音：这个 Python 缺少 {e.name}。" if e.name else f"读不了这个录音：{e}")
+            print(CONVERT_HINT)
+            return 1
+        except FfmpegNotFound:
+            print("读不了这个录音：这个 Python 找不到 ffmpeg（转格式要用它）。")
+            print(CONVERT_HINT)
+            return 1
+        except Exception as e:  # noqa: BLE001  文件坏了、不是录音等
+            print(f"处理失败：{e}")
+            return 1
+
+    numpy_feats = mfcc(samples, SR, n_mfcc=N_MFCC, n_mels=N_MELS, n_fft=N_FFT, hop=HOP)
     print(f"录音：{src}（{len(samples) / SR:.1f} 秒）")
     print(f"numpy 版 MFCC：{numpy_feats.shape[0]} 帧 × {numpy_feats.shape[1]} 维")
     results = [("numpy 版（pipeline/features.py 的 mfcc）", numpy_feats)]
 
     try:
         tf_feats = tf_mfcc(samples, SR)
-    except ImportError:
+    except ImportError as e:  # 没装 TensorFlow，或装坏了（Windows 上常见"DLL load failed"）
         tf_feats = None
-        print("这个 Python 没装 TensorFlow，只算、只画 numpy 版。想看对照：用机房自带的 Python 运行本脚本。")
+        print("这个 Python 用不了 TensorFlow，只算、只画 numpy 版。想看对照：用机房自带的 Python 运行本脚本。")
+        print(f"（原因：{e}）")
+    except Exception as e:  # noqa: BLE001  TensorFlow 版算的时候出错：照样画 numpy 版
+        tf_feats = None
+        print(f"TensorFlow 版计算失败：{e}。只画 numpy 版。")
     if tf_feats is not None:
         corr = mean_correlation(numpy_feats, tf_feats)
         print(f"TensorFlow 版 MFCC：{tf_feats.shape[0]} 帧 × {tf_feats.shape[1]} 维")
@@ -182,8 +264,12 @@ def main(argv=None) -> int:
     try:
         plot_compare(results, SR, out, title=f"{src.name} 的 MFCC")
     except ImportError as e:
-        print(f"画图失败：缺少 {e.name}。请先运行 pip install matplotlib 再试。")
-        return 1
+        print(f"这个 Python 没装 {e.name or 'matplotlib'}，没有画图。")
+        if tf_feats is None:  # 既没有 TensorFlow 也画不了图：这次什么也没做成
+            print("请换一个 Python：机房自带的 Python（有 TensorFlow）或便携包的 Python（能画 numpy 版）。")
+            return 1
+        print("上面的相关系数照样有效。想看图：请老师在第 0 周给机房的 Python 准备好 matplotlib。")
+        return 0
     print(f"图片已保存：{out}")
     return 0
 

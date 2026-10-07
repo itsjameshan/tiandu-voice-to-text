@@ -4,6 +4,8 @@
 - split_digits：段数不是 50 时退出码 1、不写任何文件，并提示怎么重录；
   段数正好 50 时（把端点检测换成假的）按"数字/学号后四位_第几遍.wav"的顺序存好；
 - mfcc_compare：没装 TensorFlow 时只画 numpy 版，退出码 0，写出 PNG；装了时两种算法结果高度相关；
+  模拟机房自带的 Python（没有 soundfile、PyYAML、ffmpeg）时，切好的 16 kHz WAV 照样能对照、画图；
+  其他格式转不了时提示用便携包的 Python；没有 matplotlib 时照样打印相关系数；
 - train_digits：说话人不够 3 个、没装 TensorFlow 时给出中文提示并退出码 1；
   装了 TensorFlow 时用很小的合成数据集（每个"数字"是一个不同频率的正弦波）跑通训练。
 
@@ -22,6 +24,10 @@ from conftest import ROOT, ZH_WAV, ffmpeg_exe, requires_models
 TF_LAB = ROOT / "tools" / "tf_lab"
 SR = 16000
 ADVICE = "念慢一点、每个字之间停顿约 1 秒，重录"
+
+# 走真的端点检测既要模型文件，也要 sherpa_onnx（只装了 TensorFlow 的环境里没有它，这时跳过）
+requires_sherpa = pytest.mark.skipif(importlib.util.find_spec("sherpa_onnx") is None,
+                                     reason="没装 sherpa_onnx（端点检测要用）")
 
 
 def _load(name: str):
@@ -75,6 +81,7 @@ def _synthetic_digits(root, speakers, reps=2, seconds=0.5):
 
 
 @requires_models
+@requires_sherpa
 @pytest.mark.parametrize("kind", ["three_bursts", "tone_gap_tone", "tone"])
 def test_split_digits_wrong_count(make_audio, tmp_path, capsys, kind):
     """正弦波录音切出来的段数不是 50（Silero 对正弦不一定检出）：退出码 1、一个文件也不写、提示重录。"""
@@ -145,6 +152,7 @@ def test_split_digits_saves_50_in_order(tmp_path, monkeypatch, capsys):
 
 
 @requires_models
+@requires_sherpa
 def test_split_digits_real_vad_50_segments(tmp_path, capsys):
     """走真的端点检测：模型自带的测试音频 zh.wav（一句话，约 4.4 秒人声）重复 50 遍、中间隔 1 秒静音，
     应该正好切出 50 段并存好（这里每段都比 1 秒长，会提示"超过 1 秒"）。只用于自动测试，不是数字录音。"""
@@ -240,6 +248,116 @@ def test_mean_correlation_ignores_scale():
     b = a * np.r_[np.sqrt(2.0), np.ones(12)]
     assert compare.mean_correlation(a, b) == pytest.approx(1.0)
     assert compare.mean_correlation(a, -a) == pytest.approx(-1.0)
+
+
+def _hide_modules(monkeypatch, *names):
+    """让 import 这些库失败，模拟"这个 Python 没装"。"""
+    for name in names:
+        monkeypatch.setitem(sys.modules, name, None)
+
+
+def _hide_ffmpeg(monkeypatch, tmp_path):
+    """让 pipeline.audio.find_ffmpeg 找不到 ffmpeg：不设 FFMPEG_BINARY、PATH 里没有、也没装 imageio-ffmpeg。"""
+    empty = tmp_path / "empty_path"
+    empty.mkdir(exist_ok=True)
+    monkeypatch.delenv("FFMPEG_BINARY", raising=False)
+    monkeypatch.setenv("PATH", str(empty))
+    _hide_modules(monkeypatch, "imageio_ffmpeg")
+
+
+def _split_digit_wav(tmp_path):
+    """和 split_digits.py 切出来的文件一样：digits/3/0123_1.wav，16000 Hz、单声道、16 位，约 0.6 秒正弦 + 静音。"""
+    t = np.arange(SR) / SR
+    path = tmp_path / "digits" / "3" / "0123_1.wav"
+    _write_wav(path, 0.3 * np.sin(2 * np.pi * 440 * t) * (t < 0.6))
+    return path
+
+
+def test_mfcc_compare_machine_room_python(tmp_path, monkeypatch, capsys):
+    """模拟机房自带的 Python（没有 soundfile、PyYAML、ffmpeg）：split_digits.py 切好的 WAV
+    用 Python 自带的 wave 模块直接读，不转格式；读不了 config.yaml 时图片存到项目的 outputs/tf_lab/。退出码 0。"""
+    _hide_modules(monkeypatch, "soundfile", "yaml")
+    _hide_ffmpeg(monkeypatch, tmp_path)
+    audio = _split_digit_wav(tmp_path)
+    compare = _load("mfcc_compare")
+    monkeypatch.setattr(compare, "ROOT", tmp_path)  # 项目文件夹换成临时文件夹，不往仓库的 outputs/ 里写
+    rc = compare.main([str(audio)])
+    printed = capsys.readouterr().out
+    assert rc == 0, printed
+    png = tmp_path / "outputs" / "tf_lab" / "3_0123_1_mfcc_compare.png"
+    assert png.is_file(), printed
+    assert png.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
+
+
+@pytest.mark.parametrize("missing", ["ffmpeg", "soundfile", "unnamed"])
+def test_mfcc_compare_other_formats_need_portable_python(make_audio, tmp_path, monkeypatch, capsys, missing):
+    """不是 16000 Hz 单声道 16 位的 WAV（这里是 44.1 kHz 立体声）要先用 ffmpeg 转、用 soundfile 读。
+    缺了时说清楚缺什么、建议对照切好的 WAV 或用便携包的 Python；退出码 1。
+    不提示 pip install（机房不联网、重启会还原）；提示里也不能出现 "None"（有的 ImportError 不带模块名）。"""
+    import pipeline.audio
+
+    audio = make_audio("tone", ext="wav", seconds=1.0)  # 44.1 kHz 立体声（先生成，再"拿走" ffmpeg）
+    if missing == "ffmpeg":
+        _hide_ffmpeg(monkeypatch, tmp_path)
+    elif missing == "soundfile":
+        _hide_modules(monkeypatch, "soundfile")
+    else:
+        def broken_read_wav(path):
+            raise ImportError("cannot import name 'x' from 'y'")  # 这种 ImportError 的 name 是 None
+
+        monkeypatch.setattr(pipeline.audio, "read_wav", broken_read_wav)
+    png = tmp_path / "compare.png"
+    compare = _load("mfcc_compare")
+    rc = compare.main([str(audio), "--out", str(png)])
+    printed = capsys.readouterr().out
+    assert rc == 1, printed
+    assert not png.exists()
+    for words in ("便携包", "split_digits.py", {"ffmpeg": "ffmpeg", "soundfile": "soundfile",
+                                                 "unnamed": "cannot import name"}[missing]):
+        assert words in printed, words
+    assert "None" not in printed
+    assert "pip install" not in printed
+
+
+@pytest.mark.parametrize("relative, name", [
+    ("digits/3/0123_1.wav", "3_0123_1_mfcc_compare.png"),  # 切好的文件：前面加上数字，不同数字的图不会互相覆盖
+    ("digits/8/0123_1.wav", "8_0123_1_mfcc_compare.png"),
+    ("digits-0123.m4a", "digits-0123_mfcc_compare.png"),
+    ("录音.m4a", "audio_mfcc_compare.png"),  # 中文文件名换成英文（Windows 上路径最好只有英文）
+])
+def test_mfcc_compare_default_png_name(tmp_path, relative, name):
+    compare = _load("mfcc_compare")
+    out = compare.default_out_path(tmp_path / relative, tmp_path / "outputs")
+    assert out == tmp_path / "outputs" / "tf_lab" / name
+
+
+def test_mfcc_compare_without_matplotlib_and_tf(tmp_path, monkeypatch, capsys):
+    """既没有 TensorFlow 也没有 matplotlib：对照不了、也画不了图，说明原因，退出码 1。"""
+    _hide_modules(monkeypatch, "tensorflow", "matplotlib")
+    audio = _split_digit_wav(tmp_path)
+    png = tmp_path / "compare.png"
+    compare = _load("mfcc_compare")
+    rc = compare.main([str(audio), "--out", str(png)])
+    printed = capsys.readouterr().out
+    assert rc == 1, printed
+    assert not png.exists()
+    assert "没有画图" in printed
+    assert "pip install" not in printed
+
+
+def test_mfcc_compare_with_tf_without_matplotlib(tmp_path, monkeypatch, capsys):
+    """装了 TensorFlow、没装 matplotlib（机房的 Python 可能这样）：照样打印相关系数，只是不画图，退出码 0。"""
+    pytest.importorskip("tensorflow")
+    _hide_modules(monkeypatch, "matplotlib", "soundfile", "yaml")
+    audio = _split_digit_wav(tmp_path)
+    png = tmp_path / "compare.png"
+    compare = _load("mfcc_compare")
+    rc = compare.main([str(audio), "--out", str(png)])
+    printed = capsys.readouterr().out
+    assert rc == 0, printed
+    assert not png.exists()
+    assert "相关系数" in printed
+    assert "没有画图" in printed
 
 
 # ---------- 补充的测试：train_digits ----------

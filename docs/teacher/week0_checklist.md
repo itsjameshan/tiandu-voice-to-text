@@ -20,6 +20,8 @@
 - [ ] 重启电脑，看 `D:\asr\tiandu` 还在不在：☐ 在（D 盘不还原，以后放 D 盘）　☐ 不在（以后放 U 盘或每次课前从共享文件夹拷）
 - [ ] 在另一台机房电脑的浏览器打开 `http://这台电脑的IP:7860`（IP 用 `ipconfig` 查），能不能访问：☐ 能　☐ 不能（防火墙拦了，那就每人用自己的电脑开）
 - [ ] 机房自带 TensorFlow 版本：命令行运行 `python -c "import tensorflow as tf; print(tf.__version__)"`，结果：________（给第 6、7 组）
+- [ ] （只在做第 3 周选做的数字小实验时需要）机房 Python 有没有 matplotlib：`python -c "import matplotlib"` 不报错就有。没有时 `tools/tf_lab/mfcc_compare.py` 照样算出相关系数，只是不画图。
+- [ ] （同上）自己按 `docs/guides/recording.md` 第六节录一遍"零一二三四五六七八九"×5，用便携包运行 `python\python.exe tools\tf_lab\split_digits.py 录音文件 --speaker 0000`，看能不能切出 50 段。切分用的端点检测参数还没有在真人数字录音上试过（开发环境不允许用真人录音）；如果段数经常偏少，在 `tools/tf_lab/split_digits.py` 的 `VAD_OVERRIDES` 里加 `"threshold": 0.4` 再试。
 - [ ] U 盘能不能用：☐ 能　☐ 不能；老师电脑的共享文件夹能不能访问：☐ 能　☐ 不能
 
 ## 3. 便携包分发给 31 台电脑

@@ -144,7 +144,7 @@ def mfcc(samples, sr, n_mfcc=13, n_mels=40, n_fft=400, hop=160) -> np.ndarray:
     return log_mel @ _dct_matrix(n_mels, n_mfcc).T                   # 6. DCT-II [帧数, n_mfcc]
 
 
-def _use_chinese_font():
+def use_chinese_font():
     """在电脑上找一个中文字体给 matplotlib 用，返回字体名；一个都没有时返回 None（中文会显示成方框）。"""
     from matplotlib import font_manager, rcParams
 
@@ -172,7 +172,7 @@ def plot_recording(samples, sr, path=None, title=""):
     # 不用 pyplot，直接建 Figure：pyplot 会把画过的图都记在内存里，网页工具一直开着会越积越多
     from matplotlib.figure import Figure
 
-    _use_chinese_font()
+    use_chinese_font()
     x = _to_float_mono(samples)
     n_fft = 400
     duration = max(len(x), n_fft) / sr  # 比一帧还短（甚至是空的）录音按一帧的长度画，不报错

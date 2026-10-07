@@ -22,7 +22,7 @@ MODEL_NAMES = {
 }
 
 
-def _ascii_name(name: str) -> str:
+def ascii_name(name: str) -> str:
     """文件名里的中文、空格等换成 _，用作输出文件夹名（Windows 上路径最好只有英文）。"""
     safe = "".join(c if (c.isascii() and (c.isalnum() or c in "-_.")) else "_" for c in name)
     return safe.strip("._") or "audio"
@@ -33,7 +33,7 @@ def default_out_dir(cfg: dict, path) -> str:
     from datetime import datetime
     from pathlib import Path
 
-    stem = _ascii_name(Path(path).stem)
+    stem = ascii_name(Path(path).stem)
     base = Path(cfg["paths"]["outputs"]) / f"{datetime.now():%Y%m%d-%H%M%S}_{stem}"
     out, n = base, 1
     while out.exists():

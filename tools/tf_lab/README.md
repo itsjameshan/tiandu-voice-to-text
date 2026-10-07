@@ -35,10 +35,14 @@
 | 脚本 | 做什么 | 用哪个 Python |
 |---|---|---|
 | `split_digits.py` | 把录音切成 50 段 | 便携包的 Python（要用端点检测模型） |
-| `mfcc_compare.py` | numpy 和 TensorFlow 各算一遍 MFCC，画图对照 | 都可以；**用机房自带的 Python 运行**才有 TensorFlow 对照，便携包的 Python 只画 numpy 版 |
+| `mfcc_compare.py` | numpy 和 TensorFlow 各算一遍 MFCC，画图对照 | 都可以；**用机房自带的 Python 运行**才有 TensorFlow 对照（请对照第 2 步切好的 WAV），便携包的 Python 只画 numpy 版 |
 | `train_digits.py` | 训练小卷积网络 | **用机房自带的 Python 运行**（装了 TensorFlow；只需要 numpy 和 TensorFlow） |
 
 下面的命令都在项目文件夹里运行。便携包的 Python 写成 `python\python.exe`，机房自带的 Python 写成 `python`（以老师告诉你的为准）。
+
+机房自带的 Python 一般只有 TensorFlow、numpy 和少数常用库，**可能没有 ffmpeg、soundfile、PyYAML**。这两个脚本已经避开了它们：
+`mfcc_compare.py` 用 Python 自带的 `wave` 模块直接读切好的 WAV（16000 Hz、单声道、16 位），读不了 `config.yaml` 时图片存到项目的 `outputs\tf_lab\`；`train_digits.py` 只需要 numpy 和 TensorFlow。画图要用 matplotlib，机房的 Python 没有它时 `mfcc_compare.py` 照样打印相关系数，只是不画图。
+机房电脑重启会还原、上课不联网，**缺什么库都不要自己装**；需要的话请老师在第 0 周统一准备（例如用 `requirements-tf.txt` 给便携包装上 TensorFlow）。
 
 ## 四、实验步骤
 
@@ -69,7 +73,8 @@ python\python.exe tools\tf_lab\split_digits.py digits-0123.m4a --speaker 0123
 python tools\tf_lab\mfcc_compare.py data_pool\digits\3\0123_1.wav
 ```
 
-- 图片存到 `outputs\tf_lab\`，上面一张是 numpy 版（`pipeline/features.py`），下面一张是 TensorFlow 版（`tf.signal`）；
+- `data_pool\digits\3\0123_1.wav` 换成你自己切好的文件（数据池换过位置的，写实际路径）。机房自带的 Python 请对照切好的 WAV，m4a 等原始录音要用便携包的 Python；
+- 图片存到 `outputs\tf_lab\`（文件名如 `3_0123_1_mfcc_compare.png`，前面的 3 是数字），上面一张是 numpy 版（`pipeline/features.py`），下面一张是 TensorFlow 版（`tf.signal`）；
 - 程序打印两种算法的**相关系数**（越接近 1 越像，一般在 0.99 以上）。两者不是一模一样：TensorFlow 的梅尔滤波器形状略有不同，第 0 维的"归一化"写法也不同（大 √2 倍），所以按每一维分别算相关系数再取平均；
 - 打开 `tools/tf_lab/mfcc_compare.py`，对照上面的表格找到 6 个步骤分别是哪几行；再打开 `pipeline/features.py` 的 `mfcc` 函数对照 numpy 写法；
 - 找几个不同数字的录音画一画，比较"一"和"八"、"一"和"七"……的 MFCC 图有什么不同。
@@ -116,8 +121,9 @@ python tools\tf_lab\train_digits.py --data data_pool\digits
 | 问题 | 怎么办 |
 |---|---|
 | 切分时段数不是 50 | 按提示放慢、每个字之间停顿约 1 秒重录；周围要安静，不要边念边说话 |
-| 提示"没装 TensorFlow" | 换成机房自带的 Python 运行（便携包的 Python 没装 TensorFlow）；自己的电脑可以 `pip install -r requirements-tf.txt` |
-| 提示缺少 matplotlib、soundfile、PyYAML | 机房的 Python 缺这几个库时，按提示 `pip install` 即可 |
+| 提示"没装 TensorFlow" | 换成机房自带的 Python 运行（便携包的 Python 没装 TensorFlow）；自己的电脑联网时可以 `pip install -r requirements-tf.txt` |
+| `mfcc_compare.py` 提示"不是 16000 Hz、单声道、16 位的 WAV" | 机房自带的 Python 只能直接读第 2 步切好的 WAV；对照原始录音（m4a 等）请用便携包的 Python（只画 numpy 版） |
+| `mfcc_compare.py` 提示"没装 matplotlib，没有画图" | 相关系数照样有效；想看图请老师在第 0 周准备好（机房会还原、不联网，不要自己装） |
 | 提示"至少需要 3 个人" | 先把更多同学的录音汇总到同一个 `digits` 文件夹 |
 | 图上的中文是方框 | 电脑上没有中文字体，不影响结果 |
 | 文件夹路径里有中文时出错 | 把项目放到纯英文路径，如 `D:\asr\tiandu` |
