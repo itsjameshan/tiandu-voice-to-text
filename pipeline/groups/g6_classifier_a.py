@@ -16,7 +16,8 @@
 怎么测
     python tools/train_classifier.py --model g6 --eval logo     （按组留一，主结果）
     python tools/train_classifier.py --model g6 --eval random   （随机划分，对照，会虚高）
-    python tools/evaluate.py classify --method classify=g6 --out reports/g6
+    python tools/evaluate.py classify --method classify=g6 --out reports/g6/check
+        （只用来确认模型能加载、能跑：模型最后是用全部台词训练的，在同样的台词上测会虚高，成绩看上面按组留一的报告）
 
 注意
     - "按组留一"：用 7 个组的台词训练、测剩下 1 个组，轮 8 次，汇总成一个混淆矩阵——相当于"用别的同学写的句子测"。

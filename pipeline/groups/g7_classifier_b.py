@@ -16,7 +16,8 @@
 
 怎么测
     python tools/train_classifier.py --model g7 --eval logo
-    python tools/evaluate.py classify --method classify=g7 --out reports/g7
+    python tools/evaluate.py classify --method classify=g7 --out reports/g7/check
+        （只用来确认模型能加载、能跑：模型最后是用全部台词训练的，在同样的台词上测会虚高，成绩看上面按组留一的报告）
     和第 6 组用同样的数据、同样的测评方式比较（按组留一的混淆矩阵、各类召回率、误报率）。
 
 注意

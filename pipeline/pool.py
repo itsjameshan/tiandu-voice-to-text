@@ -8,7 +8,7 @@
     references/            每段录音一份参考文本，如 G1-S1-Q.txt
     annotations/speakers/  说话人时间标注
     annotations/clips/     疑似片段起止标注
-    asr_cache/             "数据校对"页的识别结果缓存
+    asr_cache/             识别结果缓存（"数据校对"页和测评工具共用）
     digits/                选做：中文数字录音
     versions/              冻结的数据池版本（如 versions/v1/）
     manifest.csv           清单：每段入池的录音一行

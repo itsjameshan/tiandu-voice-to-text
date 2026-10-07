@@ -21,7 +21,7 @@ D:\data_pool\
   references\           72 份参考文本，如 G1-S1-Q.txt
   annotations\speakers\ 说话人时间标注
   annotations\clips\    疑似片段起止标注
-  asr_cache\            "数据校对"页的识别结果缓存
+  asr_cache\            识别结果缓存（"数据校对"页和测评工具共用，可以删，删了只是下次要重新识别）
   digits\               选做：中文数字录音
   manifest.csv          清单（文件、剧本、条件、时长、采样率、质检、上传时间、SHA-256 指纹）
   qc_report.csv         质检报告

@@ -11,8 +11,9 @@
     和 speaker（"说话人N"或"未知"）。
 
 怎么测（需要人工标注的说话人时间，见 docs/guides/annotation.md）
-    python tools/evaluate.py speakers --pool 数据池路径 --out reports/g3
-    python tools/compare.py --slot diarize --method g3 --metric speakers --pool 数据池路径 --out reports/g3
+    python tools/evaluate.py speakers --pool 数据池路径 --speakers auto --out reports/g3/auto   （人数设自动）
+    python tools/evaluate.py speakers --pool 数据池路径 --speakers ref --out reports/g3/ref     （人数设对）
+    python tools/compare.py --slot diarize --method g3 --metric speakers --pool 数据池路径 --speakers ref --out reports/g3
 
 注意
     - 知道人数时一定要设人数（config.yaml 的 diarize.num_speakers，或网页上的"说话人数"）。

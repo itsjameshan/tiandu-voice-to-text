@@ -557,6 +557,20 @@ def test_check_proofreader_rejects(bad):
 def test_check_proofreader_accepts():
     assert app.check_proofreader(" 1234 ") == "1234"
     assert app.check_proofreader("A07x") == "A07x"
+    assert app.check_proofreader("１２３４") == "1234"  # 中文输入法打出的全角数字
+
+
+def test_check_upload_without_ffmpeg(monkeypatch, make_audio):
+    """电脑上找不到 ffmpeg：提示怎么装 ffmpeg，而不是说“文件可能已损坏”。"""
+    from pipeline.audio import FfmpegNotFound
+
+    def no_ffmpeg(*args, **kwargs):
+        raise FfmpegNotFound("找不到 ffmpeg：请用便携包的 start.bat 启动")
+
+    monkeypatch.setattr(app, "convert_to_wav", no_ffmpeg)
+    with pytest.raises(gr.Error) as info:
+        app.check_upload(str(make_audio("tone", "wav", seconds=1.0, sr=16000, channels=1)))
+    assert "ffmpeg" in str(info.value) and "损坏" not in str(info.value)
 
 
 def test_save_reference(tmp_path):
@@ -597,6 +611,10 @@ def test_pool_recordings_reads_manifest(tmp_path):
     update, hint = app.refresh_recordings(f"  {root}  ")  # 路径前后多打了空格也认
     assert update["choices"] == ["G1-S1-Q", "G1-S2-N"] and update["value"] == "G1-S1-Q"
     assert "2 段" in hint
+    update, _ = app.refresh_recordings(str(root), "G1-S2-N")  # 原来选的录音还在：继续选它，不跳回第一个
+    assert update["value"] == "G1-S2-N"
+    update, _ = app.refresh_recordings(str(root), "G8-S3-F")  # 原来选的录音不在了：选第一个
+    assert update["value"] == "G1-S1-Q"
     _, hint = app.refresh_recordings("")
     assert "数据池路径" in hint
     with pytest.raises(gr.Error) as info:  # 清单里有、但转换后的录音不见了
@@ -605,7 +623,7 @@ def test_pool_recordings_reads_manifest(tmp_path):
 
 
 def test_comparison_cache_follows_wav(tmp_path, make_audio, monkeypatch, app_cfg):
-    """“生成对照”的识别结果缓存在 asr_cache/<编号>.json：录音没变就直接用；录音换了（复录）就重新识别。
+    """“生成对照”的识别结果和测评工具共用缓存 asr_cache/<编号>.eval-<钥匙>.json：录音没变就直接用；录音换了（复录）就重新识别。
 
     用假的端点检测和识别代替模型，只检查缓存和对照的逻辑。
     """
@@ -636,7 +654,7 @@ def test_comparison_cache_follows_wav(tmp_path, make_audio, monkeypatch, app_cfg
     assert "还没有参考文本文件" in summary
     assert state["meta"]["stem"] == "G1-S1-Q" and Path(state["meta"]["wav"]) == wav
     assert calls == ["eval"]
-    assert (root / "asr_cache" / "G1-S1-Q.json").is_file()
+    assert len(list((root / "asr_cache").glob("G1-S1-Q.eval-*.json"))) == 1
 
     (root / "references" / "G1-S1-Q.txt").write_text("今天去石林。下午回昆明。", encoding="utf-8")
     summary, rows, reference, _ = app.generate_comparison(str(root), "G1-S1-Q")
@@ -704,8 +722,7 @@ def test_proofreading_flow(recorded_pool, monkeypatch):
     assert [row[0] for row in rows] == list(range(1, len(rows) + 1))
     assert all(row[5] in ("相同", "不同") for row in rows)
     assert "字错率" in summary and "G1-S1-Q" in summary
-    cache = root / "asr_cache" / "G1-S1-Q.json"
-    assert cache.is_file() and not list((root / "asr_cache").glob("*.eval-*"))
+    assert len(list((root / "asr_cache").glob("G1-S1-Q.eval-*.json"))) == 1, "和测评工具共用一个缓存文件"
     hyps = [row[3] for row in rows]
 
     # 点一行：播放这一段原声（采样率, 采样数组）

@@ -37,6 +37,7 @@ import shutil
 import stat
 import sys
 import time
+import unicodedata
 import uuid
 import warnings
 from collections import Counter
@@ -52,16 +53,15 @@ import gradio as gr
 
 from pipeline import default_out_dir, run_pipeline, ui_text  # default_out_dir：输出文件夹的命名规则
 from pipeline import methods as method_registry
-from pipeline import step2_vad, step3_asr  # 数据校对用：按“模块.函数”调用，测试时可以换成假的
 from pipeline.align import align_segments, cer_details
-from pipeline.audio import SR, convert_to_wav, has_non_ascii, probe, read_wav, remove_tree, sha256_file
+from pipeline.audio import SR, FfmpegNotFound, convert_to_wav, has_non_ascii, probe, read_wav, remove_tree
 from pipeline.data import (DISPLAY_NAMES, FLAG_LABELS, FLAG_OUTPUTS, load_hotwords, load_recording_plan,
                            load_scripts, script_reference_text)
-from pipeline.evaluation import read_reference
+from pipeline.evaluation import read_reference, recognize_item
 from pipeline.features import plot_recording
 from pipeline.methods import SLOT_TITLES, SLOTS
 from pipeline.pool import log_proofread, parse_recording_name, pool_paths, read_csv_rows
-from pipeline.schema import NOTICE, read_json, write_json
+from pipeline.schema import NOTICE
 from pipeline.script_demo import run_script_demo
 from pipeline.step1_ingest import SUPPORTED_EXTS, quality_check
 from pipeline.step4_diarize import apply_speaker_map, speaker_durations
@@ -444,10 +444,11 @@ def _pool_listing(root) -> tuple[list[str], str]:
     return stems, ui_text.POOL_READY.format(count=len(stems))
 
 
-def refresh_recordings(root):
-    """“刷新录音列表”：返回 (录音下拉框的新选项，默认选第一个；提示文字)。"""
+def refresh_recordings(root, current=None):
+    """“刷新录音列表”：返回 (录音下拉框的新选项，提示文字)。原来选的录音 current 还在就继续选它，否则选第一个。"""
     stems, hint = _pool_listing(root)
-    return gr.update(choices=stems, value=stems[0] if stems else None), hint
+    value = current if current in stems else (stems[0] if stems else None)
+    return gr.update(choices=stems, value=value), hint
 
 
 def _pool_recording(root, stem) -> tuple[Path, str, dict, Path]:
@@ -480,7 +481,7 @@ def _pool_recording(root, stem) -> tuple[Path, str, dict, Path]:
 
 def check_proofreader(value) -> str:
     """校对人编号：去掉前后空格，必须是 1—12 个英文字母或数字（学号后四位），否则报错。不收姓名。"""
-    who = str(value or "").strip()
+    who = unicodedata.normalize("NFKC", str(value or "")).strip()  # 全角的１２３４换成半角的1234
     if not PROOFREADER_RE.fullmatch(who):
         raise gr.Error(ui_text.PROOFREADER_ERROR)
     return who
@@ -489,38 +490,11 @@ def check_proofreader(value) -> str:
 def _recognize_for_proofreading(root: Path, stem: str, wav: Path, progress=None) -> list[dict]:
     """用测评模式识别一段池内录音（汉字读法、没有标点，和参考文本口径一致），返回带 text_raw 的段落。
 
-    结果缓存在 数据池/asr_cache/<编号>.json，里面记着录音的 SHA-256 指纹和降噪、增强、端点检测用的做法；
-    录音换了（复录）或做法换了才重新识别，否则直接用缓存，第二次“生成对照”几乎不用等。
-    入池工具复录时会删掉 asr_cache/<编号>.*；测评工具的缓存叫 <编号>.eval-<钥匙>.json，和这里的互不影响。
+    和测评工具（tools/evaluate.py）用同一套带缓存的识别（pipeline.evaluation.recognize_item）：
+    结果存在 数据池/asr_cache/<编号>.eval-<钥匙>.json，录音、识别设置、降噪/增强/端点检测的做法或代码变了才重新识别。
+    所以校对时识别过的录音，测评时不用再识别；复录时入池工具会删掉 asr_cache/<编号>.*。
     """
-    cfg = _config()
-    cache = pool_paths(root)["asr_cache"] / f"{stem}.json"
-    fingerprint = sha256_file(wav)
-    chosen = cfg.get("methods") or {}
-    methods = {slot: chosen.get(slot) or "baseline" for slot in step2_vad.STEP_SLOTS}
-    if cache.is_file():
-        try:
-            segments, meta = read_json(cache)
-            if meta.get("wav_sha256") == fingerprint and meta.get("methods") == methods:
-                return segments
-        except (OSError, ValueError):
-            pass  # 缓存文件坏了：重新识别
-
-    if progress is not None:
-        progress(0, "端点检测")
-    processed, segments = step2_vad.detect_speech(read_wav(wav), SR, cfg)
-    segments = step3_asr.recognize(processed, SR, segments, cfg, mode="eval", progress=progress)
-
-    meta = {"stem": stem, "mode": "eval", "wav_sha256": fingerprint, "methods": methods,
-            "created": time.strftime("%Y-%m-%d %H:%M:%S")}
-    tmp = cache.with_name(cache.name + ".tmp")  # 先写临时文件再改名：写到一半出错不会留下半个缓存
-    try:
-        write_json(tmp, segments, meta)
-        os.replace(tmp, cache)
-    except OSError as exc:
-        logger.warning("识别结果缓存写不进去（不影响这次校对，只是下次要重新识别）：%s", exc)
-        if tmp.exists():
-            tmp.unlink()
+    segments, _ = recognize_item(root, {"stem": stem, "wav": wav}, _config(), progress=progress)
     return segments
 
 
@@ -543,11 +517,12 @@ def proofread_rows(segments: list[dict], reference: str) -> list[list]:
             for n, (seg, piece) in enumerate(zip(segments, pieces), start=1)]
 
 
-def proofread_summary(stem: str, segments: list[dict], reference: str) -> str:
-    """对照的摘要：整体字错率（拆成错字、漏字、多字）、有几段不同。"""
+def proofread_summary(stem: str, segments: list[dict], reference: str, rows: list[list] | None = None) -> str:
+    """对照的摘要：整体字错率（拆成错字、漏字、多字）、有几段不同。rows 是 proofread_rows 的结果（不给就现算）。"""
     details = cer_details(reference, "".join(seg.get("text_raw", "") for seg in segments))
-    pieces = align_segments([seg.get("text_raw", "") for seg in segments], reference)
-    different = sum(1 for piece in pieces if piece["diff"])
+    if rows is None:
+        rows = proofread_rows(segments, reference)
+    different = sum(1 for row in rows if row[5] == "不同")
     lines = [
         f"### 录音 {stem}",
         f"- 整体字错率：**{details['cer']:.1%}**（参考文本 {details['n_ref']} 字：错字 {details['sub']}、"
@@ -572,11 +547,12 @@ def generate_comparison(root, stem, progress=gr.Progress()):
         logger.exception("数据校对识别失败：%s", stem)
         raise gr.Error(f"识别失败：{exc}") from exc
     reference, exists = _pool_reference(root, stem)
-    summary = proofread_summary(stem, segments, reference)
+    rows = proofread_rows(segments, reference)
+    summary = proofread_summary(stem, segments, reference, rows)
     if not exists:
         summary = f"**{ui_text.REFERENCE_MISSING_NOTE}**\n\n{summary}"
     state = new_state(segments, {"root": str(root), "stem": stem, "wav": str(wav)})
-    return summary, proofread_rows(segments, reference), reference, state
+    return summary, rows, reference, state
 
 
 def clear_comparison():
@@ -659,6 +635,8 @@ def check_upload(file_path):
         original_sr = probe(src)["sample_rate"]
         convert_to_wav(src, wav)
         samples = read_wav(wav)
+    except FfmpegNotFound as exc:  # 不是文件的问题：电脑上找不到 ffmpeg，提示怎么装
+        raise gr.Error(str(exc)) from exc
     except (OSError, RuntimeError, ValueError) as exc:
         logger.warning("录音质检读不了文件 %s：%s", src.name, exc)
         raise gr.Error(f"读不了这个文件：{src.name}。文件可能已损坏，或者不是录音、视频文件，"
@@ -772,8 +750,8 @@ def _pool_picker(cfg: dict) -> tuple[gr.Textbox, gr.Dropdown]:
         recording = gr.Dropdown(stems, value=stems[0] if stems else None, label=ui_text.RECORDING_LABEL, scale=3)
         refresh_btn = gr.Button("刷新录音列表", scale=1)
     hint_md = gr.Markdown(hint)
-    refresh_btn.click(refresh_recordings, pool, [recording, hint_md])
-    pool.submit(refresh_recordings, pool, [recording, hint_md])  # 在路径框里按回车也刷新
+    refresh_btn.click(refresh_recordings, [pool, recording], [recording, hint_md])
+    pool.submit(refresh_recordings, [pool, recording], [recording, hint_md])  # 在路径框里按回车也刷新
     return pool, recording
 
 

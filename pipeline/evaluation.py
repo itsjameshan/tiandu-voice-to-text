@@ -73,8 +73,8 @@ ASR_SLOTS = ("denoise", "enhance", "vad")
 # 字错率、专名正确率涉及的槽位（报告里列出这几个槽位用的做法）
 AUDIO_SLOTS = ("denoise", "enhance", "vad", "hotword")
 
-# 说话人指标涉及的槽位；片段指标涉及的槽位（识别之后要经过热词纠错、数字规范化、话术分类才定片段）
-SPEAKER_SLOTS = ("denoise", "enhance", "vad", "diarize")
+# 说话人指标涉及的槽位（和整个流程一样，热词纠错之后再分说话人）；片段指标涉及的槽位（识别之后要经过热词纠错、数字规范化、话术分类才定片段）
+SPEAKER_SLOTS = ("denoise", "enhance", "vad", "hotword", "diarize")
 CLIP_SLOTS = ("denoise", "enhance", "vad", "hotword", "normalize", "classify", "clips")
 
 # 说话人分离没配上任何人的段落写成这个（见 pipeline/step4_diarize.py），不算工具分出的说话人
@@ -475,12 +475,14 @@ def _save_cache(path: Path, segments: list[dict], meta: dict) -> None:
             tmp.unlink()
 
 
-def recognize_item(root, item: dict, cfg: dict, use_cache: bool = True) -> tuple[list[dict], dict]:
+def recognize_item(root, item: dict, cfg: dict, use_cache: bool = True,
+                   progress=None) -> tuple[list[dict], dict]:
     """识别数据池里的一段录音（测评模式），返回 (段落列表, 情况)。
 
     段落带 text_raw（汉字读法、没有标点），还没做热词纠错。
     情况：{"seconds": 录音时长（秒）, "cached": 是否用了缓存, "elapsed": 这次识别用了几秒}。
     cfg["methods"] 决定降噪、增强、端点检测用哪个做法（见 with_methods）。
+    progress：可选，progress(完成比例 0~1, 中文说明)，识别时显示进度（网页的“数据校对”页用）。
     """
     from pipeline import step2_vad, step3_asr
     from pipeline.audio import SR, read_wav
@@ -502,7 +504,7 @@ def recognize_item(root, item: dict, cfg: dict, use_cache: bool = True) -> tuple
     samples = read_wav(item["wav"])
     seconds = round(len(samples) / SR, 2)
     processed, segments = step2_vad.detect_speech(samples, SR, cfg)
-    segments = step3_asr.recognize(processed, SR, segments, cfg, mode="eval")
+    segments = step3_asr.recognize(processed, SR, segments, cfg, mode="eval", progress=progress)
     elapsed = time.perf_counter() - started
 
     folder.mkdir(parents=True, exist_ok=True)
@@ -905,35 +907,6 @@ def describe_num_speakers(value) -> str:
     return "自动（工具自己判断人数）" if value <= 0 else f"{value} 人"
 
 
-def speaker_details(ref_turns, hyp_turns, step: float = 0.01) -> dict:
-    """一段录音的说话人标错比例，以及汇总时要用的分母、分子（秒）。
-
-    ref_turns：标注的 [(开始秒, 结束秒, 角色名)]；hyp_turns：工具的 [(开始秒, 结束秒, "说话人N")]。
-    返回：
-        speaker_error_rate  说话人标错比例（pipeline.metrics.speaker_error_rate，算法见那里的说明）
-        scored_seconds      比对的时长：两边都有人说话的时间（每一格取 min(标注里说话的人数, 工具里说话的人数)，
-                            加起来 × 格宽；两人同时说话时按人数算）
-        error_seconds       标错的时长 = 标错比例 × 比对的时长
-    用和 speaker_error_rate 一模一样的格子（同一个画格子的函数），所以几段录音加起来再除，结果和逐格算的一致。
-    """
-    import numpy as np
-
-    from pipeline.metrics import _activity, _turn, speaker_error_rate
-
-    ref = [_turn(item) for item in ref_turns]
-    hyp = [_turn(item) for item in hyp_turns]
-    rate = speaker_error_rate(ref, hyp, step)
-    scored = 0.0
-    if ref and hyp:
-        n_frames = int(round(max(end for _, end, _ in ref + hyp) / step))
-        if n_frames > 0:
-            _, ref_active = _activity(ref, step, n_frames)
-            _, hyp_active = _activity(hyp, step, n_frames)
-            frames = np.minimum(ref_active.sum(axis=0), hyp_active.sum(axis=0)).sum()
-            scored = round(float(frames) * step, 3)
-    return {"speaker_error_rate": rate, "scored_seconds": scored, "error_seconds": round(rate * scored, 3)}
-
-
 def _speaker_rates(stats: dict) -> dict:
     """汇总：标错比例 = 标错的时长之和 ÷ 比对的时长之和。标错比例放在录音数后面（表格里排第一列数字）。"""
     rate = stats["error_seconds"] / stats["scored_seconds"] if stats["scored_seconds"] else 0.0
@@ -948,7 +921,7 @@ def eval_speakers(root, cfg: dict, methods: dict | None = None, files: list[str]
     只评有说话人标注（annotations/speakers/<文件编号>.csv）的录音。methods、files、progress、use_cache 同 eval_cer。
     num_speakers：说话人数。不填就按 cfg["diarize"]["num_speakers"]（config.yaml，-1 表示自动）；
         填正整数就每段录音都按这个人数；填 -1 表示自动；填 "ref" 表示每段录音按它的标注里有几个人（设对人数）。
-    流程：识别结果（和字错率共用缓存）→ diarize 做法用原始录音（没降噪的）给段落配说话人 → speaker_details 和标注比。
+    流程：识别结果（和字错率共用缓存）→ diarize 做法用原始录音（没降噪的）给段落配说话人 → pipeline.metrics.speaker_error_details 和标注比。
     配成"未知"的段落不算工具分出的说话人。
     每行：stem、group、condition、speaker_error_rate、annotated_seconds（标注覆盖的秒数，重叠只算一次）、
     scored_seconds、error_seconds、ref_speakers（标注的人数）、hyp_speakers（分出的人数）、num_speakers（人数设置）、seconds。
@@ -956,13 +929,17 @@ def eval_speakers(root, cfg: dict, methods: dict | None = None, files: list[str]
     """
     from pipeline.annotations import annotated_seconds
     from pipeline.audio import SR, read_wav
+    from pipeline.metrics import speaker_error_details
 
     cfg = with_methods(cfg, methods)
     cfg["diarize"] = dict(cfg.get("diarize") or {})
+    if num_speakers is not None:
+        num_speakers = parse_num_speakers(num_speakers)  # 也接受 "auto"、"4"；写错时报中文说明
     by_annotation = num_speakers == SPEAKERS_BY_ANNOTATION
     if num_speakers is not None and not by_annotation:
         cfg["diarize"]["num_speakers"] = int(num_speakers) if int(num_speakers) > 0 else -1
     items = annotated_items(root, "speakers", files)
+    hotword = _get_method(cfg, "hotword")
     diarize = _get_method(cfg, "diarize")
 
     def score(item: dict, segments: list[dict]) -> tuple[dict, str]:
@@ -973,10 +950,12 @@ def eval_speakers(root, cfg: dict, methods: dict | None = None, files: list[str]
             run_cfg = copy.deepcopy(cfg)
             run_cfg["diarize"]["num_speakers"] = ref_count or -1
         setting = int(run_cfg["diarize"].get("num_speakers") or -1)
+        # 和 run_pipeline 测评模式一样：text 里放识别结果（汉字读法），先做热词纠错，再分说话人（做法可能会看文字）
+        segments = hotword([dict(seg, text=seg.get("text_raw") or "") for seg in segments], None, run_cfg)
         result = diarize(read_wav(item["wav"]), SR, segments, run_cfg)  # 用原始录音
         hyp = [(seg["start"], seg["end"], seg["speaker"]) for seg in result
                if seg.get("speaker") and seg["speaker"] != UNKNOWN_SPEAKER]
-        details = speaker_details(turns, hyp)
+        details = speaker_error_details(turns, hyp)
         values = {
             "speaker_error_rate": details["speaker_error_rate"],
             "annotated_seconds": round(annotated_seconds(turns), 3),
@@ -992,7 +971,7 @@ def eval_speakers(root, cfg: dict, methods: dict | None = None, files: list[str]
 
     rows = _run_items(root, cfg, items, progress, use_cache, score)
     summary = _summarize(rows, ["annotated_seconds", "scored_seconds", "error_seconds"], _speaker_rates)
-    summary["info"] = _audio_info(root, cfg, SPEAKER_SLOTS, ("vad", "asr", "diarize"))
+    summary["info"] = _audio_info(root, cfg, SPEAKER_SLOTS, ("vad", "asr", "hotword", "diarize"))
     if by_annotation:
         summary["info"]["params"]["diarize.num_speakers"] = "按标注里的人数（设对人数，每段录音不同）"
     summary["tables"] = [{"title": "汇总（全体、按录音条件、按组）", "rows": summary["overview"]}]

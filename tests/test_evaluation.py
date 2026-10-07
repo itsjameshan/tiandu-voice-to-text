@@ -37,10 +37,9 @@ from pipeline.evaluation import (
     parse_num_speakers,
     pool_items,
     pool_version,
-    speaker_details,
     write_report,
 )
-from pipeline.metrics import false_positive_rate
+from pipeline.metrics import false_positive_rate, speaker_error_details
 from pipeline.pool import MANIFEST_COLUMNS, export_references, ingest_pool, pool_paths, write_csv_rows
 
 LIMITATION = "剧本数据上的测评结果不代表真实场景的效果"
@@ -475,9 +474,15 @@ def _fake_pool(root, stems):
         sf.write(root / "normalized" / f"{stem}.wav", np.zeros(1600, dtype=np.float32), 16000, subtype="PCM_16")
 
 
-def _no_g6_model(monkeypatch, tmp_path):
-    """让第 6 组的做法找不到训练好的模型（不管这台电脑有没有 TensorFlow、有没有训练过），一定退回关键词规则。"""
-    monkeypatch.setattr("pipeline.groups.g6_classifier_a.classifier_dir",
+GROUP_CLASSIFIERS = {"g6": "pipeline.groups.g6_classifier_a", "g7": "pipeline.groups.g7_classifier_b"}
+
+
+def _no_g6_model(monkeypatch, tmp_path, method="g6"):
+    """让第 6 组（或第 7 组）的做法找不到训练好的模型（不管这台电脑有没有 TensorFlow、有没有训练过），一定退回关键词规则。"""
+    import importlib
+
+    importlib.import_module(GROUP_CLASSIFIERS[method])
+    monkeypatch.setattr(f"{GROUP_CLASSIFIERS[method]}.classifier_dir",
                         lambda cfg, name="classifier": tmp_path / "no_models" / name)
 
 
@@ -512,13 +517,14 @@ def test_eval_classify_rules(cfg):
         assert row["rate"] == (row["count"] / row["n"] if row["n"] else 0.0)
 
 
-def test_eval_classify_g6_falls_back_to_rules_with_warning(cfg, monkeypatch, tmp_path):
-    _no_g6_model(monkeypatch, tmp_path)
+@pytest.mark.parametrize("method", ["g6", "g7"])
+def test_eval_classify_group_model_falls_back_to_rules_with_warning(cfg, monkeypatch, tmp_path, method):
+    _no_g6_model(monkeypatch, tmp_path, method)
     base = eval_classify_rules(cfg)
-    g6 = eval_classify_rules(cfg, method="g6")
-    assert g6["warnings"] and all("关键词规则" in w for w in g6["warnings"])
-    assert g6["confusion"] == base["confusion"]
-    assert g6["info"]["methods"] == {"classify": "g6"}
+    result = eval_classify_rules(cfg, method=method)
+    assert result["warnings"] and all("关键词规则" in w for w in result["warnings"])
+    assert result["confusion"] == base["confusion"]
+    assert result["info"]["methods"] == {"classify": method}
     with pytest.raises(ValueError, match="g99"):
         eval_classify_rules(cfg, method="g99")
 
@@ -564,20 +570,20 @@ def test_compare_classify_g6_without_model(tmp_path, monkeypatch):
     assert compare.main(["--metric", "classify", "--slot", "denoise", "--method", "g1"]) == 2
 
 
-def test_speaker_details_counts_seconds():
+def test_speaker_error_details_counts_seconds():
     ref = [(0, 10, "导游"), (10, 20, "游客甲")]
     hyp = [(0, 10, "说话人1"), (10, 15, "说话人2"), (15, 20, "说话人1")]
-    details = speaker_details(ref, hyp)
+    details = speaker_error_details(ref, hyp)
     # 最优对应：导游↔说话人1（重叠 10 秒）、游客甲↔说话人2（5 秒）；15—20 秒的"说话人1"标错
     assert details["speaker_error_rate"] == pytest.approx(0.25)
     assert details["scored_seconds"] == pytest.approx(20.0)
     assert details["error_seconds"] == pytest.approx(5.0)
     # 只有一边有人说话的时间不比对
-    one_side = speaker_details([(0, 10, "导游")], [(5, 20, "说话人1")])
+    one_side = speaker_error_details([(0, 10, "导游")], [(5, 20, "说话人1")])
     assert one_side["scored_seconds"] == pytest.approx(5.0) and one_side["error_seconds"] == 0
-    assert speaker_details(ref, [])["scored_seconds"] == 0
+    assert speaker_error_details(ref, [])["scored_seconds"] == 0
     # 两人同时说话：按人数算
-    both = speaker_details([(0, 10, "导游"), (0, 10, "游客甲")], [(0, 10, "说话人1"), (0, 10, "说话人2")])
+    both = speaker_error_details([(0, 10, "导游"), (0, 10, "游客甲")], [(0, 10, "说话人1"), (0, 10, "说话人2")])
     assert both["scored_seconds"] == pytest.approx(20.0) and both["speaker_error_rate"] == 0
 
 

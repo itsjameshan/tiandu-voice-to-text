@@ -1,6 +1,8 @@
 # 第 6 组报告：话术分类模型 A（卷积）
 
-> **填写说明**：把"（填写）"换成你们自己的内容，表格里的数字从训练脚本的输出和本文件夹里的测评报告（`classify.md`）复制。
+> **填写说明**：把"（填写）"换成你们自己的内容。表格里的数字：关键词规则的从 `baseline\classify.md` 复制；
+> 模型 A 的从训练脚本写在本文件夹里的报告复制——按组留一 `train_g6_logo_extra.md`（用补充句子）、
+> `train_g6_logo_no_extra.md`（不用补充句子），随机划分 `train_g6_random_extra.md`（只作对照）。
 > 只写角色和学号后四位，**不写真实姓名、学号、手机号**。变差了也要如实写。
 > 剧本数据上的测评结果不代表真实场景的效果。
 >
@@ -38,6 +40,7 @@ python\python.exe tools\evaluate.py classify --method classify=baseline --out re
 
 - 误报率（全部 24 个剧本）：（填写）
 - 误报率（第 8 组剧本）：（填写）
+- 注意：关键词规则的关键词是参照剧本台词写的，在剧本上测出来的数字偏乐观（`classify.md` 的说明里也写了）。
 
 ## 4. 改进做法说明（模型 A）
 
@@ -54,23 +57,34 @@ python\python.exe tools\evaluate.py classify --method classify=baseline --out re
 
 ## 5. 改进后结果
 
+主结果用**按组留一**，用和不用补充句子各训练一次（用机房自带的 Python）：
+
 ```bat
-python\python.exe tools\evaluate.py classify --method classify=g6 --out reports\g6\after
+python tools\train_classifier.py --model g6 --eval logo
+python tools\train_classifier.py --model g6 --eval logo --no-extra
 ```
 
-| 类别 | 准确率（按组留一） | 召回率（按组留一） |
-|---|---|---|
-| 购物安排 |  |  |
-| 费用 |  |  |
-| 行程变更 |  |  |
-| 服务态度 |  |  |
-| 威胁消费（显示为"消费施压"） |  |  |
-| 正常讲解 |  |  |
-| 其他 |  |  |
+数字从 `train_g6_logo_extra.md` 和 `train_g6_logo_no_extra.md` 的"各类准确率与召回率"表复制。
+**不要**用 `evaluate.py classify --method classify=g6` 的结果当改进后结果：训练脚本最后是用全部剧本台词训练模型的，
+在同样的台词上测等于"考原题"，数字会明显虚高。那条命令只用来确认模型能加载
+（报告开头没有"退回关键词规则"的提示，才说明真的用了你们的模型；便携包里没有 TensorFlow，在便携包里运行一定会退回关键词规则）。
 
-- 混淆矩阵：（贴上训练脚本或测评报告输出的 7×7 表；哪两类最容易混？）
+| 类别 | 准确率（用补充句子） | 召回率（用补充句子） | 准确率（不用补充句子） | 召回率（不用补充句子） |
+|---|---|---|---|---|
+| 购物安排 |  |  |  |  |
+| 费用 |  |  |  |  |
+| 行程变更 |  |  |  |  |
+| 服务态度 |  |  |  |  |
+| 威胁消费（显示为"消费施压"） |  |  |  |  |
+| 正常讲解 |  |  |  |  |
+| 其他 |  |  |  |  |
+
+- 混淆矩阵：（贴上按组留一训练报告里的 7×7 表；哪两类最容易混？）
 
 ## 6. 对比表
+
+数字来源：关键词规则 ← `baseline\classify.md`；模型 A ← `train_g6_logo_no_extra.md`、`train_g6_logo_extra.md`（按组留一）、
+`train_g6_random_extra.md`（随机划分，会虚高，只作对照）。平均召回率 = 7 个类别召回率的平均（自己算）。
 
 | 指标 | 关键词规则 | 模型 A（不用补充句子） | 模型 A（用补充句子） | 模型 A（随机划分，对照） |
 |---|---|---|---|---|

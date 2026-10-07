@@ -92,23 +92,37 @@ def speaker_error_rate(ref_turns, hyp_turns, step: float = 0.01) -> float:
     两边没有同时说话的时间（例如结果一段也没有）时没有可比的，返回 0.0，
     这时请同时看比对了多少秒，不要只看这个 0。
     """
+    return speaker_error_details(ref_turns, hyp_turns, step)["speaker_error_rate"]
+
+
+def speaker_error_details(ref_turns, hyp_turns, step: float = 0.01) -> dict:
+    """说话人标错比例，连同几段录音汇总时要用的两个时长（秒）。参数和算法同 speaker_error_rate。
+
+    返回：
+        speaker_error_rate  说话人标错的时长比例
+        scored_seconds      比对的时长：两边都有人说话的时间（每一格取 min(标注里说话的人数, 结果里说话的人数)，
+                            加起来 × 格宽；两人同时说话时按人数算）
+        error_seconds       标错的时长 = 标错比例 × 比对的时长
+    几段录音汇总时用"标错的时长之和 ÷ 比对的时长之和"，和把所有格子放在一起算的结果一样。
+    """
+    zero = {"speaker_error_rate": 0.0, "scored_seconds": 0.0, "error_seconds": 0.0}
     ref = [_turn(item) for item in ref_turns]
     hyp = [_turn(item) for item in hyp_turns]
     if not ref or not hyp:
-        return 0.0
+        return zero
 
     # 格子总数：覆盖到两边最晚的结束时间
     last_end = max(end for _, end, _ in ref + hyp)
     n_frames = int(round(last_end / step))
     if n_frames <= 0:
-        return 0.0
+        return zero
     _, ref_active = _activity(ref, step, n_frames)
     _, hyp_active = _activity(hyp, step, n_frames)
 
     # 每一格要比对的人数 = min(标准答案说话人数, 结果说话人数)；只有一边有人说话时为 0
     scored = np.minimum(ref_active.sum(axis=0), hyp_active.sum(axis=0)).sum()
     if scored == 0:
-        return 0.0
+        return zero
 
     # 重叠表：overlap[i][j] = 标准答案第 i 个人和结果第 j 个人同时在说话的格数
     overlap = ref_active.astype(np.int64) @ hyp_active.T.astype(np.int64)
@@ -118,8 +132,11 @@ def speaker_error_rate(ref_turns, hyp_turns, step: float = 0.01) -> float:
 
     rows, cols = linear_sum_assignment(overlap, maximize=True)
     correct = overlap[rows, cols].sum()  # 按这个对应，所有格子里对上的人数之和
-
-    return float((scored - correct) / scored)
+    return {
+        "speaker_error_rate": float((scored - correct) / scored),
+        "scored_seconds": round(float(scored) * step, 3),
+        "error_seconds": round(float(scored - correct) * step, 3),
+    }
 
 
 # ---------------- 话术分类：混淆矩阵、各类准确率和召回率、误报率 ----------------

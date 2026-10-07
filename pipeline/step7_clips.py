@@ -20,7 +20,8 @@
     - 和第 6、7 组一起统计误报：正常讲解被标成疑似的有多少。
 测评指标：
     片段起止误差：和人工标注的疑似片段起止时间比，开始、结束各差多少秒；
-    误报率：标准答案为"正常讲解"的句子中被标成任一疑似类别的比例（tools/evaluate.py clips）。
+    误报率：标准答案为"正常讲解"的句子中被标成任一疑似类别的比例（句子层面，tools/evaluate.py classify）；
+    片段层面看 tools/evaluate.py clips 的"和标注都不重叠的工具片段"。
 """
 import csv
 import logging

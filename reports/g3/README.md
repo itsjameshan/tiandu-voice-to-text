@@ -21,12 +21,9 @@
 
 ## 3. 基线结果
 
-```bat
-python\python.exe tools\evaluate.py speakers --pool D:\data_pool --out reports\g3
-```
-
-上面这条命令按 `config.yaml` 的 `diarize.num_speakers`（默认 -1，自动）。分别在"人数设自动"和"人数设对"两种情况下各测一次，
-`--speakers ref` 表示每段录音按它的标注里有几个人来设人数（不同录音人数不同，所以不要全部写成同一个数）：
+分别在"人数设自动"和"人数设对"两种情况下各测一次。`--speakers auto` 让工具自己判断人数；
+`--speakers ref` 表示每段录音按它的标注里有几个人来设人数（不同录音人数不同，所以不要全部写成同一个数）。
+不写 `--speakers` 时按 `config.yaml` 的 `diarize.num_speakers`（默认 -1，自动）。
 
 ```bat
 python\python.exe tools\evaluate.py speakers --pool D:\data_pool --speakers auto --out reports\g3\auto
