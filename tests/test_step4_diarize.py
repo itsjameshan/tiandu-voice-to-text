@@ -93,13 +93,24 @@ def test_apply_speaker_map():
     assert segments[0]["speaker"] == "说话人1"  # 传进来的段落不被改动
 
 
-def test_apply_speaker_map_again_uses_speaker_id():
-    # 已经映射过一次，改了主意再应用一次：按编号仍然能对上
+def test_apply_speaker_map_keeps_manual_edit():
+    # 人在表格里把这一行的说话人手动改成了"游客"（speaker_id 还是模型给的 1）：
+    # 再应用 {"说话人1": "导游"} 时，人改过的不能被编号"改回去"
+    segments = [new_segment(0, 4, speaker="说话人1", speaker_id=1),
+                new_segment(4, 6, speaker="游客", speaker_id=1),
+                new_segment(6, 8, speaker="说话人2", speaker_id=2)]
+    out = apply_speaker_map(segments, {"说话人1": "导游", "说话人2": "游客"})
+    assert [(seg["speaker"], seg["speaker_id"]) for seg in out] == [("导游", 1), ("游客", 1), ("游客", 2)]
+
+
+def test_apply_speaker_map_rename_current_name():
+    # 映射过一次后改了主意：按表格里现在显示的名字再映射，例如 {"导游": "游客"}
     segments = attach_speakers([new_segment(1, 4), new_segment(6, 8)], [(0, 5, 0), (5, 10, 1)])
-    first = apply_speaker_map(segments, {"说话人1": "导游", "说话人2": "游客"})
-    second = apply_speaker_map(first, {"说话人1": "游客", "说话人2": "导游"})
-    assert [seg["speaker"] for seg in second] == ["游客", "导游"]
-    assert [seg["speaker_id"] for seg in second] == [1, 2]
+    first = apply_speaker_map(segments, {"说话人1": "导游"})
+    second = apply_speaker_map(first, {"导游": "游客"})
+    assert [seg["speaker"] for seg in second] == ["游客", "说话人2"]
+    assert [seg["speaker_id"] for seg in second] == [1, 2]  # 编号保留
+    assert first[0]["speaker"] == "导游"  # 传进来的段落不被改动
 
 
 def test_apply_speaker_map_blank_and_unknown():
@@ -133,6 +144,60 @@ def test_short_audio_single_turn(cfg, monkeypatch):
     monkeypatch.setattr(step4_diarize, "get_diarizer", _no_model)
     assert diarize_turns(_tone(1.5), SR, cfg) == [(0.0, 1.5, 0)]
     assert diarize_turns(np.zeros(0, dtype=np.float32), SR, cfg) == [(0.0, 0.0, 0)]
+
+
+class _FakeTurn:
+    def __init__(self, start, end, speaker):
+        self.start, self.end, self.speaker = start, end, speaker
+
+
+class _FakeResult:
+    def __init__(self, turns):
+        self.turns = turns
+
+    def sort_by_start_time(self):
+        return sorted(self.turns, key=lambda t: t.start)
+
+
+class _FakeDiarizer:
+    """不加载模型的假分离器：按给定的片段原样"分离"。"""
+
+    def __init__(self, turns):
+        self.turns = turns
+
+    def process(self, samples):
+        return _FakeResult(self.turns)
+
+
+def test_turns_renumbered_by_first_appearance(monkeypatch):
+    # 模型给的编号是 7、5、7、2：按第一次说话的先后改成 0、1、0、2，并按开始时间排好
+    fake = _FakeDiarizer([_FakeTurn(1.0, 2.004, 5), _FakeTurn(0.0, 1.0, 7),
+                          _FakeTurn(2.5, 3.0, 7), _FakeTurn(3.0, 4.0, 2)])
+    calls = []
+
+    def fake_get_diarizer(cfg, num_speakers, threshold):
+        calls.append((num_speakers, threshold))
+        return fake
+
+    monkeypatch.setattr(step4_diarize, "get_diarizer", fake_get_diarizer)
+    # 人数和阈值在这里写死，老师改了 config.yaml 的默认值也不影响这个测试
+    cfg = load_config(overrides={"diarize": {"num_speakers": -1, "threshold": 0.5}})
+    turns = diarize_turns(_tone(5.0), SR, cfg)
+    assert turns == [(0.0, 1.0, 0), (1.0, 2.0, 1), (2.5, 3.0, 0), (3.0, 4.0, 2)]
+    assert calls == [(-1, 0.5)]
+
+
+def test_num_speakers_from_config(monkeypatch):
+    calls = []
+
+    def fake_get_diarizer(cfg, num_speakers, threshold):
+        calls.append(num_speakers)
+        return _FakeDiarizer([_FakeTurn(0.0, 3.0, 0)])
+
+    monkeypatch.setattr(step4_diarize, "get_diarizer", fake_get_diarizer)
+    for value in (4, 0, None):
+        diarize_turns(_tone(3.0), SR, load_config(overrides={"diarize": {"num_speakers": value}}))
+    assert calls == [4, -1, -1]  # 没填或填 0 都当作自动
 
 
 def test_diarize_rejects_wrong_sample_rate(cfg):
@@ -182,15 +247,40 @@ def test_diarizer_cached(cfg):
 
 
 @requires_models
+def test_non_ascii_warning_only_when_loading(cfg, monkeypatch, caplog):
+    # 假装模型路径里有中文：只在第一次加载模型时提醒，以后从缓存里拿就不再重复提醒
+    monkeypatch.setattr(step4_diarize, "_DIARIZERS", {})
+    monkeypatch.setattr(step4_diarize, "has_non_ascii", lambda path: True)
+    with caplog.at_level("WARNING", logger="pipeline.step4_diarize"):
+        step4_diarize.get_diarizer(cfg, 2, 0.5)
+        step4_diarize.get_diarizer(cfg, 2, 0.5)
+    warnings = [r for r in caplog.records if "非英文字符" in r.getMessage()]
+    assert len(warnings) == 2  # 分割模型、声纹模型各提醒一次，第二次调用不再提醒
+
+
+@requires_models
 def test_baseline_on_four_speakers(four_speakers, four_turns):
     cfg = load_config(overrides={"diarize": {"num_speakers": 4}})
     # 每 5 秒造一个段落（不依赖步骤 2）；基线 = 先分离、再按重叠时长配说话人
     segments = [new_segment(t, t + 5) for t in range(0, 55, 5)]
     out = get_method("diarize", "baseline")(four_speakers, SR, segments, cfg)
     assert out == attach_speakers(segments, four_turns)
-    assert {seg["speaker_id"] for seg in out} <= {1, 2, 3, 4}
-    assert len({seg["speaker_id"] for seg in out}) >= 2
-    assert all(seg["speaker"] == f"说话人{seg['speaker_id']}" for seg in out)
+    ids = {seg["speaker_id"] for seg in out if seg["speaker_id"] is not None}
+    assert ids <= {1, 2, 3, 4} and len(ids) >= 2
+    for seg in out:
+        if seg["speaker_id"] is None:
+            assert seg["speaker"] == "未知"  # 这 5 秒里没人说话（测试音频中间有长停顿）
+        else:
+            assert seg["speaker"] == f"说话人{seg['speaker_id']}"
+
+
+@requires_models
+def test_auto_speakers_numbered_from_zero(four_speakers, cfg):
+    # 默认配置是"自动"判断人数；编号要从 0 开始连续，不能出现"说话人8"这种跳号
+    turns = diarize_turns(four_speakers, SR, cfg)
+    ids = [speaker for _, _, speaker in turns]
+    assert ids[0] == 0
+    assert set(ids) == set(range(len(set(ids))))
 
 
 def test_light_import():

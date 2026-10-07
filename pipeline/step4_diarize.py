@@ -21,6 +21,7 @@ speaker_durations() 统计每人说了多久，可以提示"说话时间最长�
       min_duration_on   短于这么多秒的说话片段丢掉，默认 0.3；
       min_duration_off  同一个人两次说话之间的停顿短于这么多秒就连成一段，默认 0.5。
     录音短于 2 秒时不做分离，整段算一个人。
+    模型给的说话人编号不一定连续，按第一次说话的先后重新编成 0、1、2……
     配说话人：按重叠时长最大配对；和所有说话片段都不重叠的段落写"未知"。
 可改进方向：
     第 3 组（pipeline/groups/g3_diarize.py）：
@@ -48,7 +49,7 @@ SPEAKER_ROLES = ["导游", "游客", "店员", "司机", "经理", "未知"]
 MIN_SECONDS = 2.0
 
 # 已经做好的分离器：(分割模型, 声纹模型, 人数, 阈值, min_duration_on, min_duration_off) → 分离器。
-# 加载模型要一两秒，同样的设置只加载一次，以后直接拿来用。
+# 加载模型要花时间，同样的设置只加载一次，以后直接拿来用。
 _DIARIZERS: dict[tuple, object] = {}
 
 
@@ -65,8 +66,6 @@ def get_diarizer(cfg: dict, num_speakers: int, threshold: float):
     for path in (segmentation, embedding):
         if not path.is_file():
             raise FileNotFoundError(f"找不到说话人分离模型：{path}。请先运行 python models/download_models.py 下载模型")
-        if has_non_ascii(path):
-            logger.warning("模型路径里有中文等非英文字符，Windows 上可能加载失败，建议把程序放到纯英文路径：%s", path)
 
     params = cfg["diarize"]
     min_duration_on = float(params["min_duration_on"])
@@ -74,6 +73,11 @@ def get_diarizer(cfg: dict, num_speakers: int, threshold: float):
     key = (str(segmentation), str(embedding), num_speakers, threshold, min_duration_on, min_duration_off)
     if key in _DIARIZERS:
         return _DIARIZERS[key]
+
+    # 只在第一次加载模型时提醒一次，不用每次分离都重复说
+    for path in (segmentation, embedding):
+        if has_non_ascii(path):
+            logger.warning("模型路径里有中文等非英文字符，Windows 上可能加载失败，建议把程序放到纯英文路径：%s", path)
 
     config = sherpa_onnx.OfflineSpeakerDiarizationConfig(
         segmentation=sherpa_onnx.OfflineSpeakerSegmentationModelConfig(
@@ -101,7 +105,9 @@ def _num_speakers(params: dict) -> int:
 
 
 def diarize_turns(samples: np.ndarray, sr: int, cfg: dict) -> list[tuple[float, float, int]]:
-    """说话人分离：返回 [(开始秒, 结束秒, 说话人编号)]，编号从 0 开始，按开始时间排好，时间保留 2 位小数。
+    """说话人分离：返回 [(开始秒, 结束秒, 说话人编号)]，按开始时间排好，时间保留 2 位小数。
+
+    编号从 0 开始、连续，按第一次说话的先后排（第一个开口的人是 0）。
 
     人数用 cfg["diarize"]["num_speakers"]（-1 表示自动）。
     录音短于 2 秒时不加载模型，直接返回 [(0, 时长, 0)]（整段算一个人）。
@@ -116,7 +122,15 @@ def diarize_turns(samples: np.ndarray, sr: int, cfg: dict) -> list[tuple[float, 
     params = cfg["diarize"]
     diarizer = get_diarizer(cfg, _num_speakers(params), float(params["threshold"]))
     result = diarizer.process(samples).sort_by_start_time()
-    return [(round(t.start, 2), round(t.end, 2), int(t.speaker)) for t in result]
+
+    # 模型给的编号不一定连续（实测"自动"时出现过 0、1、2、5、7），
+    # 这里按第一次说话的先后重新编号为 0、1、2……，第一个开口的人就是"说话人1"
+    new_ids: dict[int, int] = {}
+    turns = []
+    for t in result:
+        speaker = new_ids.setdefault(int(t.speaker), len(new_ids))
+        turns.append((round(t.start, 2), round(t.end, 2), speaker))
+    return turns
 
 
 def attach_speakers(segments: list[dict], turns: list[tuple[float, float, int]]) -> list[dict]:
@@ -163,16 +177,15 @@ def diarize_baseline(samples: np.ndarray, sr: int, segments: list[dict], cfg: di
 def apply_speaker_map(segments: list[dict], mapping: dict[str, str]) -> list[dict]:
     """把"说话人1"等编号换成导游、游客等角色名，例如 mapping={"说话人1": "导游"}。
 
-    只改 speaker，保留 speaker_id。先按段落现在的说话人查 mapping；查不到时，
-    再按编号 speaker_id 对应的"说话人N"查（这样映射改了主意，可以再应用一次）。
+    只改 speaker，保留 speaker_id。只按段落现在显示的说话人（表格里"说话人"那一列）查 mapping，
+    不看隐藏的编号 speaker_id——人在表格里手动改过的说话人，不能被编号悄悄改回去。
+    映射过以后想改主意，就按现在显示的名字再映射一次，例如 {"导游": "游客"}。
     mapping 里角色为空的项不改。返回新的段落列表，不改动传进来的段落。
     """
     result = []
     for seg in segments:
         new_seg = dict(seg)
         role = mapping.get(seg.get("speaker", ""))
-        if not role and seg.get("speaker_id") is not None:
-            role = mapping.get(f"说话人{seg['speaker_id']}")
         if role and role.strip():
             new_seg["speaker"] = role.strip()
         result.append(new_seg)

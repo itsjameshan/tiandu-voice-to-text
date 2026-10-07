@@ -51,9 +51,10 @@ def get_recognizer(cfg: dict, use_itn: bool):
     if key in _RECOGNIZERS:
         return _RECOGNIZERS[key]
 
-    if not model.is_file() or not tokens.is_file():
+    missing = [p for p in (model, tokens) if not p.is_file()]
+    if missing:
         raise FileNotFoundError(
-            f"找不到识别模型：{model}。请先运行 python models/download_models.py 下载模型，"
+            f"找不到识别模型文件：{missing[0]}。请先运行 python models/download_models.py 下载模型，"
             f"或者把下载好的模型文件夹拷进 models/"
         )
     import sherpa_onnx  # 重依赖，用到时才导入

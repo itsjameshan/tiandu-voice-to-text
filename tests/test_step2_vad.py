@@ -100,7 +100,7 @@ def test_vad_uses_config_params(cfg, four_speakers):
     assert max(end - start for start, end in merged) > max(end - start for start, end in normal)
 
 
-def test_vad_config_cached(cfg):
+def test_vad_config_cached():
     model = str(ROOT / "models" / "silero_vad.onnx")
     first = step2_vad._vad_config(model, 0.5, 0.3, 0.25, 15.0)
     assert step2_vad._vad_config(model, 0.5, 0.3, 0.25, 15.0) is first

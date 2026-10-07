@@ -8,14 +8,14 @@ detect_speech() 把三步串起来，返回处理后的采样和段落列表（�
 
 基线做法：
     - 降噪 baseline：原样返回，不做任何处理（降噪不一定让识别更准，要用字错率验证后才能默认开启）；
-    - 降噪 noisereduce：用 noisereduce 库的 reduce_noise 做谱减法降噪（备选做法，默认不用）；
+    - 降噪 noisereduce：用 noisereduce 库的 reduce_noise 做谱门限（spectral gating）降噪（备选做法，默认不用）；
     - 远距离增强 baseline：原样返回；
     - 端点检测 baseline：Silero VAD（sherpa-onnx 提供），参数在 config.yaml 的 vad 下面：
         threshold             判断"有人声"的把握（0 到 1），越大越严格、切得越碎，默认 0.5；
         min_silence_duration  停顿超过多少秒才算一段话结束，越大段落越长、段数越少，默认 0.3；
         min_speech_duration   连续有人声超过多少秒才开始算一段话，默认 0.25；
         max_speech_duration   一段话超过多少秒后，就在较短的停顿处切开，默认 15
-                              （不是严格的上限，切出来的段落偶尔会比它长一点）。
+                              （不是严格的上限：超过这个时长后会在更短的停顿处切开，但没有停顿时段落可能明显更长，实测设 3 秒时最长约 8.9 秒）。
       录音按 512 个采样（0.032 秒）一小块喂给检测器，每检测完一段话就取出来。
 可改进方向：
     第 1 组（pipeline/groups/g1_denoise.py）：换更好的降噪做法，调端点检测参数，减少漏切人声；
@@ -55,7 +55,7 @@ def denoise_baseline(samples: np.ndarray, sr: int, cfg: dict) -> np.ndarray:
 
 @register("denoise", "noisereduce")
 def denoise_noisereduce(samples: np.ndarray, sr: int, cfg: dict) -> np.ndarray:
-    """用 noisereduce 库降噪：先估计背景噪声的频谱，再从每一小段声音里减掉它。"""
+    """用 noisereduce 库降噪（谱门限）：先估计每个频带的噪声水平，再把低于这个门限的时间—频率点调小。"""
     import noisereduce
 
     cleaned = noisereduce.reduce_noise(y=samples, sr=sr)

@@ -26,6 +26,7 @@
     过度纠正次数（故意说错的名称被改成正确名称的次数）。用 tools/evaluate.py hotwords 计算。
 """
 import re
+from collections import Counter
 from functools import lru_cache
 
 from pypinyin import lazy_pinyin
@@ -166,7 +167,9 @@ def hotword_baseline(segments: list[dict], hotwords: list[str] | None, cfg: dict
     for seg in segments:
         seg = dict(seg)  # 复制一份再改
         records = []
-        pairs_in_text = set()  # text 里已经记过的 (原来的字, 热词)
+        # text 和 text_raw 是同一段话的两种写法，同一处替换只记一次：
+        # 按次数比较，text_raw 里多出来的替换才另外记下
+        counted = Counter()
         for field in ("text", "text_raw"):
             if not seg.get(field):
                 continue
@@ -174,9 +177,10 @@ def hotword_baseline(segments: list[dict], hotwords: list[str] | None, cfg: dict
             for item in found:
                 pair = (item["from"], item["to"])
                 if field == "text":
-                    pairs_in_text.add(pair)
-                elif pair in pairs_in_text:
-                    continue  # text_raw 里的同一处替换，text 里已经记过了
+                    counted[pair] += 1
+                elif counted[pair] > 0:
+                    counted[pair] -= 1
+                    continue  # text 里已经记过这一处
                 records.append({"from": item["from"], "to": item["to"], "start": seg.get("start")})
         if records:
             seg["corrections"] = list(seg.get("corrections") or []) + records
