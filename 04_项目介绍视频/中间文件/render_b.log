@@ -1,0 +1,22 @@
+seg 2: frames 447-1084 (637) in 25.5s -> /tmp/claude-0/-home-claude/72d30024-61c6-5c0c-8bdb-12ec541966da/scratchpad/video/segs/seg02.mp4
+seg 4: frames 1568-2105 (537) in 23.7s -> /tmp/claude-0/-home-claude/72d30024-61c6-5c0c-8bdb-12ec541966da/scratchpad/video/segs/seg04.mp4
+seg 6: frames 2469-2976 (507) in 20.4s -> /tmp/claude-0/-home-claude/72d30024-61c6-5c0c-8bdb-12ec541966da/scratchpad/video/segs/seg06.mp4
+seg 8: frames 3649-4270 (621) in 27.8s -> /tmp/claude-0/-home-claude/72d30024-61c6-5c0c-8bdb-12ec541966da/scratchpad/video/segs/seg08.mp4
+seg 10: frames 4989-5576 (587) in 23.8s -> /tmp/claude-0/-home-claude/72d30024-61c6-5c0c-8bdb-12ec541966da/scratchpad/video/segs/seg10.mp4
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-claude/72d30024-61c6-5c0c-8bdb-12ec541966da/scratchpad/video/render.py", line 139, in <module>
+    seg(int(a) - 1)
+    ~~~^^^^^^^^^^^^
+  File "/tmp/claude-0/-home-claude/72d30024-61c6-5c0c-8bdb-12ec541966da/scratchpad/video/render.py", line 118, in seg
+    draw_frame(ctx, f / FPS)
+    ~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/tmp/claude-0/-home-claude/72d30024-61c6-5c0c-8bdb-12ec541966da/scratchpad/video/render.py", line 40, in draw_frame
+    SCENES[i](ctx, lt, sh)
+    ~~~~~~~~~^^^^^^^^^^^^^
+  File "/tmp/claude-0/-home-claude/72d30024-61c6-5c0c-8bdb-12ec541966da/scratchpad/video/scenes_b.py", line 536, in scene12
+    ai_ting(ctx, 960, 600, 1.2 * min(1.05, pa), t, talk=0.5, wave=wave)
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/claude-0/-home-claude/72d30024-61c6-5c0c-8bdb-12ec541966da/scratchpad/video/gfx.py", line 224, in ai_ting
+    ctx.scale(s, s)
+    ~~~~~~~~~^^^^^^
+cairo.Error: invalid matrix (not invertible)

@@ -1,0 +1,1046 @@
+{
+  "group": 6,
+  "scripts": [
+    {
+      "id": "G6-S1",
+      "title": "玉器城门口的暗示",
+      "setting": "第一天上午，昆明锦程玉器城门口，购物时间快结束，导游集合十二名游客，下午原定去石林。",
+      "roles": [
+        "导游",
+        "游客甲",
+        "游客乙",
+        "店员"
+      ],
+      "focus": "导游用多种含蓄说法把下午石林的游览和消费挂钩，夹杂店员的正常推销和游客的不同回应，测试分类器区分“威胁消费”与普通“购物安排”“费用”的能力。",
+      "lines": [
+        {
+          "speaker": "导游",
+          "text": "来来来，大家先到门口集合一下，我点个人数啊。",
+          "direction": "（拿着小喇叭，站在玉器城门口）",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "赵导，十二个人都在，一个不少。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "12人",
+          "hotwords": "赵导"
+        },
+        {
+          "speaker": "导游",
+          "text": "好，辛苦大家。在锦程玉器城也逛了四十多分钟了，我简单说两句。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "40多分钟",
+          "hotwords": "锦程玉器城"
+        },
+        {
+          "speaker": "导游",
+          "text": "咱们团今天这个情况，我不多讲，大家心里应该都有数。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "啥情况啊？我们就是进去看看，没看到合适的，就没买嘛。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "看看是应该的。可十二个人进去，出来手上都空空的，我回去也不太好交代。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "12人",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "上午别的团在这儿，人均都过千，人家下午的安排就宽松得多。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "1000元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "咱们下午石林几点进园、待多长时间，说实话，也要看上午这边的情况来排。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": "石林"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "赵导，你的意思是，我们买得少，下午石林就去不成了？",
+          "direction": "（与上一句部分重叠）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "赵导；石林"
+        },
+        {
+          "speaker": "导游",
+          "text": "不是不是，石林肯定去，行程单上写着的，大家放心。",
+          "direction": "（连忙摆手）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "石林"
+        },
+        {
+          "speaker": "导游",
+          "text": "我是说……不是，我的意思是，去了是慢慢逛，还是转一圈就上车，那就不好讲了。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "石林门票是含在团费里的，我们是交了钱的呀。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": "石林"
+        },
+        {
+          "speaker": "导游",
+          "text": "含的含的。可大家算算，一千三百八玩五天，吃住行全包，这个账是怎么平的？",
+          "direction": "",
+          "label": "费用",
+          "numbers": "1380元；5天",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "我也不是逼大家，就是提个醒，大家多少支持一下，后面的事才好办。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "店员",
+          "text": "各位哥哥姐姐，门口柜台也有小件，挂件、手串都有，最便宜的一百二十八。",
+          "direction": "（从店里走到门口柜台）",
+          "label": "购物安排",
+          "numbers": "128元",
+          "hotwords": "挂件；手串"
+        },
+        {
+          "speaker": "店员",
+          "text": "您看这个糯种平安扣，带鉴定证书，送人、自己戴都合适。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "糯种；平安扣；鉴定证书"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "这个倒挺秀气的，我拿起来看看。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "店员",
+          "text": "标价一百六十八，团里的客人买，给您抹个零，算一百六。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "168元；160元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "咋个整？要不咱们意思意思，买个小的，下午也省得麻烦。",
+          "direction": "（压低声音，对游客乙）",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "我不买。合同写得清清楚楚，购物自愿，买不买都不该影响行程。",
+          "direction": "（压低声音）",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "道理我懂，可万一下午真被压缩了，大老远跑一趟，划不来嘛。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "你别被这几句话绕进去。你想买就买，我反正一样都不买。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "这位大姐会体谅人。挑个小的也是份心意，大家都像大姐这样，下午就好商量了。",
+          "direction": "（看见游客甲拿着平安扣，走过来）",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "行，那我就要这个平安扣，麻烦帮我包一下。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "平安扣"
+        },
+        {
+          "speaker": "店员",
+          "text": "要得，一共一百六，这边扫码，证书给您放袋子里。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "160元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "大家再进去转十分钟，有看上的别犹豫，下午的时间，我尽量往宽了排。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "10分钟",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "赵导，我把话说在前头，我不买东西，下午石林该怎么走，就得怎么走。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "赵导；石林"
+        },
+        {
+          "speaker": "导游",
+          "text": "大哥，我又没说不带你玩。大家是一个团的，好多事情是连在一起的。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "你一个人不买没关系，可要是人人都这么想，计调一看单子，下午的车我还得去磨。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": "计调"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "赵导，你这么说话，大家听着心里都不舒服。",
+          "direction": "（打断导游）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": "赵导"
+        },
+        {
+          "speaker": "导游",
+          "text": "我这人说话直，有不中听的地方，大哥别往心里去。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "下午的讲解，我肯定好好讲。大家高兴，我也有劲，这就看大家给不给面子了。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "你这些话我都记下了。回去我会如实向听澜百川旅行社反映，也会打一二三零一。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "12301",
+          "hotwords": "听澜百川旅行社"
+        },
+        {
+          "speaker": "导游",
+          "text": "反映是您的权利。我只是希望大家将心比心，趁最后十分钟再进去看看，后面几天咱们都顺顺当当的。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "10分钟",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "好了好了，都少说两句，太阳这么大，先上车吧。",
+          "direction": "（拉了拉游客乙的袖子）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "好，现在十一点四十，大家去趟洗手间，十一点五十门口上车。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "11:40；11:50",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "中午到石林吃饭，饭后两点左右进景区。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "14:00",
+          "hotwords": "石林"
+        },
+        {
+          "speaker": "导游",
+          "text": "石林是喀斯特地貌，那些石头是水流长年累月溶蚀出来的，到了再给大家细讲。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": "石林"
+        },
+        {
+          "speaker": "导游",
+          "text": "景区里石缝窄、台阶多，大家注意脚下，拍照别往石头上爬。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "这个我同意，安全第一。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "店员",
+          "text": "各位慢走，下回来昆明，再来店里坐坐。",
+          "direction": "（在门口挥手）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "昆明"
+        }
+      ]
+    },
+    {
+      "id": "G6-S2",
+      "title": "车上念合同",
+      "setting": "第二天上午，从昆明开往大理的旅游中巴上，导游用车载扩音器讲话，车上是同一个五天四晚团。",
+      "roles": [
+        "导游",
+        "司机",
+        "游客丙",
+        "游客丁"
+      ],
+      "focus": "施压从团费低、同行对比、住宿调整等角度不断换说法，并与正常的费用说明和合同条款交错出现，测试分类器是否只记住了固定句式。",
+      "lines": [
+        {
+          "speaker": "司机",
+          "text": "赵导，马上上高速了，你提醒大家把安全带系上。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": "赵导"
+        },
+        {
+          "speaker": "导游",
+          "text": "好嘞师傅。各位，车马上上高速，大家系好安全带，过道别站人啊。",
+          "direction": "（用车载扩音器）",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "今天咱们从昆明去大理，路上四个半小时左右，中间在服务区歇个脚。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "4.5小时",
+          "hotwords": "昆明；大理"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "四个半小时啊，那到大理差不多下午两点了。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "4.5小时；14:00",
+          "hotwords": "大理"
+        },
+        {
+          "speaker": "导游",
+          "text": "对，大叔算得准。大理古城走路多，下午穿双舒服的鞋。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": "大理"
+        },
+        {
+          "speaker": "导游",
+          "text": "趁路上有空，跟大家交个底，说几句掏心窝子的话。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "咱们这个团是听澜百川旅行社组的，团费一千三百八，五天四晚，吃住行加门票全包。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "1380元；5天4晚",
+          "hotwords": "听澜百川旅行社"
+        },
+        {
+          "speaker": "导游",
+          "text": "大家报名前肯定比过价，这个价钱什么水平，不用我多说。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "说白了，团费就这么点，这个团能不能走得舒舒服服，全靠大家支持。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "我这个导游当得好不好，跟大家后面玩得顺不顺，其实是拴在一根绳上的。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丁",
+          "text": "支持？赵导，你说的支持，具体是啥意思啊？",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "赵导"
+        },
+        {
+          "speaker": "导游",
+          "text": "也没别的。明天上午有家银器店，后天丽江还有家普洱茶店，大家进去看看，合适就带点回去。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "银器；丽江；普洱茶"
+        },
+        {
+          "speaker": "导游",
+          "text": "当然，买不买随大家。我就是说，大家心里都有杆秤，自己掂量掂量。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "昨天在锦程玉器城，咱们团基本没怎么动，上面已经有点看法了。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": "锦程玉器城"
+        },
+        {
+          "speaker": "导游",
+          "text": "上一个团的朋友就特别给力，酒店那边给他们排的都是好房间。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "怎么，买东西还跟晚上住哪儿挂钩啊？",
+          "direction": "（与上一句部分重叠）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "也不是说一定挂钩。房间是统一排的，排的时候看的是团里的整体情况。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "后面几晚住的地方，我还在跟那边协调，具体怎么安排，还要看这两天大家的情况。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "要是大家都无所谓，那晚上的住宿可能就得调整一下，换个地方住，反正就是睡一觉的事嘛。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丁",
+          "text": "换地方？换到哪儿去？离古城远不远啊？",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "现在还说不准，先跟大家提一句，真有变动，大家心里也有个准备。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "赵导，团费低是你们旅行社定的价，又不是我们压的价。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": "赵导"
+        },
+        {
+          "speaker": "导游",
+          "text": "大叔，道理是这个道理，可这行就是互相的，大家帮我一把，我也拉大家一把。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "明天进店，哪怕每人带个小银饰出来，我去跟酒店谈的时候，腰杆也硬一点。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": "银饰"
+        },
+        {
+          "speaker": "游客丁",
+          "text": "那要是我们一样都不买呢？",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "那……我也只能尽量去争取，争取到什么样，我真不敢打包票。",
+          "direction": "（停顿约两秒）",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "行了赵导，你把合同拿出来，给大家念一念，住宿到底是怎么写的。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "赵导"
+        },
+        {
+          "speaker": "导游",
+          "text": "合同肯定有，大叔莫急，我这不就是跟大家聊聊天嘛。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丁",
+          "text": "不用麻烦了，我手机里拍了合同，我念给大家听。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丁",
+          "text": "合同上写的：住宿四晚，昆明一晚、大理一晚、丽江两晚，都是标准双人间，含早餐。",
+          "direction": "（看着手机念）",
+          "label": "行程变更",
+          "numbers": "4晚；1晚；1晚；2晚",
+          "hotwords": "昆明；大理；丽江"
+        },
+        {
+          "speaker": "游客丁",
+          "text": "购物点三个，每个不超过一小时，后面还专门写了一句：购物自愿。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "3个；1小时",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "大家都听见了吧，标准双人间，白纸黑字，没什么好调整的。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "嗯……是，合同上是这么写的，我刚才可能没把话说清楚。",
+          "direction": "（语气放软）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "住宿肯定按合同来，后面几晚都是标准双人间，这个不会变。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "刚才那些话说得不妥当，让大家不舒服了，我跟大家道个歉。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丁",
+          "text": "那明天的银器店，我们要是不想买呢？",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "银器"
+        },
+        {
+          "speaker": "导游",
+          "text": "店是合同里有的，进去坐坐、看看就行，不买一点问题都没有。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "这就对了嘛。出来玩，图的就是个开心。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "司机",
+          "text": "赵导，前面二十公里有个服务区，这次停多久？",
+          "direction": "",
+          "label": "其他",
+          "numbers": "20公里",
+          "hotwords": "赵导"
+        },
+        {
+          "speaker": "导游",
+          "text": "停二十分钟。各位，十点半到服务区，十点五十准时发车，大家记好时间。",
+          "direction": "（用车载扩音器）",
+          "label": "正常讲解",
+          "numbers": "20分钟；10:30；10:50",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "下车注意来车，贵重物品随身带好，上车前看看身边的人到齐没有。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丁",
+          "text": "好的，谢谢赵导。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "赵导"
+        }
+      ]
+    },
+    {
+      "id": "G6-S3",
+      "title": "晚饭前的单独沟通",
+      "setting": "第三天傍晚，丽江一家餐厅外的小院，晚饭开席前，被大家推为代表的游客乙单独找导游沟通。",
+      "roles": [
+        "导游",
+        "游客乙",
+        "游客甲"
+      ],
+      "focus": "导游一对一施压改用好处交换等新说法，代表复述原话的句子按说话人意图标为“服务态度”，检验分类器能否区分“施压”与“复述施压”。",
+      "lines": [
+        {
+          "speaker": "游客乙",
+          "text": "赵导，离开饭还有十分钟，想跟您单独聊几句，方便吗？",
+          "direction": "（在餐厅外的小院里）",
+          "label": "其他",
+          "numbers": "10分钟",
+          "hotwords": "赵导"
+        },
+        {
+          "speaker": "导游",
+          "text": "方便方便，代表找我，哪有不方便的。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "那你们聊，我先进去帮大家占桌子。",
+          "direction": "（转身走进餐厅）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "正好我也想找您。明天那家普洱茶店，您帮我跟大家说说，多少带点东西出来，后面我也好安排。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": "普洱茶"
+        },
+        {
+          "speaker": "导游",
+          "text": "说实话，今天咱们团后台的数字很不好看，计调已经打电话来问了。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": "计调"
+        },
+        {
+          "speaker": "导游",
+          "text": "要是明天还这样，后面几天车怎么派、房怎么排，我就很难替大家说上话了。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "我也不让您白帮忙。明早出发，我可以往后推半个钟头，让大家多睡会儿。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "30分钟",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "后面两天车上前排的位置，我也给您和几位肯帮衬的朋友留着。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "2天",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "明晚吃饭，我也能跟餐厅打个招呼，给大家加两个菜，这都看明天了。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "2个",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "赵导，您先别往下说。这几天您说过的话，我跟您核对核对。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "赵导"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "在锦程玉器城门口，您说下午石林待多久，要看上午的情况来排。",
+          "direction": "（语气平静）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": "锦程玉器城；石林"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "去大理的车上，您说后面几晚住的地方，要看大家的情况再协调。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": "大理"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "合同当着大家念过，您也道了歉。可今天在银器店门口，您又说咱们团的情况大家心里有数，后面的安排不好跟上面交代。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": "银器"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "刚才您又说，明天大家买了东西，出发可以晚半个钟头，前排座位给留着，晚饭还能加菜。是这么说的吧？",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "30分钟",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "嗯……话是说过，可那都是随口一说，没别的意思。",
+          "direction": "（停顿约两秒）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "代表您也体谅体谅，我们导游的收入，大头就靠这个，光靠团费根本不够。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "您的收入怎么算，是您跟旅行社之间的事，不该摊到我们游客身上。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "合同写的是购物自愿，住宿、行程跟买不买东西，本来就不挂钩。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "合同是合同。可服务这东西，用不用心，合同上可写不出来。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "我干这行八年了，有些规矩大家都明白，我就不细说了。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "8年",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "后面住宿、用餐要是有个不如意，我手上能争取的空间，可就小了。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "明天下午本想多带大家去个拍照的好地方，现在也不好意思去申请了。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "那个拍照的地方，本来在行程里吗？",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "不在，是我想额外加的，不加也不算违约。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "您是明白人，有些话我不用说透，点到为止。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "赵导，我不是来跟您吵架的。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "赵导"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "您刚才说住宿用餐能争取的空间会变小，拍照的地方也不好申请了，这些我也记上。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "回去我会原原本本写下来，向听澜百川旅行社反映，有必要也会打一二三零一。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "12301",
+          "hotwords": "听澜百川旅行社"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "我不添油加醋，也不少说一句，您说过什么，我就写什么。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "代表，您看这事弄的，咱们有话好好说嘛。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "我一直在好好说。就想听您一句明白话：明天的店，到底是不是自愿的？",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "嗯……是，是自愿的。",
+          "direction": "（停顿约三秒）",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "我把话收回来。买不买自愿，愿意进去就看看，不想看就在外面休息，谁也不用勉强。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "住宿、用餐、景点，全按合同来，一样不少，明早出发时间也照原来的定。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "这几天我说话没注意分寸，让大家心里有疙瘩，是我的不对。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "您这么说我就放心了，回去也会跟大家讲清楚。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "反映的事，您该怎么写就怎么写，我认。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "赵导，菜都上齐了，大家都等着你们呢。",
+          "direction": "（从餐厅门口探出头，离手机较远）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "赵导"
+        },
+        {
+          "speaker": "导游",
+          "text": "来了来了。正好跟大家说说明天的安排。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "明早七点吃早饭，八点半在酒店大堂集合，大家别迟到。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "7:00；8:30",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "丽江早晚温差大，晚上出门加件外套，古城里人多，手机钱包都看好。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": "丽江"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "要得，我进去跟大家说一声。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        }
+      ]
+    }
+  ]
+}
