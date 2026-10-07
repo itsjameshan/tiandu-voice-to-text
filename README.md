@@ -318,7 +318,8 @@ pipeline/               八步处理流程
   step1_ingest.py … step8_report.py   各步的基线做法
   groups/               ★ 各组的改进做法（每组一个文件，只改这里）
   schema.py             统一中间格式    data.py   读剧本和表格    methods.py   做法登记
-tools/                  命令行工具：入池、参考文本、验收、冻结、标注转换、语谱图、测评、对比、训练、自检
+tools/                  命令行工具：入池、参考文本、验收、冻结、标注转换、语谱图、测评、对比、训练、自检、长录音测试
+  tf_lab/               选做：MFCC 对比、中文数字录音切分、小型 CNN 数字识别（第 3 周）
 data/                   24 个虚构剧本（JSON）、1055 句台词表、热词表、虚构名称、录音计划、类别定义、AI 补充句子
 models/                 模型（运行 download_models.py 下载，不进仓库）
 reports/g1 … g8/        各组报告（模板 + 测评输出）
