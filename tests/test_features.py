@@ -133,11 +133,18 @@ def test_show_spectrogram_cli(make_audio, tmp_path):
     assert out.is_file()
 
 
-def test_show_spectrogram_default_out(make_audio):
+def test_show_spectrogram_default_out(make_audio, tmp_path, monkeypatch):
+    """不填 --out 时图片存到 outputs/spectrograms/，不往录音旁边（可能是只读的数据池）写文件。"""
+    import pipeline.config
+
+    real_load = pipeline.config.load_config
+    monkeypatch.setattr(pipeline.config, "load_config",
+                        lambda *a, **k: real_load(overrides={"paths": {"outputs": str(tmp_path / "out")}}))
     tool = _load_tool()
     src = make_audio("tone", "m4a", seconds=1.0, name="G1-S1-Q.m4a")
     assert tool.main([str(src)]) == 0
-    assert (src.parent / "G1-S1-Q_spectrogram.png").is_file()
+    assert (tmp_path / "out" / "spectrograms" / "G1-S1-Q_spectrogram.png").is_file()
+    assert not (src.parent / "G1-S1-Q_spectrogram.png").exists()
 
 
 def test_show_spectrogram_missing_file(tmp_path, capsys):

@@ -24,6 +24,8 @@ def main(argv=None) -> int:
     parser.add_argument("--overwrite", action="store_true",
                         help="已有的参考文本也按剧本重新写（会丢掉校对结果，慎用）")
     args = parser.parse_args(argv)
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(errors="replace")  # 命令行编码不支持某些字时不报错
 
     from pipeline.config import load_config
     from pipeline.data import load_recording_plan

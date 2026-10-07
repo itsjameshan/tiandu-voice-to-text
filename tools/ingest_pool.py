@@ -68,6 +68,9 @@ def main(argv=None) -> int:
     except OSError as e:
         print(f"无法访问数据池文件夹：{e}。请检查路径是否写对、U 盘或共享文件夹是否连上。")
         return 1
+    except ValueError as e:  # 清单或质检报告读不出来（例如被 Excel 另存成了别的编码）
+        print(e)
+        return 1
 
     added, skipped, errors = result["added"], result["skipped"], result["errors"]
     if not (added or skipped or errors):

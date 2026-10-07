@@ -330,6 +330,11 @@ def _ingest_one(path: Path, stem: str, sha: str, paths: dict, cfg: dict) -> dict
     expected = round(plan["expected_minutes"] * 60, 1) if plan else None
     name = parse_recording_name(path.name)
 
+    # 0. 先删掉这段录音以前的识别结果缓存（复录时旧缓存已经不对了），下次"数据校对"时重新识别。
+    #    放在最前面：后面哪一步出错，都不会出现"新录音配旧识别结果"
+    for cache in paths["asr_cache"].glob(f"{stem}.*"):
+        cache.unlink()
+
     # 1. 读原始采样率，转成 16000 Hz 单声道 16 位 WAV，质检（只报告、不修改）
     info = probe(path)
     samples = _convert_to_pool_wav(path, paths["normalized"] / f"{stem}.wav")
@@ -353,11 +358,7 @@ def _ingest_one(path: Path, stem: str, sha: str, paths: dict, cfg: dict) -> dict
     # 3. 原始文件设为只读
     _set_read_only(path)
 
-    # 4. 删掉这段录音以前的识别结果缓存（复录时旧缓存已经不对了），下次"数据校对"时重新识别
-    for cache in paths["asr_cache"].glob(f"{stem}.*"):
-        cache.unlink()
-
-    # 5. 最后写清单：写进去了才算入池
+    # 4. 最后写清单：写进去了才算入池
     _replace_row(paths["manifest"], MANIFEST_COLUMNS, {
         "文件编号": stem,
         "剧本编号": name["script_id"],

@@ -43,3 +43,10 @@
 - `pipeline/script_demo.py`：剧本台词按每分钟 220 字估算时间，跑步骤 5、6 并和剧本标注对照（标对、误报、漏标、误报率）。第 8 组三个剧本误报率都是 0。
 - `pipeline/groups/g1`—`g8`：每组一个文件，初始调用基线，开头写明负责什么、改哪里、怎么测、注意什么、改进方向；第 6、7 组有 `build_model`（初始为模板的字级卷积网络，`pipeline/tf_classifier.build_baseline_model`）。`load_all` 改为严格导入。
 - `data/classification_extra.csv`：964 句 AI 生成的补充句子（11 个写作子任务 + 7 个对抗式审查子任务 + 合并检查）。
+
+## Task 15、Task 17（非界面部分）· 数据池入池与参考文本、对齐与语谱图
+
+- `pipeline/pool.py`、`tools/ingest_pool.py`、`tools/export_references.py`：文件名检查（小写、"(1)"、下划线、前导零、全角字母、少条件代码、组号超出等都给出具体提示，不猜）；转成 16k WAV（先写临时文件再替换，失败不留半成品）、质检、只读、清单最后写（写进去才算入池），按 SHA-256 跳过已入池文件；复录时替换旧行、删掉旧识别缓存；72 份参考文本只补不覆盖；校对记录追加写（带 BOM，可被 Excel 打开）。
+- `pipeline/align.py`：字错率明细（错字、漏字、多字）和"识别结果逐段对齐到参考文本"（给"数据校对"页用）；视频里的例子"雾隐行舟旅行社"→"雾影行走旅行社"算出 2/7。
+- `pipeline/features.py`、`tools/show_spectrogram.py`：只用 numpy 算语谱图和 MFCC（预加重、汉明窗、梅尔滤波、对数、DCT），画波形、语谱图、MFCC 三联图（30 分钟录音约 4.4 秒）；默认存到 `outputs/spectrograms/`。
+- 测试：数据池 54 个、对齐与特征 24 个，全部通过。
