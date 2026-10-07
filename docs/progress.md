@@ -131,3 +131,6 @@
 - 任务 26 全面验收（提交 e1490eb）：开发环境 `pytest -q` 846 通过、9 跳过（没有 TensorFlow）、3 个已知失败（留给第 4 组）；`ruff check .` 通过；
   GitHub Actions 自动测试（Windows、Linux）和"构建 Windows 便携包"（自检 + 网页能打开）都通过。
   Playwright 走查五个页面：整理录音（四人测试音频，7 段，导出 ZIP、Word、CSV、JSON）、剧本文本演示、数据校对、录音质检、使用说明，浏览器控制台没有错误；数据池不存在时两页只显示中文提示。
+- 发布便携包预览版 v0.2.0-pre（提交 e32cb9b，"构建 Windows 便携包"手动触发、填发布版本号）：自检和网页启动检查通过，zip 约 416 MB，未登录可下载：
+  https://github.com/itsjameshan/tiandu-voice-to-text/releases/download/v0.2.0-pre/tiandu-portable-win64-v0.2.0-pre.zip
+  比 v0.1.0-pre 多了"数据校对""录音质检"两页、说话人/分类/片段三项测评、数字小实验和审查后的全部修改。
