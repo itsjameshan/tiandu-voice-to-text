@@ -2,6 +2,7 @@
 import csv
 import io
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -18,6 +19,7 @@ from pipeline import ui_text
 from pipeline.config import load_config
 from pipeline.data import get_script
 from pipeline.methods import SLOT_TITLES, SLOTS
+from pipeline.pool import export_references, ingest_pool, init_pool
 from pipeline.schema import NOTICE, new_segment
 from pipeline.script_demo import DEMO_NOTICE, run_script_demo
 from pipeline.table import COL_NOTE, COL_REVIEW, COL_SPEAKER, COL_TEXT, TABLE_HEADERS, segments_to_rows
@@ -431,3 +433,227 @@ def test_server_starts(tmp_path):
         except subprocess.TimeoutExpired:
             proc.kill()
         log.close()
+
+
+# ---------------- 数据校对、录音质检（Task 17） ----------------
+
+TAB_ORDER = ["整理录音", "剧本文本演示", "数据校对", "录音质检", "使用说明"]
+
+
+def test_app_has_five_tabs(app_cfg):
+    components = _components(app.build_app(app_cfg))
+    tabs = [c["props"].get("label") for c in components if c["type"] == "tabitem"]
+    assert tabs == TAB_ORDER
+    texts = [str(c["props"].get("value", "")) for c in components]
+    assert any(ui_text.QC_EXPLAIN.strip() in text for text in texts), "录音质检页要有五项质检的中文解释"
+    # 对照表的表头
+    tables = [c["props"]["value"]["headers"] for c in components if c["type"] == "dataframe"]
+    assert app.PROOFREAD_HEADERS in tables
+    assert app.PROOFREAD_HEADERS == ["序号", "开始", "结束", "识别结果", "参考文本", "是否不同"]
+    # 数据池路径框默认是 config.yaml 里的 paths.data_pool
+    boxes = [c["props"] for c in components if c["type"] == "textbox"]
+    assert sum(box.get("value") == str(app_cfg["paths"]["data_pool"]) for box in boxes) == 2
+
+
+def test_no_browser_access_to_pool_or_outputs():
+    """安全决定：不对网页开放 outputs 和数据池（不加 allowed_paths）。"""
+    source = (ROOT / "app.py").read_text(encoding="utf-8")
+    assert "allowed_paths=" not in source
+
+
+def test_qc_explain_covers_five_checks():
+    for word in ["时长", "音量太小", "削波", "大段无声", "原始采样率"]:
+        assert word in ui_text.QC_EXPLAIN, word
+    assert "语谱图" in ui_text.QC_EXPLAIN and "怎么办" in ui_text.QC_EXPLAIN
+    assert ui_text.QC_EXPLAIN.count("怎么办") >= 5
+
+
+@pytest.fixture
+def missing_pool_cfg(tmp_path, monkeypatch):
+    """数据池文件夹不存在时的配置（outputs、tmp 也放进临时文件夹）。"""
+    cfg = load_config(overrides={"paths": {"outputs": str(tmp_path / "outputs"), "tmp": str(tmp_path / "tmp"),
+                                           "data_pool": str(tmp_path / "no_such_pool")}})
+    monkeypatch.setattr(app, "_current_cfg", cfg)
+    return cfg
+
+
+def test_pool_tabs_without_pool(missing_pool_cfg, tmp_path):
+    """数据池不存在或是空的：界面能搭起来，下拉框是空的，给出中文提示，按钮报中文原因而不是崩溃。"""
+    missing = missing_pool_cfg["paths"]["data_pool"]
+    demo = app.build_app(missing_pool_cfg)  # 不崩溃
+    texts = [str(c["props"].get("value", "")) for c in _components(demo)]
+    assert any("找不到数据池" in text for text in texts)
+
+    assert app.pool_recordings(missing) == []
+    update, hint = app.refresh_recordings(missing)
+    assert update["choices"] == [] and update["value"] is None
+    assert "找不到数据池" in hint
+
+    init_pool(tmp_path / "empty_pool")
+    assert app.pool_recordings(tmp_path / "empty_pool") == []
+    _, hint = app.refresh_recordings(str(tmp_path / "empty_pool"))
+    assert "还没有入池的录音" in hint and "ingest_pool" in hint
+
+    with pytest.raises(gr.Error) as info:
+        app.generate_comparison(missing, None)
+    assert "找不到数据池" in str(info.value)
+    with pytest.raises(gr.Error) as info:
+        app.generate_comparison(str(tmp_path / "empty_pool"), None)
+    assert "请先选一个录音" in str(info.value)
+    with pytest.raises(gr.Error) as info:
+        app.generate_comparison(str(tmp_path / "empty_pool"), "G1-S1-Q")
+    assert "清单" in str(info.value)
+    with pytest.raises(gr.Error):
+        app.check_pool_recording(missing, "G1-S1-Q")
+    with pytest.raises(gr.Error):
+        app.check_pool_recording(str(tmp_path / "empty_pool"), None)
+    with pytest.raises(gr.Error):
+        app.check_upload(None)
+    with pytest.raises(gr.Error) as info:
+        app.save_reference(None, "参考文本", "1234")
+    assert "生成对照" in str(info.value)
+
+
+def test_proofread_rows_and_cer():
+    segments = [new_segment(0.0, 1.5, text_raw="今天去石林"), new_segment(1.5, 3.25, text_raw="下午回昆名")]
+    reference = "今天去石林。下午回昆明。"
+    rows = app.proofread_rows(segments, reference)
+    assert rows == [[1, 0.0, 1.5, "今天去石林", "今天去石林。", "相同"],
+                    [2, 1.5, 3.25, "下午回昆名", "下午回昆明。", "不同"]]
+    text = app.proofread_summary("G1-S1-Q", segments, reference)
+    assert "G1-S1-Q" in text and "字错率" in text and "10.0%" in text  # 10 个字错 1 个
+    assert "错字 1" in text and "1/2" in text
+    assert app.proofread_rows([], reference) == []
+
+
+@pytest.mark.parametrize("bad", ["", "  ", "张三", "1234567890123", "12 34", "a-b"])
+def test_check_proofreader_rejects(bad):
+    with pytest.raises(gr.Error) as info:
+        app.check_proofreader(bad)
+    assert "学号后四位" in str(info.value)
+
+
+def test_check_proofreader_accepts():
+    assert app.check_proofreader(" 1234 ") == "1234"
+    assert app.check_proofreader("A07x") == "A07x"
+
+
+def test_save_reference(tmp_path):
+    root = tmp_path / "pool"
+    init_pool(root)
+    export_references(root)
+    state = app.new_state([], {"root": str(root), "stem": "G1-S1-Q", "wav": str(root / "normalized" / "G1-S1-Q.wav")})
+    ref_file = root / "references" / "G1-S1-Q.txt"
+    before = ref_file.read_text(encoding="utf-8")
+
+    for bad in ["张三", ""]:
+        with pytest.raises(gr.Error):
+            app.save_reference(state, "改过的参考文本", bad)
+    with pytest.raises(gr.Error):  # 参考文本不能是空的
+        app.save_reference(state, "  \n", "1234")
+    assert ref_file.read_text(encoding="utf-8") == before  # 都没保存
+    assert not (root / "proofread_log.csv").exists()
+
+    message = app.save_reference(state, "今天去石林。\n下午回昆明。", "1234", "第 3 句重叠")
+    assert "G1-S1-Q" in message and "生成对照" in message
+    assert ref_file.read_text(encoding="utf-8") == "今天去石林。\n下午回昆明。"
+    app.save_reference(state, "今天去石林。", "5678")
+    with open(root / "proofread_log.csv", encoding="utf-8-sig", newline="") as f:
+        log = list(csv.DictReader(f))
+    assert [(row["文件编号"], row["校对人"], row["第几遍"], row["备注"]) for row in log] == [
+        ("G1-S1-Q", "1234", "1", "第 3 句重叠"), ("G1-S1-Q", "5678", "2", "")]
+
+
+def test_check_upload_qc(app_cfg, make_audio, monkeypatch, tmp_path):
+    """录音质检：任何格式先转成 WAV（放在 tmp 里，用完删掉），画图，按文件名找剧本预计时长。"""
+    from matplotlib.figure import Figure
+
+    tmp_dir = tmp_path / "tmp"
+    monkeypatch.setitem(app_cfg["paths"], "tmp", str(tmp_dir))
+    audio = make_audio("tone_gap_tone", "m4a", sr=8000, channels=1, name="G1-S1-Q.m4a")
+    fig, text = app.check_upload(str(audio))
+    assert isinstance(fig, Figure)
+    assert "G1-S1-Q.m4a" in text
+    for part in ["时长与剧本预计时长相差较大", "静音", "原始采样率只有 8000 Hz"]:
+        assert part in text, part
+    assert not list(tmp_dir.rglob("*.wav")), "转换出来的临时 WAV 要删掉"
+
+    good = make_audio("tone", "wav", seconds=3.0, sr=16000, channels=1, name="my_voice.wav")
+    fig, text = app.check_upload(str(good))
+    assert isinstance(fig, Figure)
+    assert "没有检查时长" in text and "没有发现问题" in text
+
+    bad = tmp_path / "broken.mp3"
+    bad.write_bytes(b"not audio")
+    with pytest.raises(gr.Error) as info:
+        app.check_upload(str(bad))
+    assert "broken.mp3" in str(info.value)
+
+
+# ---------------- 数据校对、录音质检：需要模型 ----------------
+
+@pytest.fixture
+def recorded_pool(tmp_path, app_cfg):
+    """临时数据池：模型自带的测试录音改名成 raw/G1-S1-Q.wav，入池并生成参考文本初稿。"""
+    root = tmp_path / "pool"
+    init_pool(root)
+    shutil.copyfile(FOUR_SPEAKERS_WAV, root / "raw" / "G1-S1-Q.wav")
+    result = ingest_pool(root, app_cfg)
+    assert [item["stem"] for item in result["added"]] == ["G1-S1-Q"]
+    export_references(root)
+    return root
+
+
+@requires_models
+def test_proofreading_flow(recorded_pool, monkeypatch):
+    root = recorded_pool
+    assert app.pool_recordings(root) == ["G1-S1-Q"]
+    update, hint = app.refresh_recordings(str(root))
+    assert update["choices"] == ["G1-S1-Q"] and update["value"] == "G1-S1-Q"
+    assert "1 段" in hint
+
+    summary, rows, reference, state = app.generate_comparison(str(root), "G1-S1-Q")
+    assert reference == (root / "references" / "G1-S1-Q.txt").read_text(encoding="utf-8")
+    assert rows and all(len(row) == len(app.PROOFREAD_HEADERS) for row in rows)
+    assert [row[0] for row in rows] == list(range(1, len(rows) + 1))
+    assert all(row[5] in ("相同", "不同") for row in rows)
+    assert "字错率" in summary and "G1-S1-Q" in summary
+    cache = root / "asr_cache" / "G1-S1-Q.json"
+    assert cache.is_file() and not list((root / "asr_cache").glob("*.eval-*"))
+    hyps = [row[3] for row in rows]
+
+    # 点一行：播放这一段原声（采样率, 采样数组）
+    sr, samples = app.play_row(state, _select(0, row_value=rows[0]))
+    seg = state["segments"][0]
+    assert sr == 16000 and abs(len(samples) - (seg["end"] - seg["start"]) * 16000) <= 2
+
+    # 保存参考文本：写回 txt，记一笔校对
+    app.save_reference(state, "".join(hyps), "1234")
+    assert (root / "references" / "G1-S1-Q.txt").read_text(encoding="utf-8") == "".join(hyps)
+    with open(root / "proofread_log.csv", encoding="utf-8-sig", newline="") as f:
+        assert [row["校对人"] for row in csv.DictReader(f)] == ["1234"]
+
+    # 再生成对照：用缓存（不再识别），参考文本和识别结果一样 → 字错率 0、没有不同的段
+    from pipeline import step3_asr
+
+    def no_recognition(*args, **kwargs):
+        raise AssertionError("应该用缓存，不该重新识别")
+
+    monkeypatch.setattr(step3_asr, "recognize", no_recognition)
+    summary2, rows2, reference2, _ = app.generate_comparison(str(root), "G1-S1-Q")
+    assert reference2 == "".join(hyps)
+    assert [row[3] for row in rows2] == hyps
+    assert all(row[5] == "相同" for row in rows2)
+    assert "0.0%" in summary2
+
+
+@requires_models
+def test_check_pool_recording(recorded_pool, app_cfg, tmp_path, monkeypatch):
+    from matplotlib.figure import Figure
+
+    monkeypatch.setitem(app_cfg["paths"], "tmp", str(tmp_path / "tmp"))
+    fig, text = app.check_pool_recording(str(recorded_pool), "G1-S1-Q")
+    assert isinstance(fig, Figure)
+    assert "G1-S1-Q" in text
+    assert "时长与剧本预计时长相差较大" in text  # 测试录音只有几十秒，剧本预计 4 分多钟
+    assert not list((tmp_path / "tmp").rglob("*.wav"))
