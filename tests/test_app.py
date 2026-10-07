@@ -20,7 +20,7 @@ from pipeline.data import get_script
 from pipeline.methods import SLOT_TITLES, SLOTS
 from pipeline.schema import NOTICE, new_segment
 from pipeline.script_demo import DEMO_NOTICE, run_script_demo
-from pipeline.table import COL_NOTE, COL_REVIEW, COL_SPEAKER, TABLE_HEADERS, segments_to_rows
+from pipeline.table import COL_NOTE, COL_REVIEW, COL_SPEAKER, COL_TEXT, TABLE_HEADERS, segments_to_rows
 
 BANNER = ('仅限虚构演示材料，请勿上传真实投诉录音或含个人信息的录音｜识别可能有误，'
           '所有标注均为"疑似、待核查"，必须人工复核｜不作为任何定性依据')
@@ -160,10 +160,10 @@ def test_parse_helpers():
 
 
 def test_denoise_switch():
-    """降噪开关只在 baseline 和 noisereduce 之间切换；高级设置里选了别的做法（如 g1）以高级设置为准。"""
+    """降噪开关只在 baseline 和 noisereduce 之间切换；高级设置里选了 baseline 以外的做法时以高级设置为准。"""
     assert app.denoise_method("开", "baseline") == "noisereduce"
     assert app.denoise_method("关", "baseline") == "baseline"
-    assert app.denoise_method("关", "noisereduce") == "baseline"
+    assert app.denoise_method("关", "noisereduce") == "noisereduce"
     assert app.denoise_method("开", None) == "noisereduce"
     assert app.denoise_method("开", "g1") == "g1"
     assert app.denoise_method("关", "g1") == "g1"
@@ -227,7 +227,9 @@ def test_main_launch_settings(tmp_path, monkeypatch, capsys):
     assert launched["server_name"] == cfg["app"]["host"]
     assert launched["share"] is False  # 不开公网分享
     # 导出的文件在 outputs 里：要允许浏览器下载（从别的文件夹启动、或 outputs 改到别的盘时也要能下载）
-    assert str(outputs) in launched["allowed_paths"]
+    # 不对网页开放 outputs 文件夹（下载用 tmp/exports 里的副本）；不打印 Gradio 自己的英文提示
+    assert not launched.get("allowed_paths")
+    assert launched.get("quiet") is True
     assert launched["auth"] == ("teacher", "pw123")
     assert launched["max_file_size"] == cfg["app"]["max_file_size"]
     assert isinstance(launched["theme"], gr.themes.Soft)
@@ -299,11 +301,19 @@ def test_apply_mapping_and_export(app_cfg):
     assert ui_text.LONGEST_SPEAKER_HINT in app.speaker_summary(state2)
 
     rows2[2][COL_REVIEW] = "驳回"  # 映射之后再改一行，导出也要用上
+    rows2[3][COL_TEXT] = "人工改过的文字"
+    rows2[4][COL_SPEAKER] = "店员"
     paths = app.export_files(state2, rows2)
     assert [Path(p).suffix for p in paths] == [".zip", ".docx", ".csv", ".json"]
     assert all(Path(p).is_file() for p in paths)
-    assert Path(paths[0]).is_relative_to(Path(app_cfg["paths"]["outputs"]))
-    assert Path(paths[0]).parent.name.endswith("_G8-S1_demo")  # outputs/<日期-时间>_G8-S1_demo
+    # 给浏览器下载的是放在 tmp/exports/<随机编号>/ 里的副本，不直接暴露 outputs 文件夹（别人的原始录音也在那里）
+    served = Path(paths[0]).parent
+    assert served.parent == Path(app_cfg["paths"]["tmp"]) / "exports"
+    assert len(served.name) == 32
+    assert not Path(paths[0]).is_relative_to(Path(app_cfg["paths"]["outputs"]))
+    # 原件仍然留在 outputs/<日期-时间>_G8-S1_demo 里，老师可以在本机找到
+    originals = list(Path(app_cfg["paths"]["outputs"]).glob("*_G8-S1_demo/*_review.zip"))
+    assert len(originals) == 1
     with zipfile.ZipFile(paths[0]) as zf:
         names = zf.namelist()
     for name in ["review_draft.docx", "segments.csv", "segments.json", "说明.txt"]:
@@ -313,6 +323,8 @@ def test_apply_mapping_and_export(app_cfg):
     assert "导游" in speakers and "说话人1" not in speakers
     assert csv_rows[1]["复核结论"] == "确认" and csv_rows[1]["复核意见"] == "已听原声"
     assert csv_rows[2]["复核结论"] == "驳回"
+    assert csv_rows[3]["文字内容"] == "人工改过的文字"
+    assert csv_rows[4]["说话人"] == "店员"
 
 
 def test_handlers_need_a_result_first(app_cfg):

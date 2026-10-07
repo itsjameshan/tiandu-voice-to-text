@@ -49,7 +49,6 @@ _METHOD_MODULES = (
     "pipeline.step5_normalize",
     "pipeline.step6_classify",
     "pipeline.step7_clips",
-    "pipeline.groups",
 )
 
 
@@ -110,7 +109,9 @@ def get_method(slot: str, name: str) -> Callable:
 
 def load_all() -> None:
     """导入各步骤模块和各组文件，让里面的做法都登记进来。可以重复调用（模块只会导入一次）。"""
-    for module_name in _METHOD_MODULES:
+    from pipeline.groups import GROUP_MODULES  # 各组文件的清单（导入 pipeline.groups 本身很轻）
+
+    for module_name in _METHOD_MODULES + GROUP_MODULES:
         importlib.import_module(module_name)
 
 

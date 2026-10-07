@@ -15,7 +15,7 @@
     Gradio 6 搭界面；主题、样式传给 launch()；同一时间每种操作只处理一个任务（队列）；
     只在本机和局域网提供服务，不开公网分享；关闭 Gradio 的使用统计（GRADIO_ANALYTICS_ENABLED=False）；
     上传的临时文件放在项目里的 tmp/（避开 Windows 中文用户名路径）；启动时清理超过 cleanup_hours 的旧结果；
-    导出文件所在的 outputs 文件夹传给 launch(allowed_paths=...)，从别的文件夹启动也能下载；
+    导出时把文件复制到 tmp/exports/<随机编号>/ 再给浏览器下载，不对网页开放 outputs 文件夹；
     设置了环境变量 DEMO_USERNAME 和 DEMO_PASSWORD 才要求登录（云端演示用）。
 可改进方向：
     这是教师模板，学生一般不改。各组的改进做法写在 pipeline/groups/ 里，会自动出现在“高级设置”的下拉框中。
@@ -29,9 +29,11 @@ import argparse
 import logging
 import os
 import re
+import shutil
 import stat
 import sys
 import time
+import uuid
 import warnings
 from collections import Counter
 from pathlib import Path
@@ -44,7 +46,7 @@ os.environ.setdefault("GRADIO_TEMP_DIR", str(ROOT / "tmp"))
 
 import gradio as gr
 
-from pipeline import _default_out_dir, run_pipeline, ui_text  # _default_out_dir：输出文件夹的命名规则
+from pipeline import default_out_dir, run_pipeline, ui_text  # default_out_dir：输出文件夹的命名规则
 from pipeline import methods as method_registry
 from pipeline.audio import SR, has_non_ascii, read_wav, remove_tree
 from pipeline.data import DISPLAY_NAMES, FLAG_LABELS, FLAG_OUTPUTS, load_hotwords, load_scripts
@@ -131,9 +133,9 @@ def denoise_method(switch, chosen=None) -> str:
     """降噪开关 + 高级设置里“降噪”下拉框 → 实际用的降噪做法。
 
     开关只在 baseline（不降噪）和 noisereduce 之间切换；
-    高级设置里选了别的做法（如第 1 组的 g1）时，以高级设置为准。
+    高级设置里选了 baseline 以外的做法（如 noisereduce、第 1 组的 g1）时，以高级设置为准。
     """
-    if chosen and chosen not in ("baseline", "noisereduce"):
+    if chosen and chosen != "baseline":
         return chosen
     return "noisereduce" if is_on(switch) else "baseline"
 
@@ -329,7 +331,7 @@ def export_files(state, rows) -> list[str]:
     segments = rows_to_segments(rows if rows is not None else [], state["segments"])
     # 整理录音时 run_pipeline 已经建好了输出文件夹（work_dir）；
     # 剧本文本演示没有，用和整理录音一样的命名规则：outputs/<日期-时间>_<剧本编号>_demo
-    out_dir = Path(meta.get("work_dir") or _default_out_dir(cfg, f"{meta.get('file', '')}_demo"))
+    out_dir = Path(meta.get("work_dir") or default_out_dir(cfg, f"{meta.get('file', '')}_demo"))
 
     clips_dir = None
     if meta.get("wav"):
@@ -338,7 +340,25 @@ def export_files(state, rows) -> list[str]:
         segments = export_clips(segments, read_wav(meta["wav"]), SR, clips_dir, run_cfg,
                                 method=method_registry.resolve(run_cfg)["clips"])
     zip_path = export_bundle(segments, meta, out_dir, clips_dir=str(clips_dir) if clips_dir else None)
-    return [zip_path, str(out_dir / DOCX_NAME), str(out_dir / CSV_NAME), str(out_dir / JSON_NAME)]
+    files = [Path(zip_path), out_dir / DOCX_NAME, out_dir / CSV_NAME, out_dir / JSON_NAME]
+    return serve_copies(files, cfg)
+
+
+def serve_copies(files: list[Path], cfg: dict) -> list[str]:
+    """把要下载的文件复制到 tmp/exports/<随机编号>/ 里再交给浏览器。
+
+    原件留在 outputs 里给老师在本机找；浏览器只能拿到这一次导出的副本。
+    这样网页不用开放整个 outputs 文件夹（里面还有别人上传的原始录音）。
+    tmp 是 Gradio 的临时文件夹（启动时设成 GRADIO_TEMP_DIR），Gradio 允许从这里下载；随机编号猜不出来。
+    """
+    target = Path(cfg["paths"]["tmp"]) / "exports" / uuid.uuid4().hex
+    target.mkdir(parents=True, exist_ok=True)
+    copies = []
+    for path in files:
+        dest = target / path.name
+        shutil.copyfile(path, dest)
+        copies.append(str(dest))
+    return copies
 
 
 def run_demo_with_state(script_id):
@@ -426,7 +446,7 @@ def _process_tab(cfg: dict) -> None:
         # 点“开始整理”：先清掉上一段录音的下载文件、原声、映射和说话人时长，再整理，最后显示各说话人时长
         start.click(clear_old_results, None, [files_out, audio, mapping, speaker_md]).then(
             start_processing, [file_in, speakers, denoise_on, hotword_on, hotword_text, *method_boxes],
-            [summary, table, state]).then(speaker_summary, state, speaker_md)
+            [summary, table, state]).success(speaker_summary, state, speaker_md)
         table.select(play_row, state, audio)
         apply_btn.click(apply_mapping, [state, table, mapping], [table, state]).then(speaker_summary, state,
                                                                                      speaker_md)
@@ -546,13 +566,12 @@ def main(argv=None) -> None:
     print(message)
 
     demo = build_app(cfg)
-    # allowed_paths：Gradio 只让浏览器下载“当前文件夹、系统临时文件夹、allowed_paths”里的文件。
-    # 导出的核查初稿在 outputs 里；从别的文件夹启动，或者在 config.yaml 里把 outputs 改到别的盘时，
-    # 不写这一项就下载不了。
+    # 下载文件由 serve_copies 放进 tmp（GRADIO_TEMP_DIR）里，所以不用 allowed_paths 开放 outputs 文件夹。
+    # quiet=True：不打印 Gradio 自己的英文提示（其中有"怎么开公网分享"的提示，本课程不开公网分享），
+    # 访问地址由上面的中文提示给出。
     demo.launch(server_name=host, server_port=port, max_file_size=app_cfg["max_file_size"],
                 inbrowser=args.inbrowser, auth=auth, share=False,  # 不开公网分享
-                allowed_paths=[cfg["paths"]["outputs"]],
-                show_error=True, theme=gr.themes.Soft(font=FONTS), css=CSS)
+                quiet=True, show_error=True, theme=gr.themes.Soft(font=FONTS), css=CSS)
 
 
 if __name__ == "__main__":

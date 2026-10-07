@@ -182,7 +182,7 @@ def test_metric_helpers():
     labels = ["费用", "正常讲解", "其他"]
     gold = ["费用", "费用", "正常讲解", "正常讲解", "其他"]
     pred = ["费用", "其他", "费用", "正常讲解", "其他"]
-    assert train._confusion_matrix(gold, pred, labels) == [[1, 0, 1], [1, 1, 0], [0, 0, 1]]
+    assert train.confusion_matrix(gold, pred, labels) == [[1, 0, 1], [1, 1, 0], [0, 0, 1]]
     pr = train._per_class_pr(gold, pred, labels)
     assert pr["费用"]["precision"] == pytest.approx(0.5)
     assert pr["费用"]["recall"] == pytest.approx(0.5)

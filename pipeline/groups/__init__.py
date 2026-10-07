@@ -11,14 +11,19 @@
 
 每组只改自己的文件。这些文件在导入时不能加载 sherpa-onnx、gradio、tensorflow 等重依赖
 （需要时在函数里面导入），这样只装了 TensorFlow 的电脑也能运行训练脚本。
+
+这个包的 __init__ 不导入各组文件：导入哪个组文件，就只加载那个组需要的东西
+（例如第 6 组训练模型时只需要 TensorFlow 和 numpy，不需要第 4 组用的 cn2an）。
+各组的做法由 pipeline.methods.load_all() 按 GROUP_MODULES 逐个导入登记。
 """
-from pipeline.groups import (  # noqa: F401  导入就是为了登记做法
-    g1_denoise,
-    g2_far_field,
-    g3_diarize,
-    g4_numbers,
-    g5_hotwords,
-    g6_classifier_a,
-    g7_classifier_b,
-    g8_clips,
+
+GROUP_MODULES = (
+    "pipeline.groups.g1_denoise",
+    "pipeline.groups.g2_far_field",
+    "pipeline.groups.g3_diarize",
+    "pipeline.groups.g4_numbers",
+    "pipeline.groups.g5_hotwords",
+    "pipeline.groups.g6_classifier_a",
+    "pipeline.groups.g7_classifier_b",
+    "pipeline.groups.g8_clips",
 )

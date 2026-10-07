@@ -28,7 +28,7 @@ def _ascii_name(name: str) -> str:
     return safe.strip("._") or "audio"
 
 
-def _default_out_dir(cfg: dict, path) -> str:
+def default_out_dir(cfg: dict, path) -> str:
     """默认输出文件夹：outputs/<日期-时间>_<文件名>，重名时加序号。"""
     from datetime import datetime
     from pathlib import Path
@@ -87,7 +87,7 @@ def run_pipeline(path, options: dict | None = None, progress=None, cfg: dict | N
     funcs = method_registry.resolve(cfg)
     chosen = {slot: (cfg.get("methods") or {}).get(slot, "baseline") for slot in method_registry.SLOTS}
 
-    out_dir = Path(opts.get("out_dir") or _default_out_dir(cfg, path))
+    out_dir = Path(opts.get("out_dir") or default_out_dir(cfg, path))
     timings: dict[str, float] = {}
     caught_warnings: list[str] = []
 

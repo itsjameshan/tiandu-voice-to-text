@@ -59,7 +59,8 @@ def denoise_noisereduce(samples: np.ndarray, sr: int, cfg: dict) -> np.ndarray:
     import noisereduce
 
     cleaned = noisereduce.reduce_noise(y=samples, sr=sr)
-    return np.asarray(cleaned, dtype=np.float32)
+    # 全静音时 noisereduce 会除以 0 算出 NaN，NaN 会让端点检测误以为有人声，所以换成 0
+    return np.nan_to_num(np.asarray(cleaned, dtype=np.float32), nan=0.0, posinf=0.0, neginf=0.0)
 
 
 # ---------- 远距离增强 ----------

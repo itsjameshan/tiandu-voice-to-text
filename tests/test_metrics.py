@@ -191,3 +191,17 @@ def test_metrics_import_is_light():
         [sys.executable, "-c", code], cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8", check=True
     )
     assert proc.stdout.strip() == "[]"
+
+
+def test_speaker_error_uses_optimal_assignment():
+    """贪心对应和最优对应结果不同的例子：最优对应要让对上的时间总和最大。"""
+    ref = [(0, 9, "导游"), (9, 13, "游客")]
+    hyp = [(0, 5, "说话人1"), (9, 13, "说话人1"), (5, 9, "说话人2")]
+    # 重叠矩阵 [[5, 4], [4, 0]]：贪心先配 导游-说话人1（5），游客只能配说话人2（0）→ 对上 5 秒；
+    # 最优是 导游-说话人2（4）+ 游客-说话人1（4）→ 对上 8 秒，13 秒里标错 5 秒
+    assert abs(speaker_error_rate(ref, hyp) - 5 / 13) < 0.01
+
+
+def test_false_positive_rate_rejects_display_labels():
+    with pytest.raises(ValueError):
+        false_positive_rate(["正常讲解"], ["疑似·费用"])

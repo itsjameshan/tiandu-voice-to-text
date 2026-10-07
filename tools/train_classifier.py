@@ -48,7 +48,7 @@
 注意：本脚本只导入 pipeline 里的轻量模块（pipeline.data、pipeline.text_norm、pipeline.tf_classifier），
 TensorFlow 和 numpy 只在函数里面导入，不导入 sherpa_onnx、gradio，所以机房自带的 Python 就能运行。
 选 g6、g7 时会导入 pipeline.groups，它另外需要 cn2an、pypinyin 两个纯 Python 小库（缺少时会提示怎么装）。
-混淆矩阵、各类准确率召回率、误报率的计算写在本文件里（_confusion_matrix 等），和 tools/evaluate.py 的口径相同。
+混淆矩阵用 pipeline/metrics.py（只依赖 numpy）；各类准确率召回率、误报率的计算写在本文件里，和 tools/evaluate.py 的口径相同。
 """
 import argparse
 import csv
@@ -66,6 +66,7 @@ if str(ROOT) not in sys.path:
 
 # 先把项目文件夹加进 sys.path 才能导入 pipeline；这几个模块都很轻，不会带进 TensorFlow、sherpa_onnx、gradio
 from pipeline.data import FLAG_LABELS, LABEL_NAMES, load_lines  # noqa: E402
+from pipeline.metrics import confusion_matrix  # noqa: E402  只依赖 numpy，机房自带的 Python 也能用
 from pipeline.tf_classifier import (  # noqa: E402
     build_baseline_model,
     build_vocab,
@@ -233,15 +234,6 @@ def run_eval(mode: str, build_model, lines: list[dict], extra: list[dict], epoch
 
 # ---------------- 测评指标（和 tools/evaluate.py classify 的口径相同） ----------------
 
-def _confusion_matrix(gold: list[str], pred: list[str], labels: list[str]) -> list[list[int]]:
-    """混淆矩阵：matrix[i][j] = 标准答案是 labels[i]、被预测成 labels[j] 的句数。"""
-    index = {label: i for i, label in enumerate(labels)}
-    matrix = [[0] * len(labels) for _ in labels]
-    for g, p in zip(gold, pred):
-        matrix[index[g]][index[p]] += 1
-    return matrix
-
-
 def _per_class_pr(gold: list[str], pred: list[str], labels: list[str]) -> dict[str, dict]:
     """各类的准确率（精确率）和召回率。
 
@@ -303,7 +295,7 @@ def summarize(test_lines: list[dict], pred: list[str], mode: str) -> dict:
         "normal_count_g8": normal_count_g8,
         "labels": list(LABEL_NAMES),
         "per_class": _per_class_pr(gold, pred, LABEL_NAMES),
-        "confusion": _confusion_matrix(gold, pred, LABEL_NAMES),
+        "confusion": confusion_matrix(gold, pred, LABEL_NAMES),
         "by_group": by_group,
     }
 
@@ -316,7 +308,7 @@ def report_stem(model_name: str, mode: str, used_extra: bool) -> str:
 
 
 def _ratio(count: int, total: int) -> str:
-    """"0.62（650/1055）"这样的写法；分母为 0 时写"—（0 句）"。"""
+    """写成 0.62（650/1055）这样；分母为 0 时写 —（0 句）。"""
     return f"{count / total:.2f}（{count}/{total}）" if total else "—（0 句）"
 
 
@@ -410,7 +402,7 @@ def write_report(report_dir, info: dict, summary: dict, test_lines: list[dict], 
         "这些类别的准确率、召回率波动很大。",
     ]
     if info["used_extra"]:
-        out.append("- 补充句子由 AI 参照全部剧本台词写成，按组留一时可能带有被测组的说法，结果可能偏乐观；"
+        out.append("- 补充句子由 AI 参照全部剧本台词写成，可能带有测试句的说法，结果可能偏乐观；"
                    "补充句子在第 6、7 组审核完之前可能有标错的类别或固定的说法。")
     if info["eval"] == "random":
         out.append("- 随机划分时同一个剧本的句子同时出现在训练和测试里，结果会虚高，只作对照，主结果看按组留一。")

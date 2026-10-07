@@ -185,9 +185,13 @@ def false_positive_rate(gold, pred) -> float:
     标准答案是费用等疑似类别的句子分错了，也不算误报（那是准确率、召回率管的事）。
     标准答案里没有正常讲解时没有可比的，返回 0.0。
     """
-    from pipeline.data import FLAG_LABELS  # 放在函数里：本文件顶层只导入标准库和 numpy
+    from pipeline.data import FLAG_LABELS, LABEL_NAMES  # 放在函数里：本文件顶层只导入标准库和 numpy
 
     _check_same_length(gold, pred)
+    unknown = sorted({x for x in list(gold) + list(pred) if x not in LABEL_NAMES})
+    if unknown:
+        # 常见错误：传进来的是显示用的标签（如"疑似·费用"），而不是类别名（如"费用"）
+        raise ValueError(f"误报率要用类别名（{'、'.join(LABEL_NAMES)}），不认识：{'、'.join(unknown)}")
     n_normal = 0
     n_flagged = 0
     for g, p in zip(gold, pred):

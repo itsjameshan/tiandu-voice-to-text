@@ -50,3 +50,11 @@ def test_pipeline_method_override_and_eval_mode(tmp_path):
     assert all(s.get("text_raw") for s in segments)
     # 没装 TensorFlow 或没训练模型时，g6 退回规则，并把原因写进 meta["warnings"]
     assert isinstance(meta["warnings"], list)
+
+
+def test_pipeline_silence_with_noisereduce(make_audio, tmp_path):
+    """全静音时 noisereduce 会算出 NaN，不能因此"检测到人声"（降噪开关打开时）。"""
+    wav = make_audio("silence", "wav", seconds=2.0, sr=16000, channels=1)
+    segments, meta = run_pipeline(str(wav), {"methods": {"denoise": "noisereduce"}, "out_dir": str(tmp_path / "run")})
+    assert segments == []
+    assert meta["message"] == "没有检测到人声，请检查录音"
