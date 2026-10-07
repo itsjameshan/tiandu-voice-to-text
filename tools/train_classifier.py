@@ -47,7 +47,7 @@
 
 注意：本脚本只导入 pipeline 里的轻量模块（pipeline.data、pipeline.text_norm、pipeline.tf_classifier），
 TensorFlow 和 numpy 只在函数里面导入，不导入 sherpa_onnx、gradio，所以机房自带的 Python 就能运行。
-选 g6、g7 时会导入 pipeline.groups，它另外需要 cn2an、pypinyin 两个纯 Python 小库（缺少时会提示怎么装）。
+选 g6、g7 时只导入那一组的文件（pipeline/groups/g6_classifier_a.py 或 g7_classifier_b.py），只要 TensorFlow 和 numpy。
 混淆矩阵用 pipeline/metrics.py（只依赖 numpy）；各类准确率召回率、误报率的计算写在本文件里，和 tools/evaluate.py 的口径相同。
 """
 import argparse
@@ -449,8 +449,8 @@ def main(argv=None) -> int:
     try:
         build_model = get_build_model(args.model)
     except ImportError as err:
-        print(f"导入 {args.model} 的模型文件失败：{err}。"
-              f"pipeline.groups 还需要 cn2an、pypinyin 两个小库，请先安装：python -m pip install cn2an pypinyin")
+        print(f"导入 {args.model} 的模型文件失败：{err}。请检查本组文件 pipeline/groups/ 里是不是写错了，"
+              f"或者新加的 import 用了这台电脑没有的库")
         return 1
 
     os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")  # 少打印一些 TensorFlow 的内部日志

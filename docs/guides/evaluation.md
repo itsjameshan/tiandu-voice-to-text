@@ -8,6 +8,7 @@
 4. **如实写**：变差了也写；剧本数据上的结果不代表真实场景。
 
 命令都在便携包文件夹里运行（`python\python.exe tools\...`），`--pool` 填数据池路径。加 `--out reports\gN` 把结果存进本组报告文件夹。
+**基线和改进做法的结果放不同的文件夹**：基线放 `reports\gN`，本组做法（带 `--method`）放 `reports\gN\after`，放在同一个文件夹会互相覆盖；`compare.py` 写的是 `compare_*.md`，可以和基线放在一起。
 
 ## 一、字错率（CER）—— 全员；第 1、2 组主指标
 
@@ -28,18 +29,20 @@ python\python.exe tools\evaluate.py cer --pool D:\data_pool --out reports\g1
 ## 二、专名正确率、过度纠正 —— 第 5 组
 
 ```bat
-python\python.exe tools\evaluate.py hotwords --pool D:\data_pool --method hotword=g5 --hotword on --out reports\g5
+python\python.exe tools\evaluate.py hotwords --pool D:\data_pool --hotword on --out reports\g5
+python\python.exe tools\evaluate.py hotwords --pool D:\data_pool --method hotword=g5 --hotword on --out reports\g5\after
 ```
 
 - **专名正确率**：参考文本里出现的热词（`data/hotwords.txt` 里的虚构旅行社、店名、地名、行话），在识别结果里也出现了的比例。
 - **过度纠正**：参考文本里人物**故意说错或简称**的名字（`data/hotword_variants.csv`，如把"松风晚渡"说成"松风行舟"），本来识别对了，却被热词纠错改掉了（改成正确名称、或者改成正确名称的简称）的次数。这是错误——工具应该忠实记录人说了什么。精确的计数规则写在每份 `hotwords.md` 报告的"说明"一节里。
 - **热词纠错默认是关着的**：测热词时一定要加 `--hotword on`，否则测出来的是"没纠错"的结果。开（`--hotword on`）、关（`--hotword off`）各跑一次，比较两个指标。
-- 识别结果会缓存在数据池的 `asr_cache` 里，只换热词做法时不用重新识别，很快；想全部重新识别就加 `--no-cache`。
+- 识别结果会缓存在数据池的 `asr_cache` 里，只换热词做法时不用重新识别，很快；想全部重新识别就加 `--no-cache`。数据池文件夹不能写入（只读的共享文件夹）时不留缓存，每次都全部重新识别。
 
 ## 三、数字提取正确率 —— 第 4 组
 
 ```bat
-python\python.exe tools\evaluate.py numbers --method normalize=g4 --out reports\g4
+python\python.exe tools\evaluate.py numbers --out reports\g4
+python\python.exe tools\evaluate.py numbers --method normalize=g4 --out reports\g4\after
 ```
 
 - **在剧本文字上测**：拿每句台词（汉字读法）做转换和提取，和剧本每行的 `numbers`（标准写法，如"2800元；15:40；0871-0000-6688"）比较。不需要录音，随时能测。
@@ -54,7 +57,7 @@ python\python.exe tools\evaluate.py speakers --pool D:\data_pool --speakers auto
 :: 人数设对（每段录音按标注里有几个人来设）
 python\python.exe tools\evaluate.py speakers --pool D:\data_pool --speakers ref --out reports\g3\ref
 :: 换成本组的做法
-python\python.exe tools\evaluate.py speakers --pool D:\data_pool --method diarize=g3 --speakers ref --out reports\g3
+python\python.exe tools\evaluate.py speakers --pool D:\data_pool --method diarize=g3 --speakers ref --out reports\g3\after
 ```
 
 - 只评有人工标注（`data_pool/annotations/speakers/`）的录音。
@@ -85,7 +88,8 @@ python tools\train_classifier.py --model g6 --eval logo
 ## 六、片段起止误差 —— 第 8 组
 
 ```bat
-python\python.exe tools\evaluate.py clips --pool D:\data_pool --method clips=g8 --out reports\g8
+python\python.exe tools\evaluate.py clips --pool D:\data_pool --out reports\g8
+python\python.exe tools\evaluate.py clips --pool D:\data_pool --method clips=g8 --out reports\g8\after
 ```
 
 - 只评有片段标注（`data_pool/annotations/clips/`）的录音。

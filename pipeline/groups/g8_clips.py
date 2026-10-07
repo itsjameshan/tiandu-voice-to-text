@@ -11,7 +11,8 @@
     剪音频、写文件、写索引表由 export_clips 统一做，你们只决定"从哪剪到哪"。
 
 怎么测（需要人工标注的片段起止，见 docs/guides/annotation.md）
-    python tools/evaluate.py clips --pool 数据池路径 --out reports/g8
+    python tools/evaluate.py clips --pool 数据池路径 --out reports/g8                         （基线）
+    python tools/evaluate.py clips --pool 数据池路径 --method clips=g8 --out reports/g8/after （你们的做法）
     python tools/compare.py --slot clips --method g8 --metric clips --pool 数据池路径 --out reports/g8
     python tools/evaluate.py classify --out reports/g8      （看第 8 组剧本的误报率）
 

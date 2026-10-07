@@ -12,7 +12,8 @@
     mode="spoken" 时输入是汉字读法（剧本、测评模式），要先转数字；mode="display" 时识别已经转好了，只需提取。
 
 怎么测（不需要录音，用剧本每句的标准答案 numbers 字段）
-    python tools/evaluate.py numbers --method normalize=g4 --out reports/g4
+    python tools/evaluate.py numbers --out reports/g4                             （基线）
+    python tools/evaluate.py numbers --method normalize=g4 --out reports/g4/after （你们的做法，放子文件夹，不盖掉基线）
     python tools/compare.py --slot normalize --method g4 --metric numbers --out reports/g4
     网页"剧本文本演示"页也能直接看每句提取出了什么。
 
@@ -21,7 +22,7 @@
     - 正确率（提取出来的有多少对）和召回率（标准答案有多少被提取出来）都要看。
     - 不联网。
 
-可以试的方向（由易到难；基线在剧本上时刻的召回率只有 0.14，提升空间最大）
+可以试的方向（编号不代表难度：最容易上手的是方向 2 的固定说法和方向 1 里补时间词那一步；基线在剧本上时刻的召回率只有 0.14，方向 1 提升空间最大）
     1. 没有"上午/下午"等时间词的时刻（"九点五十""十一点二十"）：根据前后文判断要不要转成时刻、是上午还是下午。
     2. "两个半小时""半个小时""三四十块"这类说法。
     3. 识别结果没有空格时，连续 7 个以上逐位读的数字（零一二……幺）很可能是电话或编号。

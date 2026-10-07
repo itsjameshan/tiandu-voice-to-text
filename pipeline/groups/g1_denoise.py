@@ -9,8 +9,9 @@
     把函数体换成你们的改进做法即可；函数名、参数、返回值的格式不要改。
 
 怎么测（数据池路径换成老师给的，如 D:\\data_pool）
-    python tools/compare.py --slot denoise --method g1 --metric cer --pool 数据池路径 --out reports/g1
-    python tools/compare.py --slot vad --method g1 --metric cer --pool 数据池路径 --out reports/g1
+    python tools/compare.py --slot denoise --method g1 --metric cer --pool 数据池路径 --out reports/g1/denoise
+    python tools/compare.py --slot vad --method g1 --metric cer --pool 数据池路径 --out reports/g1/vad
+    （两个对比放不同的文件夹，否则后一个会盖掉前一个的 compare_cer.md）
     网页"整理录音"页的"高级设置"里把"降噪"或"端点检测"选成 g1，也能直接看效果。
 
 注意

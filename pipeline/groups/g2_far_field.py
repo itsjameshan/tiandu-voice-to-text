@@ -12,7 +12,8 @@
 怎么测（数据池路径换成老师给的）
     python tools/evaluate.py cer --pool 数据池路径 --out reports/g2          （看三种条件的差距）
     python tools/compare.py --slot enhance --method g2 --metric cer --pool 数据池路径 --out reports/g2
-    python tools/compare.py --slot vad --method g2 --metric cer --pool 数据池路径 --out reports/g2
+    python tools/compare.py --slot vad --method g2 --metric cer --pool 数据池路径 --out reports/g2/vad
+    （vad 的对比放子文件夹，否则会盖掉 enhance 对比的 compare_cer.md）
 
 注意
     - 增强后采样点个数不能变（时间戳要和原录音对得上），程序会检查。

@@ -89,7 +89,7 @@ python\python.exe tools\freeze_pool.py --pool D:\data_pool --version v1
 
 各组跑测评需要 `normalized\`、`references\`、`annotations\`、`manifest.csv`。可以：
 
-- 共享文件夹：各组直接用 `--pool \\老师电脑\data_pool`（只读访问即可，测评不会修改数据池）；
+- 共享文件夹：各组直接用 `--pool \\老师电脑\data_pool`。**最好给各组写入权限**：测评和"数据校对"页会把识别结果缓存在 `asr_cache\` 里（同一段录音、同样的做法只识别一次，8 组共用）；只读也能测，但每次都要把录音全部重新识别，72 段要几十分钟。测评不会改别的文件；
 - U 盘：把整个数据池（约 700 MB）拷给每组一份。
 
 ## 七、课程结束后

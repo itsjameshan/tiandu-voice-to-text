@@ -13,7 +13,8 @@
     每次替换记进段落的 corrections（[{"from": 原来的字, "to": 热词, "start": 段落开始时间}]）。
 
 怎么测（数据池路径换成老师给的）
-    python tools/evaluate.py hotwords --pool 数据池路径 --hotword on --out reports/g5
+    python tools/evaluate.py hotwords --pool 数据池路径 --hotword on --out reports/g5                          （基线）
+    python tools/evaluate.py hotwords --pool 数据池路径 --method hotword=g5 --hotword on --out reports/g5/after （你们的做法）
     python tools/compare.py --slot hotword --method g5 --metric hotwords --pool 数据池路径 --hotword on --out reports/g5
     注意：基线只有在热词纠错打开时才工作，所以测评时一定要加 --hotword on
     （网页上是"热词纠错"开关，config.yaml 里是 hotword.enabled）。
@@ -24,7 +25,8 @@
     - 不联网，不用云端识别的热词功能。
 
 可以试的方向（由易到难）
-    1. 打开纠错，调 config.yaml 里 hotword 的 min_len、max_syllable_mismatch，看两个指标怎么变。
+    1. 调热词纠错的松紧（min_len、max_syllable_mismatch），看两个指标怎么变。参数写在本文件里：复制一份 cfg、
+       改里面 hotword 的这两个值再交给基线；不要改 config.yaml（基线也读它，对比会全是 0）。
     2. 给常用词加"保护名单"，或者要求前后文也对得上才替换，减少过度纠正。
     3. 真正的解码时热词：python models/download_models.py --optional conformer_hotword，
        用 sherpa-onnx 的 transducer 模型和 hotwords_file 识别，和基线比较（见 docs/build_spec.md 5.3）。

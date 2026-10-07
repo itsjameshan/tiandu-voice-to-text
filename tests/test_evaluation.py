@@ -784,3 +784,26 @@ def test_evaluate_cli_speakers_clips_and_compare(annotated_pool, tmp_path, capsy
     rows = _read_csv(out / "compare_clips.csv")
     assert rows[0]["分组项"].startswith("全体·")
     assert all(row["差值"] == "" or float(row["差值"]) == 0 for row in rows)  # g8 初始等于基线
+
+
+def test_recognize_item_without_writable_cache(tmp_path, monkeypatch, make_audio, cfg):
+    """数据池不能写入（例如只读的共享文件夹，建不了 asr_cache）：照样识别、照样测，只是不留缓存。"""
+    import shutil
+
+    from pipeline import step2_vad, step3_asr
+    from pipeline.evaluation import recognize_item
+    from pipeline.schema import new_segment
+
+    root = tmp_path / "pool"
+    root.mkdir()
+    (root / "asr_cache").write_text("这里是一个文件，所以建不了 asr_cache 文件夹", encoding="utf-8")
+    wav = tmp_path / "G1-S1-Q.wav"
+    shutil.copyfile(make_audio("tone", "wav", seconds=1.0, sr=16000, channels=1), wav)
+    monkeypatch.setattr(step2_vad, "detect_speech",
+                        lambda samples, sr, cfg, methods=None: (samples, [new_segment(0.0, 1.0)]))
+    monkeypatch.setattr(step3_asr, "recognize",
+                        lambda samples, sr, segs, cfg, mode="display", progress=None:
+                        [dict(seg, text_raw="今天去石林") for seg in segs])
+    segments, info = recognize_item(root, {"stem": "G1-S1-Q", "wav": wav}, cfg)
+    assert [seg["text_raw"] for seg in segments] == ["今天去石林"]
+    assert info["cached"] is False

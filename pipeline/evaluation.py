@@ -467,6 +467,7 @@ def _save_cache(path: Path, segments: list[dict], meta: dict) -> None:
 
     tmp = path.with_name(path.name + ".tmp")
     try:
+        path.parent.mkdir(parents=True, exist_ok=True)  # 只读的共享文件夹建不了：照样往下测，只是不留缓存
         write_json(tmp, segments, meta)
         os.replace(tmp, path)
     except OSError as e:
@@ -507,7 +508,6 @@ def recognize_item(root, item: dict, cfg: dict, use_cache: bool = True,
     segments = step3_asr.recognize(processed, SR, segments, cfg, mode="eval", progress=progress)
     elapsed = time.perf_counter() - started
 
-    folder.mkdir(parents=True, exist_ok=True)
     meta = {
         "stem": item["stem"],
         "key": key,
