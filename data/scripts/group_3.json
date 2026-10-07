@@ -1,0 +1,1354 @@
+{
+  "group": 3,
+  "scripts": [
+    {
+      "id": "G3-S1",
+      "title": "游船改去体验中心",
+      "setting": "行程第二天早上八点，大理澄溪假日酒店大堂，青岫远途旅行社的李导召集游客，宣布原定上午的洱海游船取消、改去一个“体验中心”，游客们七嘴八舌地质疑，有人翻出行程单逐条对照。",
+      "roles": [
+        "导游",
+        "游客甲",
+        "游客乙",
+        "游客丙",
+        "游客丁"
+      ],
+      "focus": "导游先连续宣布一大段，随后四名游客短句抢话、打断、附和，多处标注重叠和几个人同时说；游客甲、游客乙是结伴出游的两位退休老同事，观点一致、常重复对方的话，宜由声线相近的同学扮演，用来测试说话人分离对快速换人和相似声音的区分。",
+      "lines": [
+        {
+          "speaker": "导游",
+          "text": "来，各位早上好！大家往我这边靠一靠，人都到齐了吧？",
+          "direction": "（在大堂中间拍手）",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丁",
+          "text": "齐了齐了，就等您了。",
+          "direction": "（离录音手机较远）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "好。那个，跟大家说个情况啊。今天上午原定的洱海游船，取消了，我们……",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "洱海；游船"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "啊？取消了？",
+          "direction": "（打断）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "啊？怎么就取消了？",
+          "direction": "（与上一句部分重叠）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "大家先听我说完啊。早上我接到通知，说湖上风比较大，船开不了。所以呢，我们临时调整一下，上午改去一个体验中心，就在洱海边上。里面可以喝喝普洱茶，尝尝鲜花饼，看看银器，还能自己亲手做一做，环境挺好的，拍照也好看。中午吃完饭，下午照常去双廊，其他安排都不变，大家放心。",
+          "direction": "（提高声音）（连续说了一大段）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "体验中心；洱海；普洱茶；鲜花饼；银器；双廊"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "体验中心？体验中心是干什么的？",
+          "direction": "（与上一句部分重叠）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "体验中心"
+        },
+        {
+          "speaker": "游客丁",
+          "text": "是不是带我们去买东西的？",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "不是不是，就是去体验一下，买不买随……",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "我们就是冲着游船来的呀！",
+          "direction": "（打断）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "游船"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "对呀，我们就是冲着游船来的嘛！",
+          "direction": "（与上一句部分重叠）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "游船"
+        },
+        {
+          "speaker": "导游",
+          "text": "莫急莫急，风大这个事情，谁也没办法……",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "风大？我刚才下楼的时候问了前台，前台说今天船照常开。",
+          "direction": "（打断）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丁",
+          "text": "对，我就站在旁边，听得清清楚楚。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "前台的消息，那个，也不一定准……",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "那你的消息就准啦？",
+          "direction": "（与上一句部分重叠）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "就是，你的消息就准啦？",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "大家先别吵，我把行程单拿出来对一对。",
+          "direction": "（从背包里翻出行程单）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "行程单"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "第二天，早上八点大堂集合，八点半出发。上午，乘船游洱海，约两个小时。中午用餐。下午，双廊自由活动。晚上回澄溪假日酒店。",
+          "direction": "（照着行程单念，语速较慢）",
+          "label": "行程变更",
+          "numbers": "第2天；8:00；8:30；2小时",
+          "hotwords": "洱海；双廊；澄溪假日酒店"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "体验中心？一个字都没有。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "体验中心"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "没有，真没有。",
+          "direction": "（凑过去看）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "真没有。",
+          "direction": "（与上一句部分重叠）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "行程单是行程单嘛，实际情况总会有一些调……",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "行程单"
+        },
+        {
+          "speaker": "游客丁",
+          "text": "调整也得先跟我们商量吧？",
+          "direction": "（打断）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "就是，一大早直接通知，这叫商量吗？",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "我这不是正在跟大家商量嘛。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "你这是通知，不是商量。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "对，是通知，不是商量。",
+          "direction": "（与上一句部分重叠）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "好好好，我跟大家说实话。船票是我们没订上，这几天人太多了。",
+          "direction": "（停顿约两秒）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丁",
+          "text": "啊？那刚才还说风大……",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "没订上就说没订上嘛，说什么风大。",
+          "direction": "（与上一句部分重叠）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "是我说得不对，跟大家道个歉。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "不过体验中心那边呢，大家就当去坐坐，喝口茶。大家多少支持一下，下午去双廊的车也好协调一点。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": "体验中心；双廊"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "这跟车有什么关系？",
+          "direction": "（与上一句部分重叠）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "就是，这跟车有什么关系？",
+          "direction": "（与上一句部分重叠）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "游船是含在团费里的，一个人一百五十块。不坐船，这钱怎么算？",
+          "direction": "",
+          "label": "费用",
+          "numbers": "150元",
+          "hotwords": "游船；团费"
+        },
+        {
+          "speaker": "导游",
+          "text": "钱肯定不会少大家的，该退的……",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丁",
+          "text": "我们不要退钱，我们要坐船。我家孩子昨天晚上还念叨，说今天要坐大船呢。",
+          "direction": "（打断）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "对，我们要坐船！",
+          "direction": "（几个人同时说，这句最清楚）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "那……那这样，我现在给码头打个电话，问问今天还有没有别的班次。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "喂，你好，我是青岫远途旅行社的李导，想问一下今天下午还有没有船票？我们一共二十二位。",
+          "direction": "（走到一旁打电话）（离录音手机较远）",
+          "label": "行程变更",
+          "numbers": "22人",
+          "hotwords": "青岫远途旅行社；李导"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "早这么打个电话问问，不就好了。",
+          "direction": "（压低声音）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "就是，早干什么去了。",
+          "direction": "（压低声音）（与上一句部分重叠）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "先别说了，听听他怎么讲。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "好消息啊，下午两点那班还有位置，我已经订上了。",
+          "direction": "（打完电话走回来）",
+          "label": "行程变更",
+          "numbers": "14:00",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丁",
+          "text": "下午坐船，那双廊怎么办？",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "双廊"
+        },
+        {
+          "speaker": "导游",
+          "text": "双廊挪到上午。九点出发，先去双廊，十一点半在那边吃午饭，一点半到码头，两点上船。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "9:00；11:30；13:30；14:00",
+          "hotwords": "双廊"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "那体验中心呢？",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "体验中心"
+        },
+        {
+          "speaker": "导游",
+          "text": "体验中心嘛，那个……",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "体验中心"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "不去了吧？",
+          "direction": "（打断）",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "不去了！",
+          "direction": "（几个人同时说，这句最清楚）",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "好好好，不去不去，就按行程单走。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "行程单"
+        },
+        {
+          "speaker": "游客丁",
+          "text": "李导，以后再有什么变动，先在群里说一声，大家都同意了再改。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "李导"
+        },
+        {
+          "speaker": "导游",
+          "text": "一定一定。那大家先回房间收拾一下，八点五十还在大堂集合。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "8:50",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "八点五十，记住了。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "8:50",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "八点五十，记住了，走吧。",
+          "direction": "（与上一句部分重叠）",
+          "label": "其他",
+          "numbers": "8:50",
+          "hotwords": ""
+        }
+      ]
+    },
+    {
+      "id": "G3-S2",
+      "title": "三小时变一小时",
+      "setting": "行程第三天上午十点，青岫远途旅行社的团刚从城门走进大理古城，李导在城门边的空地上把合同约定的三小时游览压缩成一小时，游客拿出合同要求按约定来，李导打电话给张经理并开了外放。",
+      "roles": [
+        "导游",
+        "游客甲",
+        "游客乙",
+        "游客丙",
+        "经理"
+      ],
+      "focus": "现场四人轮流抢话，与电话外放里的经理交替出现，经理有一长段连续讲话，游客还凑近手机插话；游客甲、游客乙是结伴报团的两个年轻同事，观点一致、说话方式几乎一样，宜由声线相近的两位同学扮演，用来测试说话人分离对电话声道、相似声音和插话的区分。",
+      "lines": [
+        {
+          "speaker": "导游",
+          "text": "好，各位，大理古城到了。大家注意听啊，现在十点整，十一点回到这个城门口集合，过时不候啊。",
+          "direction": "（举着小旗，站在城门边）",
+          "label": "行程变更",
+          "numbers": "10:00；11:00",
+          "hotwords": "大理古城"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "十一点？",
+          "direction": "（与上一句部分重叠）",
+          "label": "行程变更",
+          "numbers": "11:00",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "十一点？那不就一个小时？",
+          "direction": "（与上一句部分重叠）",
+          "label": "行程变更",
+          "numbers": "11:00；1小时",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "李导，行程单上写的是古城游览三个小时啊。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "3小时",
+          "hotwords": "李导；行程单；古城"
+        },
+        {
+          "speaker": "导游",
+          "text": "三个小时太长了，古城就这么大，一个小时逛下来足够了。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "3小时；1小时",
+          "hotwords": "古城"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "够不够，得我们自己说了算吧？",
+          "direction": "（与上一句部分重叠）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "对，够不够我们自己说了算。",
+          "direction": "（与上一句部分重叠）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "古城里头走来走去都差不多，逛那么久也没多大意思……",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "古城"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "有没有意思，是我们自己的事。",
+          "direction": "（打断）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "就是，钱都交了，凭什么少玩两个小时？",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "2小时",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "就是，凭什么？",
+          "direction": "（与上一句部分重叠）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "下午还要赶去丽江，走晚了路上车多，到酒店就……",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "丽江"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "行程单上写的是下午两点才出发。",
+          "direction": "（打断）",
+          "label": "行程变更",
+          "numbers": "14:00",
+          "hotwords": "行程单"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "对，下午两点，我也记得。",
+          "direction": "（与上一句部分重叠）",
+          "label": "行程变更",
+          "numbers": "14:00",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "我这儿带着合同呢，我念一下啊。",
+          "direction": "（从文件袋里拿出合同）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "合同"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "第三天：上午十点，抵达大理古城，自由游览，约三小时；中午在古城内自行用餐；下午两点，乘车前往丽江。",
+          "direction": "（照着合同念）",
+          "label": "行程变更",
+          "numbers": "第3天；10:00；3小时；14:00",
+          "hotwords": "大理古城；古城；丽江"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "你看，约三小时，白纸黑字写着呢。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "3小时",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "白纸黑字。",
+          "direction": "（与上一句部分重叠）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "那个约字，就是说大概嘛，又不是非得三个小时……",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "3小时",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "大概也不能从三个小时变成一个小时吧？",
+          "direction": "（打断）",
+          "label": "行程变更",
+          "numbers": "3小时；1小时",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "差太多了。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "差得也太多了。",
+          "direction": "（与上一句部分重叠）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "我这也是按公司的安排……",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "那你给公司打电话。",
+          "direction": "（打断）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "对，打电话，开外放，我们一起听。",
+          "direction": "（与上一句部分重叠）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "要得要得，我问问我们经理。",
+          "direction": "（拿出手机拨号，打开外放）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "经理",
+          "text": "喂，李导，什么事？",
+          "direction": "（电话外放）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "李导"
+        },
+        {
+          "speaker": "导游",
+          "text": "张经理，我开着外放呢。我这边带团在大理古城，客人说游览时间要按三个小时来。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "3小时",
+          "hotwords": "张经理；大理古城"
+        },
+        {
+          "speaker": "经理",
+          "text": "嗯，这个情况啊。李导可能是担心下午路上车多，想早点走，大家也理解一……",
+          "direction": "（电话外放）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "李导"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "张经理您好，我是团里的游客。",
+          "direction": "（凑近手机）（打断）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "张经理"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "合同上写的是古城自由游览约三小时，下午两点出发。我们的要求很简单：按合同来。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "3小时；14:00",
+          "hotwords": "合同；古城"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "按合同来！",
+          "direction": "（几个人同时说，这句最清楚）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "合同"
+        },
+        {
+          "speaker": "经理",
+          "text": "好，好，大家先别急，我听明白了。",
+          "direction": "（电话外放）（与上一句部分重叠）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "经理",
+          "text": "各位游客，我是青岫远途旅行社的张经理。刚才的情况我都听清楚了。合同上怎么写的，我们就怎么执行。今天大理古城的游览时间，就按三个小时来，大家放心逛，中午在古城里吃饭，下午两点再上车去丽江。去丽江的路上，也不会去任何行程单以外的地方。这件事是我们事先没有沟通好，给大家添麻烦了，我在这里向大家道个歉。",
+          "direction": "（电话外放）（连续说了一大段）",
+          "label": "行程变更",
+          "numbers": "3小时；14:00",
+          "hotwords": "青岫远途旅行社；张经理；合同；大理古城；古城；丽江；行程单"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "这还差不多。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "嗯，这还差不多。",
+          "direction": "（与上一句部分重叠）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "经理",
+          "text": "李导，你听到了吧？",
+          "direction": "（电话外放）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "李导"
+        },
+        {
+          "speaker": "导游",
+          "text": "听到了，听到了。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "经理",
+          "text": "以后行程上有任何调整，先跟公司报备，再跟客人商量，客人同意了才能改。",
+          "direction": "（电话外放）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "明白，张经理。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "张经理"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "张经理，还有个事。李导刚才说过时不候，这话我们听着不太舒服。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": "张经理；李导"
+        },
+        {
+          "speaker": "经理",
+          "text": "李导，你跟大家道个歉。",
+          "direction": "（电话外放）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": "李导"
+        },
+        {
+          "speaker": "导游",
+          "text": "对不起各位，刚才是我说话太急了。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "没事，说开了就好。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "没事没事，说开了就好。",
+          "direction": "（与上一句部分重叠）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "经理",
+          "text": "那各位玩得开心，有什么事随时让李导打给我。",
+          "direction": "（电话外放）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "李导"
+        },
+        {
+          "speaker": "导游",
+          "text": "好，那我再说一遍：下午一点五十，还是在这个城门口集合，两点准时上车。",
+          "direction": "（挂断电话）",
+          "label": "正常讲解",
+          "numbers": "13:50；14:00",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "古城里人多，大家看好自己的包。走散了就打我电话，或者在群里说一声。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": "古城"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "一点五十，城门口，记住了。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "13:50",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "走，先去逛逛。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "走走走，先逛逛再吃饭。",
+          "direction": "（与上一句部分重叠）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        }
+      ]
+    },
+    {
+      "id": "G3-S3",
+      "title": "酒店换成远山客栈",
+      "setting": "行程第一天晚上九点多，旅游车停在离大理古城较远的远山客栈门口，游客发现合同上的澄溪假日酒店被换掉，大理和丽江的游览顺序也被调换，游客代表与李导和随后赶来的张经理当面协商。",
+      "roles": [
+        "导游",
+        "经理",
+        "游客甲",
+        "游客乙",
+        "游客丙"
+      ],
+      "focus": "导游、经理、游客代表三方轮流交涉，游客甲、游客乙是一对说话腔调相近的姐妹，常抢着接话、同时附和；游客代表有一段很长的连续陈述，导游最后念一遍协议，用来测试说话人分离在多方协商、长段与短句交替时的稳定性。",
+      "lines": [
+        {
+          "speaker": "导游",
+          "text": "好，各位，到了到了。大家拿好行李下车，今晚就住这儿。",
+          "direction": "（晚上九点多，车停在客栈门口）",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "远山客栈？",
+          "direction": "（念门口的招牌）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "远山客栈"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "远山客栈？不是澄溪假日酒店吗？",
+          "direction": "（与上一句部分重叠）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "远山客栈；澄溪假日酒店"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "李导，合同上写的是澄溪假日酒店，走路十分钟就到古城。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "10分钟",
+          "hotwords": "李导；合同；澄溪假日酒店；古城"
+        },
+        {
+          "speaker": "导游",
+          "text": "澄溪那边今天满房了，临时换到这边，标准都是一样的，大家……",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "澄溪"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "一样？那这儿离古城多远？",
+          "direction": "（打断）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "古城"
+        },
+        {
+          "speaker": "导游",
+          "text": "开车嘛，二十多分钟。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "20多分钟",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "二十多分钟？那晚上还怎么去古城？",
+          "direction": "（与上一句部分重叠）",
+          "label": "行程变更",
+          "numbers": "20多分钟",
+          "hotwords": "古城"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "就是说嘛，我们姐妹就想晚上去古城逛逛。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "古城"
+        },
+        {
+          "speaker": "导游",
+          "text": "还有个事，跟大家说一下。明天的安排调一调：一早先去丽江，大理古城和洱海挪到第四天，到时候……",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "第4天",
+          "hotwords": "丽江；大理古城；洱海"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "等一下，顺序也换了？",
+          "direction": "（打断）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "怎么什么都换了？",
+          "direction": "（与上一句部分重叠）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "就是说嘛，怎么什么都换了？",
+          "direction": "（与上一句部分重叠）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "这个咋个说呢，丽江那边只有明天有房，所以只能……",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "丽江"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "订不上房是你们的问题，不能让我们来承担。",
+          "direction": "（打断）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "我也是下午才接到公司的通知……",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "下午就知道了？",
+          "direction": "（打断）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "下午就知道了，那怎么不早说？",
+          "direction": "（与上一句部分重叠）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "这样吧，李导，你把经理请过来，我们当面谈。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "李导"
+        },
+        {
+          "speaker": "导游",
+          "text": "我打个电话，张经理十分钟就到。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "10分钟",
+          "hotwords": "张经理"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "那我们就在大堂等。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "对，就在大堂等他。",
+          "direction": "（与上一句部分重叠）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "经理",
+          "text": "各位好，我是青岫远途旅行社的张经理，让大家久等了。",
+          "direction": "（约十分钟后）（快步走进大堂，边走边说）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "青岫远途旅行社；张经理"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "张经理，我是大家推的代表，先说一下情况。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "张经理"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "我们报的是大理丽江五日游，合同上写得清清楚楚：第一天晚上住澄溪假日酒店，就在大理古城边上；第二天游古城和洱海；第三天才去丽江。结果到了门口才知道，酒店换成了远山客栈，离古城开车要二十多分钟；明天的行程也换成了丽江。换酒店、换顺序，事先没有一个人跟我们商量，也没让我们签字确认。大家心里都不舒服。",
+          "direction": "（语速平稳）（连续说了一大段）",
+          "label": "行程变更",
+          "numbers": "5日游；第1天；第2天；第3天；20多分钟",
+          "hotwords": "大理；丽江；合同；澄溪假日酒店；大理古城；古城；洱海；远山客栈"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "对，一点都不舒服。",
+          "direction": "（与上一句部分重叠）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "经理",
+          "text": "明白明白，这事确实是我们做得不对。澄溪今天房间不够，是我们订房出了差错，所以……",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": "澄溪"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "出了差错就直接换？",
+          "direction": "（打断）",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "直接换，一声都不说？",
+          "direction": "（与上一句部分重叠）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "经理",
+          "text": "是，应该提前说。我先讲讲处理办法，大家听听行不行。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "经理",
+          "text": "今晚先在远山客栈住一晚，房费差价，每间房退一百二十块。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "1晚；120元",
+          "hotwords": "远山客栈；差价"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "一百二？",
+          "direction": "（与上一句部分重叠）",
+          "label": "费用",
+          "numbers": "120元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "一百二不够吧，澄溪一晚上要四百多呢。",
+          "direction": "（与上一句部分重叠）",
+          "label": "费用",
+          "numbers": "120元；400多元",
+          "hotwords": "澄溪"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "这边一晚才两百出头，差价起码两百。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "200多元；200元",
+          "hotwords": "差价"
+        },
+        {
+          "speaker": "经理",
+          "text": "好，那就按实际差价，每间房退二百。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "200元",
+          "hotwords": "差价"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "差价是差价。换顺序、多跑路，怎么补偿？",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": "差价"
+        },
+        {
+          "speaker": "经理",
+          "text": "每位游客再补偿一百元，明天上车前转给大家。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "100元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "还有，古城和洱海挪到第四天，时间会不会压缩？",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "第4天",
+          "hotwords": "古城；洱海"
+        },
+        {
+          "speaker": "经理",
+          "text": "不会。第四天全天都在大理，时间一点不少，当晚就住澄溪假日酒店。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "第4天",
+          "hotwords": "大理；澄溪假日酒店"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "那今天晚上想去古城呢？",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "古城"
+        },
+        {
+          "speaker": "经理",
+          "text": "今晚想去古城的，十点门口坐车，免费送过去，十一点半接回来。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "22:00；23:30",
+          "hotwords": "古城"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "这个可以。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "这个可以，这个可以。",
+          "direction": "（与上一句部分重叠）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "张经理，这些麻烦写成书面的，您和李导签个字，我们拍照留底。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "张经理；李导"
+        },
+        {
+          "speaker": "经理",
+          "text": "没问题，我现在就写。",
+          "direction": "（向前台借了纸笔）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "我念一遍：今晚住远山客栈，每间房退差价二百元；每人补偿一百元；第四天全天游大理古城和洱海，当晚住澄溪假日酒店；今晚十点免费送古城，十一点半接回。",
+          "direction": "（拿着经理写好的纸念）",
+          "label": "费用",
+          "numbers": "200元；100元；第4天；22:00；23:30",
+          "hotwords": "远山客栈；差价；大理古城；洱海；澄溪假日酒店；古城"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "可以，就按这个来。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "不过话说在前头：这个方案我们接受，但是保留投诉的权利。哪一条没落实，我们会向旅行社投诉，也会打一二三零一热线。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "12301",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "对，保留投诉的权利。",
+          "direction": "（与上一句部分重叠）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "保留投诉的权利。",
+          "direction": "（几个人同时说，这句最清楚）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "经理",
+          "text": "理解理解，我们一定按上面写的落实。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "大家先办入住，房卡我来发。三零六，两位姐姐的。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "306；2人",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "谢谢李导。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "李导"
+        },
+        {
+          "speaker": "导游",
+          "text": "今晚十点门口坐车，别忘了啊。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "22:00",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "十点门口，忘不了。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "22:00",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "忘不了，忘不了。",
+          "direction": "（与上一句部分重叠）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        }
+      ]
+    }
+  ]
+}

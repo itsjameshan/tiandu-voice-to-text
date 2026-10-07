@@ -1,0 +1,54 @@
+{
+  "note": "话术类别定义（来自剧本写作规范）。flag=true 的类别在输出中写成“疑似·类别”；flag=false 的类别不标注（标签留空）。工具只提示、不判定，所有标注必须人工复核。count 为 24 个剧本 1055 行台词中的出现次数。",
+  "labels": [
+    {
+      "name": "购物安排",
+      "flag": true,
+      "output": "疑似·购物安排",
+      "definition": "推荐、安排、推销购物或进店，商品介绍，游客对购物的回应",
+      "count": 183
+    },
+    {
+      "name": "费用",
+      "flag": true,
+      "output": "疑似·费用",
+      "definition": "价格、自费项目、团费、退款、小费等金额相关",
+      "count": 208
+    },
+    {
+      "name": "行程变更",
+      "flag": true,
+      "output": "疑似·行程变更",
+      "definition": "取消、压缩、调换行程或时间安排变动",
+      "count": 119
+    },
+    {
+      "name": "服务态度",
+      "flag": true,
+      "output": "疑似·服务态度",
+      "definition": "催促、敷衍、不耐烦，以及对态度的抱怨和道歉",
+      "count": 110
+    },
+    {
+      "name": "威胁消费",
+      "flag": true,
+      "output": "疑似·威胁消费",
+      "definition": "以行程、住宿、服务等为条件，含蓄地施压要求消费（措辞温和，无辱骂、无人身威胁）",
+      "count": 41
+    },
+    {
+      "name": "正常讲解",
+      "flag": false,
+      "output": "",
+      "definition": "景点介绍、安全提醒、集合通知等正常导游工作",
+      "count": 155
+    },
+    {
+      "name": "其他",
+      "flag": false,
+      "output": "",
+      "definition": "寒暄、问路、附和、与上面无关的话",
+      "count": 239
+    }
+  ]
+}

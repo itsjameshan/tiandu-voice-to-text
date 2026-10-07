@@ -1,0 +1,1135 @@
+{
+  "group": 4,
+  "scripts": [
+    {
+      "id": "G4-S1",
+      "title": "《云上花间》含不含",
+      "setting": "丽江一家酒店的大堂，行程第三天晚饭后，导游通知晚上的自费演出，游客拿出合同和导游核对条款与价格。",
+      "roles": [
+        "导游",
+        "游客甲",
+        "游客乙",
+        "经理"
+      ],
+      "focus": "演出单价、团费、定金、尾款、差价、退款、人数、排数、房间号、时间日期和合同编号密集出现，同一金额与编号换用多种口语读法，并穿插“一分没少”“十分抱歉”等非数字用法，练习数字识别与规范化。",
+      "lines": [
+        {
+          "speaker": "导游",
+          "text": "各位，跟大家说一下今晚的安排。",
+          "direction": "（拍手示意大家安静）",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "今晚八点有一场演出，叫《云上花间》，来丽江的客人大多会去看，票价每人二百八十元。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "20:00；280元",
+          "hotwords": "云上花间；丽江"
+        },
+        {
+          "speaker": "导游",
+          "text": "要看的到我这儿登记，七点二十在大堂集合，七点半发车。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "19:20；19:30",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "大家多少支持一下，报名的要是不到十五个人，这个车就不太好协调了。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "15人",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "那我们家三个人先报了啊，刚才已经扫码转给你八百四了。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "3人；840元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "等一下，陈导，你先莫急收钱。我记得合同里写着，这个演出是含的。",
+          "direction": "（从包里拿出合同）",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": "陈导"
+        },
+        {
+          "speaker": "导游",
+          "text": "含的？不会吧，演出一直都是自费项目啊。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": "自费项目"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "你看嘛，合同编号 HT 二零二六 零零零零 幺幺八，第二页，第七条。",
+          "direction": "（翻开合同）",
+          "label": "费用",
+          "numbers": "HT-20260000-118；第2页；第7条",
+          "hotwords": "合同编号"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "上面写着：第三天晚上，观看《云上花间》，B区座位，费用已含在团费里。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "第3天",
+          "hotwords": "云上花间；B区；团费"
+        },
+        {
+          "speaker": "导游",
+          "text": "嗯……是写了。可是那个，我拿到的单子上写的是自费，二百八一位。",
+          "direction": "（凑近看合同，停顿约两秒）",
+          "label": "费用",
+          "numbers": "280元",
+          "hotwords": "自费"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "那就怪了。我们团费每人三千六百八，定金一千，尾款二千六百八十元，一分没少啊。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "3680元；1000元；2680元",
+          "hotwords": "团费；定金；尾款"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "三个人一共一万一千零四十，收据都在我手机里。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "3人；11040元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "您别着急，我马上打电话问问公司。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "喂，经理，是我。我这个团二十六个人，客人说合同里含《云上花间》。",
+          "direction": "（拨通电话，开免提）",
+          "label": "费用",
+          "numbers": "26人",
+          "hotwords": "云上花间"
+        },
+        {
+          "speaker": "经理",
+          "text": "你把合同号报一下，我查查。",
+          "direction": "（电话免提，声音较远）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "合同号"
+        },
+        {
+          "speaker": "导游",
+          "text": "HT 杠 二零二六 四个零 杠 一一八。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "HT-20260000-118",
+          "hotwords": ""
+        },
+        {
+          "speaker": "经理",
+          "text": "嗯，找到了。这个团是九月二十八号签的，签的是品质团。",
+          "direction": "（电话免提）",
+          "label": "费用",
+          "numbers": "9月28日",
+          "hotwords": "品质团"
+        },
+        {
+          "speaker": "经理",
+          "text": "品质团含演出，含的是B区，一百八十块一张。你说的二百八，是A区的价格。",
+          "direction": "（电话免提）",
+          "label": "费用",
+          "numbers": "180元；280元",
+          "hotwords": "品质团；B区；A区"
+        },
+        {
+          "speaker": "导游",
+          "text": "哦，那我手上这张二百八的单子是……",
+          "direction": "",
+          "label": "费用",
+          "numbers": "280元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "经理",
+          "text": "那是经济团的价目单，你拿错了。经济团团费两千八百八，演出是自费的。",
+          "direction": "（电话免提）",
+          "label": "费用",
+          "numbers": "2880元",
+          "hotwords": "经济团；价目单；团费；自费"
+        },
+        {
+          "speaker": "经理",
+          "text": "你们团看B区不用另外收钱，想换A区，补一百块差价就行。",
+          "direction": "（电话免提）",
+          "label": "费用",
+          "numbers": "100元",
+          "hotwords": "B区；A区；差价"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "我就说嘛，合同上白纸黑字写着的。",
+          "direction": "（与上一句部分重叠）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "各位，实在不好意思，是我拿错单子了，十分抱歉。",
+          "direction": "（挂断电话）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "那我们刚才转的八百四，咋个算？",
+          "direction": "",
+          "label": "费用",
+          "numbers": "840元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "您家三位要是就看B区，八百四全部退给您。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "3人；840元",
+          "hotwords": "B区"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "A区是前面几排？",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "A区"
+        },
+        {
+          "speaker": "导游",
+          "text": "A区是第一排到第十排，B区是第十一排到第二十五排，也看得清楚。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "第1排；第10排；第11排；第25排",
+          "hotwords": "A区；B区"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "老人眼神不太好，我们还是换A区吧。补一百，三个人就是三百。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "100元；3人；300元",
+          "hotwords": "A区"
+        },
+        {
+          "speaker": "导游",
+          "text": "好，那八百四里面退您五百八……不是，我是说退五百四，留下三百。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "840元；580元；540元；300元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "八百四减五百四，三百，对的对的。",
+          "direction": "（低声算）",
+          "label": "费用",
+          "numbers": "840元；540元；300元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "那我们其他人只看B区的，是不是一分钱都不用出？",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": "B区"
+        },
+        {
+          "speaker": "导游",
+          "text": "对，其他二十三位看B区，不用交钱。八零六房间的大姐也转了两百八，待会儿退给她。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "23人；806房间；280元",
+          "hotwords": "B区"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "还有，你刚才说不到十五个人车子就不好协调，这话怎么说？",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "15人",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "那是我说得不对。二十六个人都去，车子肯定安排好。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "26人",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "时间我再说一遍：七点二十大堂集合，差十分八点到剧场，在二号门取票。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "19:20；19:50；2号门",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "演出要多长时间？",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "七十分钟左右，九点十分结束，九点四十以前回到酒店。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "70分钟；21:10；21:40",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "今晚回来得晚，明天早上出发从八点改到八点半。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "8:00；8:30",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "要得。那五百四你原路转回来就行，我们住幺二幺八。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "540元；1218",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "好，一二一八房间，五百四，现在就转。",
+          "direction": "（低头在本子上记）",
+          "label": "费用",
+          "numbers": "1218房间；540元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "陈导，再确认一下，合同上的第三天就是今天十月十五号吧？",
+          "direction": "",
+          "label": "其他",
+          "numbers": "第3天；10月15日",
+          "hotwords": "陈导"
+        },
+        {
+          "speaker": "导游",
+          "text": "对，今天十五号，第三天，没错。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "15日；第3天",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "行，那我没意见了。下回单子可要先看清楚啊。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "一定一定。我把账再报一遍：刚才一共收了四位，一千一百二。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "4人；1120元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "现在退出去八百二，您家五百四，八零六的大姐两百八，留下三百，是A区的差价。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "820元；540元；806；280元；300元",
+          "hotwords": "A区；差价"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "一千一百二减八百二，三百，没错。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "1120元；820元；300元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "好，大家先回房间歇会儿，七点二十大堂见。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "19:20",
+          "hotwords": ""
+        }
+      ]
+    },
+    {
+      "id": "G4-S2",
+      "title": "没坐的钱怎么退",
+      "setting": "大理附近一处湖边景区的出口停车场，下午四点多，部分游客没坐望湖索道或环湖电瓶车，大家围着导游算退款。",
+      "roles": [
+        "导游",
+        "游客甲",
+        "游客乙",
+        "游客丙"
+      ],
+      "focus": "团队价与门市价、人数乘单价、多笔相加、算重后重算、百分比手续费、现金点数和时间调整，集中练习口算场景中金额与人数的识别与规范化。",
+      "lines": [
+        {
+          "speaker": "导游",
+          "text": "大家注意一下，人到齐了我们四点半出发，还有一刻钟，五点四十左右到大理吃晚饭。",
+          "direction": "（用小喇叭）",
+          "label": "正常讲解",
+          "numbers": "16:30；15分钟；17:40",
+          "hotwords": "大理"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "陈导，先别急着走，我们几个没坐索道的，钱咋个算？",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": "陈导"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "对，还有我们三个，环湖电瓶车也没坐，是走路过去的。",
+          "direction": "（与上一句部分重叠）",
+          "label": "费用",
+          "numbers": "3人",
+          "hotwords": "环湖电瓶车"
+        },
+        {
+          "speaker": "导游",
+          "text": "好好好，一个一个来。早上在车上收的是索道加电瓶车，每人一百九，一共二十二个人。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "190元；22人",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "望湖索道团队价一百四，环湖电瓶车团队价五十，加起来正好一百九。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "140元；50元；190元",
+          "hotwords": "望湖索道；团队价；环湖电瓶车"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "团队价？售票处牌子上索道写的是一百六，电瓶车六十，要退就该按牌子上的退。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "160元；60元",
+          "hotwords": "团队价"
+        },
+        {
+          "speaker": "导游",
+          "text": "牌子上那是门市价。我们买的是团队价，退也只能按一百四和五十来退。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "140元；50元",
+          "hotwords": "门市价；团队价"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "行，那先把人数理清楚。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "没坐索道的，我跟我爱人两个，后排两位老人家，一共四个。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "2人；2人；4人",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "排队的时候，屏幕上显示前面还有一百五十一个人，等了四十分钟都没排上，你也没过来管一下。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "151人；40分钟",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "这个怪我，当时在山下换票没顾上，跟您道个歉。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "没坐电瓶车的就我们三个，沿着湖边走了将近一个小时。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "3人；1小时",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "我是索道和电瓶车都没坐，中午有点晕车，一直在车上歇着。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "好，那我来算。没坐索道的四位，加上这位大姐，五个人，一人一百四，就是七百。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "4人；5人；140元；700元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "没坐电瓶车的三位，也加上大姐，四个人，一人五十，两百。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "3人；4人；50元；200元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "七百加两百，一共退九百。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "700元；200元；900元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "等一下，不对吧。大姐啥都没坐，该退一百九，你没加她这一百九，应该是一千零九十。",
+          "direction": "（低头按手机计算器）",
+          "label": "费用",
+          "numbers": "190元；190元；1090元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "一千零九十？那……我再算算。",
+          "direction": "（停顿约两秒）",
+          "label": "费用",
+          "numbers": "1090元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "不是不是，你这是算重了。大姐已经算在那五个人和四个人里头了，不能再加一遍。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "5人；4人",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "哦，对对对，是我算重了，不好意思啊。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "那我的单独算：一百四加五十，一百九，对吧？",
+          "direction": "",
+          "label": "费用",
+          "numbers": "140元；50元；190元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "没错。九百里头，大姐一百九，您家两位索道二百八，后排两位老人二百八，电瓶车三位一百五。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "900元；190元；2人；280元；2人；280元；3人；150元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "一百九加二百八，再加二百八，七百五，再加一百五，九百。嗯，这回对上了。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "190元；280元；280元；750元；150元；900元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "不过有个情况，没用的索道票要去窗口退，景区要扣百分之十的手续费。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "10%",
+          "hotwords": "手续费"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "还要扣钱？扣多少？",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "一张一百四，扣十四块，退一百二十六。五张就是……六百三十。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "140元；14元；126元；5张；630元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "这不合理嘛。排了四十分钟队，又不是我们不想坐，手续费凭啥我们出？",
+          "direction": "",
+          "label": "费用",
+          "numbers": "40分钟",
+          "hotwords": "手续费"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "就是说嘛，要扣也该旅行社出，你问问公司。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "我问过公司了，五张票的手续费一共七十块，我们拾光滇程旅行社出，大家还是按一百四全额退。",
+          "direction": "（走到一旁打电话，约半分钟后回来）",
+          "label": "费用",
+          "numbers": "5张；70元；140元",
+          "hotwords": "手续费；拾光滇程旅行社"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "这还差不多。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "那就还是九百。现在四点二十，我五点以前去窗口退那五张索道票。电瓶车是上车刷卡的，钱本来就在我这儿。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "900元；16:20；17:00；5张",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "那钱是现在给，还是晚上给？",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "现在就给。您家两位，二百八，现金，您点一下。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "2人；280元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "一百，两百，两百二，两百四，两百六，两百八。对的。",
+          "direction": "（边数边念）",
+          "label": "费用",
+          "numbers": "100元；200元；220元；240元；260元；280元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "我们三个电瓶车的一百五，扫码转我就行。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "3人；150元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "好，一百五十块，转过去了，您看看到账没有。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "150元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "到了，一百五十整。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "150元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "那我的一百九呢？",
+          "direction": "",
+          "label": "费用",
+          "numbers": "190元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "大姐，您的一百九给现金：一百的一张，五十的一张，二十的两张，您收好。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "190元；100元；1张；50元；1张；20元；2张",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "收到了，谢谢陈导。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "陈导"
+        },
+        {
+          "speaker": "导游",
+          "text": "后排两位老人家的二百八，我上车再给。一共九百，分四笔：一百九、二百八、二百八、一百五。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "2人；280元；900元；4笔；190元；280元；280元；150元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "行，那你赶紧去退票，别过了五点。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "17:00",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "好。我四点四十回来，出发时间从四点半改到四点五十，晚饭也从五点四十改到六点。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "16:40；16:30；16:50；17:40；18:00",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "要得，我们先上车等你。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        }
+      ]
+    },
+    {
+      "id": "G4-S3",
+      "title": "返程车上对账单",
+      "setting": "行程最后一天下午，从石林返回昆明的大巴上，导游逐项核对一对夫妻的自费账单，游客记下各类号码准备咨询。",
+      "roles": [
+        "导游",
+        "游客甲",
+        "游客乙",
+        "司机"
+      ],
+      "focus": "自费单价、合计、预交、九折、带小数的金额、日期、时间、里程，以及导游证号、旅行社电话、合同编号、订单号和热线号码的多种读法（含“幺”“四个零”“两个六两个八”），并夹有“一五一十”“一分不少”等不应转成阿拉伯数字的说法，集中练习号码与金额的规范化。",
+      "lines": [
+        {
+          "speaker": "司机",
+          "text": "各位，咱们从石林出来了，现在三点二十，离昆明还有八十多公里，前面服务区停十五分钟。",
+          "direction": "（用车载扩音器）",
+          "label": "正常讲解",
+          "numbers": "15:20；80多公里；15分钟",
+          "hotwords": "石林；昆明"
+        },
+        {
+          "speaker": "导游",
+          "text": "趁这会儿，我把大家这六天五晚的自费账单对一下，那个，有问题现在就提。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "6天5晚",
+          "hotwords": "自费"
+        },
+        {
+          "speaker": "导游",
+          "text": "先从前排开始。大哥大姐，您二位的单子在这儿。",
+          "direction": "（走到前排）",
+          "label": "费用",
+          "numbers": "2人",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "好，你念，我对着本子看。",
+          "direction": "（拿出笔记本）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "第一天在昆明，你们预交了一千二。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "第1天；1200元",
+          "hotwords": "昆明；预交"
+        },
+        {
+          "speaker": "导游",
+          "text": "十月十四号骑马，每人二百，两位四百；十五号游船，每人一百二，两位二百四。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "10月14日；200元；2人；400元；15日；120元；2人；240元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "对，四百，二百四，跟我本子上一样。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "400元；240元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "十六号晚上泡温泉，每人一百六十八，两位三百三十六。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "16日；168元；2人；336元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "等等，温泉那天你在车上说的是打九折。",
+          "direction": "（与上一句部分重叠）",
+          "label": "费用",
+          "numbers": "9折",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "九折是满十个人才有，那天报名的只有九个人，没够。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "9折；10人；9人",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "你当时说的是报了就九折，没说要满十个人，车上好些人都听见了。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "9折；10人",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "这个是我没说清楚，是我的问题。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "按九折算，一百六十八就是一百五十一块二，两个人三百零二块四。",
+          "direction": "（按手机计算器）",
+          "label": "费用",
+          "numbers": "9折；168元；151.2元；2人；302.4元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "跟三百三十六一比，差了三十三块六。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "336元；33.6元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "嗯，差三十三块六。这个我回去跟公司申请，批下来就退给您。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "33.6元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "再往下，十七号的篝火晚会，每人八十，两位一百六。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "17日；80元；2人；160元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "篝火晚会那天晚上下雨，不是临时取消了吗？",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "哎，对对，取消了，这一百六不该收，我划掉。",
+          "direction": "（翻看账单）",
+          "label": "费用",
+          "numbers": "160元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "最后是旅拍，就大姐拍了，三百九十九。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "399元",
+          "hotwords": "旅拍"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "那我算一下总数：四百、二百四、三百三十六、三百九十九，一共是……一千三百七十五。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "400元；240元；336元；399元；1375元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "对，一千三百七十五，减掉预交的一千二，还要补一百七十五。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "1375元；1200元；175元",
+          "hotwords": "预交"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "要是按九折，就该补一百四十一块四，四毛钱就算了。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "9折；141.4元；0.4元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "大姐，九折我现在做不了主，今天先按一百七十五收，公司批了，三十三块六一分不少退给您。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "9折；175元；33.6元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "那行，钱我先交。不过有几个号码我得记一下，回去打幺二三零幺问问，到底该咋个算。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "12301",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "可以可以，您问，这是您的权利。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "陈导，先说你的导游证号。",
+          "direction": "（拿起笔）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "陈导；导游证号"
+        },
+        {
+          "speaker": "导游",
+          "text": "YN，零零零零，三七二一。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "YN-0000-3721",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "YN，四个零，三七二幺，是这个吧？",
+          "direction": "（边写边念）",
+          "label": "其他",
+          "numbers": "YN-0000-3721",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "对。旅行社电话是零八七一 零零零零 六六八八，拾光滇程旅行社。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "0871-0000-6688",
+          "hotwords": "拾光滇程旅行社"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "零八七幺，四个零，然后是两个六两个八？",
+          "direction": "",
+          "label": "其他",
+          "numbers": "0871-0000-6688",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "对，六六八八。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "6688",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "合同编号呢？我们那份合同没带在身上。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "合同编号"
+        },
+        {
+          "speaker": "导游",
+          "text": "合同编号是 HT 杠 二零二六零零零零 杠 一一八。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "HT-20260000-118",
+          "hotwords": "合同编号"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "HT，二零二六，四个零，幺幺八。",
+          "direction": "（边写边念）",
+          "label": "其他",
+          "numbers": "HT-20260000-118",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "还有订单号，账单上印着呢，我念啊：DD 零零零零 五五六六。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "DD-0000-5566",
+          "hotwords": "订单号"
+        },
+        {
+          "speaker": "导游",
+          "text": "对，DD 杠 四个零 杠 五五六六，就是这个。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "DD-0000-5566",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "打一二三零一不行的话，打一二三四五也可以。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "12301；12345",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "都可以。大哥，您直接打我们旅行社电话也行，我回去也会一五一十跟公司说清楚。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "好，那今天先补一百七十五，你给我写个收条，写上十月十八号。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "175元；10月18日",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "好，收条上写：今收到一百七十五元整，二零二六年十月十八日，后面再写上我的导游证号。",
+          "direction": "（低头写收条）",
+          "label": "费用",
+          "numbers": "175元；2026年10月18日",
+          "hotwords": "导游证号"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "一百七十五，转过去了。",
+          "direction": "（扫码付款）",
+          "label": "费用",
+          "numbers": "175元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "收到了。差价那三十三块六，公司批了以后，一般七个工作日到账。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "33.6元；7个工作日",
+          "hotwords": "差价"
+        },
+        {
+          "speaker": "司机",
+          "text": "服务区到了，停十五分钟，三点五十准时开车，大家贵重物品随身带好。",
+          "direction": "（用车载扩音器）",
+          "label": "正常讲解",
+          "numbers": "15分钟；15:50",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "到昆明大概四点四十，下车前大家把账单收好。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "16:40",
+          "hotwords": "昆明"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "号码都记齐了，回去先打电话问问，九折到底算不算。",
+          "direction": "（压低声音，对游客乙）",
+          "label": "费用",
+          "numbers": "9折",
+          "hotwords": ""
+        }
+      ]
+    }
+  ]
+}

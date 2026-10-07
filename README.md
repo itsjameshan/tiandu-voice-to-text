@@ -20,3 +20,18 @@
 - 剧本中的人物、旅行社、店铺、证号和电话全部为虚构，不含任何真实投诉录音或个人信息。
 - 项目介绍视频的配音为 AI 合成，所用模型 matcha-icefall-zh-baker 基于标贝（Baker）数据集训练，该数据集**仅限非商业用途**。详见 `04_项目介绍视频/模型说明/` 和 HANDOFF.md 第 14 节。
 - 语音模型文件（约 700 MB）没有放进仓库，下载地址见 HANDOFF.md 第 14.4 节。
+
+## 用 Claude Code 搭建工具
+
+开发用的资料在下面这几处，Claude Code 打开仓库时会自动读取 `CLAUDE.md`。开发以 `CLAUDE.md`、`docs/`、`data/` 为准；`HANDOFF.md` 和 `01_`—`04_` 目录是完整交接包，供查背景。
+
+| 路径 | 内容 |
+|---|---|
+| [CLAUDE.md](CLAUDE.md) | 给 Claude Code 的项目说明：目标、红线、关键技术决定、工作方式 |
+| [docs/build_spec.md](docs/build_spec.md) | 开发规格：八步模块、统一中间格式、界面、Word 初稿、测评、测试与验收、部署、分阶段计划，以及 2026-10-07 实测过的模型和代码 |
+| [docs/handoff_slim.md](docs/handoff_slim.md) | 交接文档精简版（只留开发和部署需要的章节） |
+| [docs/script_spec.md](docs/script_spec.md) | 剧本写作规范（话术类别定义、数字写法） |
+| [docs/start_with_claude_code.md](docs/start_with_claude_code.md) | 怎么交给 Claude Code 开工，以及开工指令 |
+| [data/](data/) | 开发用数据：24 个虚构剧本、台词表、热词表、热词变体、虚构名称、录音计划、类别定义（见 [data/README.md](data/README.md)） |
+
+学生按剧本录的录音只在机房或老师电脑上处理，不要传进这个仓库；任何时候都不要放入真实投诉录音或真实个人信息。
