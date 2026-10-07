@@ -130,3 +130,23 @@ def _check_labels(labels: list[str]) -> None:
     unknown = [name for name in labels if name not in LABEL_NAMES]
     if unknown or not labels:
         raise ValueError(f"meta.json 的 labels 里有不认识的类别：{unknown}，只能是：{'、'.join(LABEL_NAMES)}")
+
+
+def build_baseline_model(vocab_size: int, num_classes: int, max_len: int):
+    """基线模型（字级卷积网络），第 6、7 组的模型都从这里出发。TensorFlow 只在这里面导入。
+
+    结构：字编号 → Embedding（每个字变成 64 维向量）→ Conv1D（128 个宽度为 3 的卷积核，看相邻 3 个字）
+          → GlobalMaxPooling1D（每个卷积核只留最强的反应）→ Dense（7 个类别的概率）。
+    vocab_size：字表大小（含 0 补位、1 未知字）；num_classes：类别数（7）；max_len：每句取几个字。
+    """
+    import tensorflow as tf
+
+    model = tf.keras.Sequential([
+        tf.keras.Input(shape=(max_len,), dtype="int32"),
+        tf.keras.layers.Embedding(vocab_size, 64),
+        tf.keras.layers.Conv1D(128, 3, activation="relu"),
+        tf.keras.layers.GlobalMaxPooling1D(),
+        tf.keras.layers.Dense(num_classes, activation="softmax"),
+    ])
+    model.compile(optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
+    return model

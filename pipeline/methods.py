@@ -111,14 +111,7 @@ def get_method(slot: str, name: str) -> Callable:
 def load_all() -> None:
     """导入各步骤模块和各组文件，让里面的做法都登记进来。可以重复调用（模块只会导入一次）。"""
     for module_name in _METHOD_MODULES:
-        try:
-            importlib.import_module(module_name)
-        except ModuleNotFoundError as err:
-            # 临时容错：这些步骤模块和 pipeline/groups 还没写好时先跳过。
-            # 只跳过“模块本身不存在”；模块里面导入别的东西失败，照样报错，不能藏起来。
-            # TODO（Task 12）：所有步骤和各组文件都写好后，改成直接导入并删掉这段容错。
-            if err.name != module_name:
-                raise
+        importlib.import_module(module_name)
 
 
 def resolve(cfg: dict) -> dict[str, Callable]:
