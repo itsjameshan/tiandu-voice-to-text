@@ -62,4 +62,7 @@ python\python.exe tools\ingest_pool.py --pool D:\data_pool
 
 课程结束、答辩后发布 `v1.0.0`，就是"交给别人用"的版本。
 
-也可以不发 Release，只手动构建一次测试版：**Actions** → "构建 Windows 便携包" → **Run workflow**。
+更简单的做法（一步完成）：**Actions** → 左边选"构建 Windows 便携包" → 右边 **Run workflow** → 分支选 `main` →
+"发布版本号"填 `v0.3.0`（或 `v0.3.0-week9`）→ 绿色按钮 **Run workflow**。约 15 分钟后自动建好标签和 Release，zip 在 Assets 里。
+
+"发布版本号"留空就只构建一次测试版，不发布：zip 在这次运行页面最下面的 **Artifacts** 里（保留 30 天，需要登录才能下载）。
