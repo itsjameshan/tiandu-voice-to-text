@@ -8,6 +8,7 @@ from conftest import ROOT
 
 from pipeline import schema
 from pipeline.schema import (
+    CSV_NOTICE_HEADER,
     FIELDS,
     HEADERS,
     NOTICE,
@@ -128,8 +129,8 @@ def test_csv_only_writes_optional_columns_that_appear(tmp_path):
     path = tmp_path / "s.csv"
     write_csv(path, segments)
     header = path.read_text(encoding="utf-8-sig").splitlines()[0].split(",")
-    # new_segment 默认带 review，所以有“复核结论”一列；没出现过的可选字段不写
-    assert header == ["开始时间（秒）", "结束时间（秒）", "说话人", "文字内容", "标签", "复核结论"]
+    # new_segment 默认带 review，所以有“复核结论”一列；没出现过的可选字段不写；最后一列是说明
+    assert header == ["开始时间（秒）", "结束时间（秒）", "说话人", "文字内容", "标签", "复核结论", CSV_NOTICE_HEADER]
 
 
 def test_csv_list_and_correction_format(tmp_path):
@@ -193,7 +194,7 @@ def test_read_csv_bad_number_is_clear(tmp_path):
 def test_empty_segment_list_csv(tmp_path):
     path = tmp_path / "empty.csv"
     write_csv(path, [])
-    assert path.read_text(encoding="utf-8-sig").splitlines() == ["开始时间（秒）,结束时间（秒）,说话人,文字内容,标签"]
+    assert path.read_text(encoding="utf-8-sig").splitlines() == [f"开始时间（秒）,结束时间（秒）,说话人,文字内容,标签,{CSV_NOTICE_HEADER}"]
     assert read_csv(path) == []
 
 
@@ -206,3 +207,18 @@ def test_schema_light_import():
     code = ("import sys; import pipeline.schema; "
             "assert not {'sherpa_onnx', 'gradio', 'tensorflow'} & set(sys.modules)")
     subprocess.run([sys.executable, "-c", code], check=True, cwd=ROOT)
+
+
+def test_csv_marks_notice_and_machine_generated(tmp_path):
+    """单独下载的 CSV 也要写明"识别可能有误……必须人工复核"和"由人工智能技术自动生成"（红线第 4、6 条）。
+
+    写在最后一列的表头里：没有段落时也在，用 Excel 排序、筛选也不会丢；读回时这一列忽略。
+    """
+    from pipeline.schema import GENERATED_BY, NOTICE, new_segment, read_csv, write_csv
+
+    for segments in ([], [new_segment(0.0, 1.5, speaker="说话人1", text="今天去石林", label="疑似·费用")]):
+        path = tmp_path / f"segments_{len(segments)}.csv"
+        write_csv(path, segments)
+        text = path.read_text(encoding="utf-8-sig")
+        assert NOTICE in text and GENERATED_BY in text
+        assert read_csv(path) == segments

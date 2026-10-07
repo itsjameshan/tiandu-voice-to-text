@@ -310,3 +310,30 @@ def test_tf_save_and_load_roundtrip(tmp_path):
         labels = methods.get_method("classify", "tf_model")(texts[:5], {"paths": {"models": str(tmp_path)}})
     assert labels == result
     assert not any("关键词规则" in str(w.message) for w in caught)
+
+
+def test_broken_tensorflow_reported_as_load_failure(tmp_path, monkeypatch):
+    """TensorFlow 装坏了（Windows 上常见"DLL load failed"，也是 ImportError）：模型文件明明都在，
+    提示要说"加载失败"和原因，不能说"没有找到训练好的分类模型"，免得同学去找本来就在的文件。"""
+    import builtins
+    import warnings
+
+    from pipeline import step6_classify, tf_classifier
+
+    for name in tf_classifier.MODEL_FILES:
+        (tmp_path / name).write_text("{}", encoding="utf-8")
+    real_import = builtins.__import__
+
+    def broken_tf(name, *args, **kwargs):
+        if name == "tensorflow":
+            raise ImportError("DLL load failed while importing _pywrap_tensorflow_internal")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(tf_classifier, "is_tf_available", lambda: True)
+    monkeypatch.setattr(builtins, "__import__", broken_tf)
+    with warnings.catch_warnings(record=True) as records:
+        warnings.simplefilter("always")
+        labels = step6_classify.classify_with_model(["这个手镯今天优惠价两千八百块"], {}, tmp_path)
+    text = " ".join(str(r.message) for r in records)
+    assert "加载失败" in text and "DLL load failed" in text and "没有找到" not in text
+    assert len(labels) == 1  # 退回关键词规则，照样出结果

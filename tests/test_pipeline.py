@@ -58,3 +58,19 @@ def test_pipeline_silence_with_noisereduce(make_audio, tmp_path):
     segments, meta = run_pipeline(str(wav), {"methods": {"denoise": "noisereduce"}, "out_dir": str(tmp_path / "run")})
     assert segments == []
     assert meta["message"] == "没有检测到人声，请检查录音"
+
+
+def test_capture_warnings_keeps_only_notices():
+    """capture_warnings 只收集工具自己发的提示（UserWarning，如"改用关键词规则"），去掉重复；
+    第三方库的 RuntimeWarning 这类不收，免得混进摘要。"""
+    import warnings
+
+    from pipeline import capture_warnings
+
+    def work(x):
+        warnings.warn("分类模型用不了，改用关键词规则", UserWarning)
+        warnings.warn("分类模型用不了，改用关键词规则", UserWarning)
+        warnings.warn("invalid value encountered in divide", RuntimeWarning)
+        return x * 2
+
+    assert capture_warnings(work, 21) == (42, ["分类模型用不了，改用关键词规则"])

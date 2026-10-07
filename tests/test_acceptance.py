@@ -32,6 +32,7 @@ from pipeline.pool import (
     log_proofread,
     pool_paths,
     read_csv_rows,
+    version_changes,
     write_acceptance,
     write_csv_rows,
 )
@@ -447,3 +448,29 @@ def test_ten_minutes_not_reached_by_rounding():
     rows = [{"组": 1, "已交": True, "通过": False, "说话人标注（秒）": 598.0}]
     summary = [r for r in acceptance_summary(rows) if r["组"] == 1][0]
     assert summary["是否达到 10 分钟"] is False
+
+
+def test_pool_version_flags_changes_after_freeze(pool, cfg, make_audio):
+    """冻结以后，测评要读的文件（清单、参考文本、标注、录音）又改了：报告里的版本名要注明"和 v1 不一致"。
+
+    校对记录、验收表这些记录表本来就会变，不算改动。
+    """
+    from pipeline.evaluation import pool_version
+
+    _put_raw(pool, make_audio("tone", "wav", seconds=2, name="a.wav"), "G1-S1-Q.wav")
+    ingest_pool(pool, cfg)
+    export_references(pool)
+    freeze(pool, "v1")
+    assert version_changes(pool, "v1") == []
+    assert pool_version(pool) == "v1"
+
+    log_proofread(pool, "G1-S1-Q", "1234")  # 校对记录变了：不算
+    write_acceptance(pool)
+    assert pool_version(pool) == "v1"
+
+    paths = pool_paths(pool)
+    (paths["references"] / "G1-S1-Q.txt").write_text("冻结以后又改过的参考文本", encoding="utf-8")
+    write_turns_csv(paths["annotations_speakers"] / "G1-S1-Q.csv", [(0.0, 1.0, "导游")])  # 冻结以后新加的标注
+    assert version_changes(pool, "v1") == ["annotations/speakers/G1-S1-Q.csv", "references/G1-S1-Q.txt"]
+    label = pool_version(pool)
+    assert label.startswith("v1（") and "2 个文件" in label and "不一致" in label

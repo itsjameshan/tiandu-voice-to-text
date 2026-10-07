@@ -116,3 +116,15 @@
 - 任务 23 完成：README 和数据池说明里的命令逐条核对。在开发环境用临时数据池（模型自带四人测试音频改名为 G1-S1-Q 入池，手写一份说话人标注和片段标注）按文档顺序运行了 19 条命令：
   export_references → ingest_pool → show_spectrogram → labels_to_csv（speakers、clips）→ check_pool → freeze_pool → evaluate（cer 基线和 denoise=g1、hotwords 关和 g5、numbers g4、speakers --speakers ref、classify、clips g8）→ compare（cer、speakers --speakers auto、clips）→ selfcheck --quick，全部退出码 0，报告开头都写明"数据池版本：v1"。
   测试音频不是剧本录音，所以不报告任何数字。README 第 9 节已改成"基线 reports\gN、本组做法 reports\gN\after、对比表单独文件夹"的写法。
+
+- 任务 26（全面验收）之一：独立代码审查。没有阻塞问题；2 个主要问题、7 个次要问题全部修好，都先写了测试：
+  1. 报告里的"数据池版本"以前只看最新冻结的文件夹名：冻结后有人又改了参考文本，报告仍写 v1。现在对照 versions/<版本>/checksums.json，清单、参考文本、标注、录音有改动就写"v1（冻结后有 N 个文件改动，和 v1 不一致……）"（`pipeline.pool.version_changes`）。
+  2. 单独下载的 CSV 没写"识别可能有误……必须人工复核"和"由人工智能技术自动生成"：现在最后一列的表头写着这句话（读回时忽略）。
+  3. 启动清理：outputs 里只删网页工具自己的输出文件夹（不再删同学们画的语谱图、数字小实验的图）；tmp/exports 里每次导出的副本超过时限也删。
+  4. "开始整理"前也清掉上一段录音的摘要、核查表和记住的结果：新录音整理失败时不会导出上一段录音的初稿。
+  5. 新增 `pipeline/textio.py`：参考文本、补充句子、数据池表格、标注都能读记事本存的 UTF-16、Excel 存的 GBK。
+  6. 收集"改用关键词规则"这类提示改用 `pipeline.capture_warnings`（加锁、只收 UserWarning），几个人同时用网页工具时提示不会串。
+  7. TensorFlow 装坏（DLL load failed）时提示"分类模型加载失败"和原因，不再说"没有找到训练好的模型"。
+  8. Dockerfile 设 REQUIRE_AUTH=1：云端演示没设用户名、密码时不启动。
+  9. 便携包里带上 requirements.txt 和 requirements-tf.txt（训练脚本的提示里提到它）。
+  审查确认：红线（不开公网分享、关统计、没有联网、outputs 和数据池不对浏览器开放、标签只有"疑似·"、机器生成标记）、轻量导入、空白/极短/没有声音的视频等输入、指标算法（说话人标错比例和穷举结果一致）都没问题。

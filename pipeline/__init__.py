@@ -10,6 +10,9 @@
 这样只装了 TensorFlow 的电脑也能运行分类训练脚本。重依赖一律在函数内部导入。
 """
 
+import contextlib
+import threading
+
 __version__ = "0.2.0"
 
 NO_SPEECH_MESSAGE = "没有检测到人声，请检查录音"
@@ -20,6 +23,36 @@ MODEL_NAMES = {
     "vad": "silero_vad",
     "diarization": "pyannote-3.0 + campplus",
 }
+
+
+# warnings.catch_warnings 改的是整个程序共用的设置：网页工具同时有几个人在用（几个线程）时，
+# 一个人的提示可能串到另一个人的摘要里。凡是要收集或屏蔽警告的地方都先拿这把锁（同一线程里可以重复拿）。
+_WARNINGS_LOCK = threading.RLock()
+
+
+def capture_warnings(func, *args, **kwargs):
+    """调用 func(*args, **kwargs)，收集它发出的提示，返回 (结果, 提示文字列表（去掉重复）)。
+
+    只收集工具自己发的提示（UserWarning，例如"没有训练好的分类模型，话术分类改用关键词规则"），
+    第三方库的 RuntimeWarning 之类不收。
+    """
+    import warnings
+
+    with _WARNINGS_LOCK, warnings.catch_warnings(record=True) as records:
+        warnings.simplefilter("always")
+        result = func(*args, **kwargs)
+    messages = [str(record.message) for record in records if issubclass(record.category, UserWarning)]
+    return result, list(dict.fromkeys(messages))
+
+
+@contextlib.contextmanager
+def quiet_warnings():
+    """在 with 里面不显示任何警告（例如 cn2an 转不了"三四十"时的警告），和 capture_warnings 用同一把锁。"""
+    import warnings
+
+    with _WARNINGS_LOCK, warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        yield
 
 
 def ascii_name(name: str) -> str:
@@ -60,7 +93,6 @@ def run_pipeline(path, options: dict | None = None, progress=None, cfg: dict | N
     import copy
     import logging
     import time
-    import warnings
     from datetime import datetime
     from pathlib import Path
 
@@ -166,11 +198,8 @@ def run_pipeline(path, options: dict | None = None, progress=None, cfg: dict | N
     # 6. 话术分类（模型用不了时会退回规则，把原因记进 meta["warnings"]）
     report(0.9, "6/7 话术分类")
     t = time.time()
-    with warnings.catch_warnings(record=True) as records:
-        warnings.simplefilter("always")
-        segments = classify_segments(segments, cfg, method=funcs["classify"])
-    for record in records:
-        message = str(record.message)
+    segments, messages = capture_warnings(classify_segments, segments, cfg, method=funcs["classify"])
+    for message in messages:
         if message not in caught_warnings:
             caught_warnings.append(message)
     timed("6 话术分类", t, duration)

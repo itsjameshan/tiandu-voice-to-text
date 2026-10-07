@@ -128,9 +128,10 @@ def get_build_model(model_name: str):
 
 def load_extra(path=EXTRA_PATH) -> list[dict]:
     """读补充句子，返回 [{"id", "text", "label"}, ...]。类别不合法或句子为空时报错，提示先运行检查脚本。"""
+    from pipeline.textio import read_csv_dicts  # Excel 另存时可能是 GBK 或带 BOM 的 UTF-8，都能读
+
     path = Path(path)
-    with open(path, encoding="utf-8-sig", newline="") as f:
-        rows = list(csv.DictReader(f))
+    rows = read_csv_dicts(path, hint="请用 Excel 另存为\"CSV UTF-8（逗号分隔）\"后再试。")[1]
     result = []
     for line_no, row in enumerate(rows, start=2):  # 表头是第 1 行
         text = (row.get("text") or "").strip()

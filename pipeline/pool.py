@@ -216,14 +216,10 @@ def read_csv_rows(path) -> list[dict]:
     path = Path(path)
     if not path.is_file():
         return []
-    # 老师用 Excel 打开后按"CSV（逗号分隔）"另存，中文 Windows 会存成 GBK 编码，所以读不了时再按 GBK 读一次
-    for encoding in ("utf-8-sig", "gb18030"):
-        try:
-            with open(path, encoding=encoding, newline="") as f:
-                return list(csv.DictReader(f))
-        except UnicodeDecodeError:
-            continue
-    raise ValueError(f"表格的文字编码认不出来：{path}。请用 Excel 另存为\"CSV UTF-8（逗号分隔）\"后再试。")
+    # 老师用 Excel 打开后按"CSV（逗号分隔）"另存，中文 Windows 会存成 GBK 编码：pipeline.textio 会自动认
+    from pipeline.textio import read_csv_dicts
+
+    return read_csv_dicts(path, hint="请用 Excel 另存为\"CSV UTF-8（逗号分隔）\"后再试。")[1]
 
 
 def write_csv_rows(path, columns: list[str], rows: list[dict]) -> None:
@@ -757,6 +753,47 @@ def freeze(root, version: str) -> Path:
         remove_tree(tmp)
         raise
     return target
+
+
+def _evaluated_files(root: Path) -> dict[str, Path]:
+    """测评要读的文件：清单、参考文本、标注、清单里写的转换后录音。返回 {相对数据池的路径: 完整路径}（选法和冻结时一样）。"""
+    paths = pool_paths(root)
+    files = {}
+    if paths["manifest"].is_file():
+        files[paths["manifest"].name] = paths["manifest"]
+        for row in read_csv_rows(paths["manifest"]):
+            rel = (row.get("转换后文件") or "").strip()
+            if rel and (root / rel).is_file():
+                files[Path(rel).as_posix()] = root / rel
+    for key in _FROZEN_FOLDERS:
+        if paths[key].is_dir():
+            for path in paths[key].rglob("*"):
+                if path.is_file() and not _is_system_file(path):
+                    files[path.relative_to(root).as_posix()] = path
+    return files
+
+
+def version_changes(root, version: str) -> list[str]:
+    """冻结版本 version 之后，测评要读的文件（manifest.csv、references/、annotations/、normalized/ 下的录音）有哪些变了。
+
+    返回变了的文件（相对数据池的路径，排好序）：改过的、冻结后新加的、删掉的都算。
+    校对记录、验收表这些记录表本来就会变，不影响测评，不算。版本的 checksums.json 读不了时返回 []（没法比）。
+    """
+    root = Path(root)
+    try:
+        data = json.loads((pool_paths(root)["versions"] / version / "checksums.json").read_text(encoding="utf-8"))
+        frozen = dict(data["files"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return []
+
+    def evaluated(rel: str) -> bool:
+        return rel == "manifest.csv" or rel.startswith(("references/", "annotations/", "normalized/"))
+
+    current = _evaluated_files(root)
+    changed = {rel for rel, digest in frozen.items()
+               if evaluated(rel) and (rel not in current or sha256_file(current[rel]) != digest)}
+    changed |= {rel for rel in current if rel not in frozen}
+    return sorted(changed)
 
 
 def _natural_key(name: str) -> list:

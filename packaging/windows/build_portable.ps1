@@ -38,7 +38,8 @@ python -m pip install --disable-pip-version-check --no-warn-script-location --ta
 if ($LASTEXITCODE -ne 0) { throw "安装依赖失败" }
 
 Write-Host "== 4. 复制项目文件"
-foreach ($item in @("app.py", "config.yaml", "pipeline", "tools", "data", "docs", "reports", "README.md", "GLOSSARY.md")) {
+foreach ($item in @("app.py", "config.yaml", "pipeline", "tools", "data", "docs", "reports", "README.md", "GLOSSARY.md",
+                       "requirements.txt", "requirements-tf.txt")) {
     $src = Join-Path $Root $item
     if (Test-Path $src) { Copy-Item -Recurse -Force $src (Join-Path $Pkg $item) }
 }

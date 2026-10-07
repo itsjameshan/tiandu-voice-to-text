@@ -29,7 +29,6 @@ Audacity"导出标签"得到一个文本文件，每个标签一行，三项之�
 类别名：数据里一律写 data/labels.json 里的类别名。"威胁消费"在界面上显示为"消费施压"，
 所以片段标注里写"消费施压"也认，保存时改成"威胁消费"。
 """
-import codecs
 import csv
 import io
 import math
@@ -58,17 +57,10 @@ CLIP_LABEL_RULE = (f"片段标注的标签只能写这 5 个类别名之一：{'
 
 
 def _read_text(path) -> str:
-    """读一个文本文件。依次试 UTF-16（记事本另存为"Unicode"时）、UTF-8（带不带 BOM 都行）、GBK。"""
-    path = Path(path)
-    data = path.read_bytes()
-    if data.startswith((codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE)):
-        return data.decode("utf-16")
-    for encoding in ("utf-8-sig", "gbk"):
-        try:
-            return data.decode(encoding)
-        except UnicodeDecodeError:
-            continue
-    raise ValueError(f"文件的文字编码认不出来：{path}。请在 Audacity 里重新导出标签，或用记事本另存为 UTF-8 后再试。")
+    """读一个文本文件。依次试 UTF-16（记事本另存为"Unicode"时）、UTF-8（带不带 BOM 都行）、GBK（见 pipeline.textio）。"""
+    from pipeline.textio import read_text
+
+    return read_text(path, hint="请在 Audacity 里重新导出标签，或用记事本另存为 UTF-8 后再试。")
 
 
 def _to_seconds(text: str, where: str) -> float:

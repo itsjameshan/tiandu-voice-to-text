@@ -315,10 +315,23 @@ def _get_method(cfg: dict, slot: str) -> Callable:
 
 
 def pool_version(root) -> str:
-    """数据池最新冻结的版本名（如 v1，见 pipeline.pool.current_version）；还没冻结过时返回 NOT_FROZEN。"""
-    from pipeline.pool import current_version
+    """数据池最新冻结的版本名（如 v1，见 pipeline.pool.current_version）；还没冻结过时返回 NOT_FROZEN。
 
-    return current_version(root) or NOT_FROZEN
+    冻结之后，测评要读的文件（清单、参考文本、标注、录音）又改过的（例如有人在"数据校对"页又保存了参考文本），
+    在版本名后面注明"和 v1 不一致"：这时测出来的结果和别的组用 v1 测的不能比，要冻结新版本、基线和改进都重测。
+    """
+    from pipeline.pool import current_version, version_changes
+
+    version = current_version(root)
+    if not version:
+        return NOT_FROZEN
+    changes = version_changes(root, version)
+    if not changes:
+        return version
+    shown = "、".join(changes[:3]) + ("……" if len(changes) > 3 else "")
+    logger.warning("数据池冻结为 %s 以后又改了 %d 个文件（%s），测评结果和 %s 不一致", version, len(changes), shown, version)
+    return (f"{version}（冻结后有 {len(changes)} 个文件改动，和 {version} 不一致：{shown}；"
+            f"请老师冻结新版本，基线和改进都用新版本重测）")
 
 
 def pool_items(root, files: list[str] | None = None) -> list[dict]:
@@ -413,12 +426,10 @@ def annotated_items(root, kind: str, files: list[str] | None = None) -> list[dic
 
 
 def read_reference(path) -> str:
-    """读参考文本。记事本存的 UTF-8（带不带 BOM 都行）或 GBK 都能读。"""
-    data = Path(path).read_bytes()
-    try:
-        return data.decode("utf-8-sig")
-    except UnicodeDecodeError:
-        return data.decode("gb18030")
+    """读参考文本。记事本存的 UTF-8（带不带 BOM 都行）、ANSI（GBK）、"Unicode"（UTF-16）都能读（见 pipeline.textio）。"""
+    from pipeline.textio import read_text
+
+    return read_text(path, hint="请用记事本打开这个参考文本，另存为时编码选 UTF-8。")
 
 
 # ======================== 识别（带缓存） ========================
@@ -862,12 +873,9 @@ def _capture_warnings(func: Callable, *args):
     例如第 6、7 组的做法在没装 TensorFlow、没有训练好的模型时会退回关键词规则，并发出一句中文警告；
     测评报告开头要写明，不然会把关键词规则的结果当成模型的结果。
     """
-    import warnings
+    from pipeline import capture_warnings
 
-    with warnings.catch_warnings(record=True) as records:
-        warnings.simplefilter("always")
-        result = func(*args)
-    return result, list(dict.fromkeys(str(record.message) for record in records))
+    return capture_warnings(func, *args)
 
 
 def _add_new(found: list[str], messages: list[str]) -> None:

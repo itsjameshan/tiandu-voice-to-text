@@ -128,7 +128,10 @@ def test_new_run_clears_old_downloads(app_cfg):
     process_outputs = _outputs_after_click(config, buttons["开始整理"])
     assert any(components[i]["type"] == "audio" for i in process_outputs)
     assert any(components[i]["props"].get("label") == ui_text.MAPPING_LABEL for i in process_outputs)
-    assert app.clear_old_results() == (None, None, "", "")
+    assert app.clear_old_results() == (None, None, "", "", ui_text.PROCESS_PLACEHOLDER, [], None)
+    # 新录音整理失败时也不能留着上一段录音的核查表和结果：开始整理之前就清掉
+    table_id = next(i for i, c in components.items() if c["type"] == "dataframe" and c["props"].get("label") == "核查表")
+    assert table_id in process_outputs
 
 
 def test_banner_and_hints():
@@ -203,6 +206,26 @@ def test_cleanup_old(tmp_path):
     assert app.cleanup_old(tmp_path / "missing", 24) == 0
 
 
+def test_startup_cleanup(tmp_path):
+    """启动时清理：outputs 里只删网页工具自己的输出文件夹（日期-时间_文件名），
+    同学们自己画的语谱图、数字小实验的图不删；tmp/exports 里每次导出的副本超过时限也删。"""
+    cfg = {"paths": {"outputs": str(tmp_path / "outputs"), "tmp": str(tmp_path / "tmp")}, "app": {"cleanup_hours": 24}}
+    old = time.time() - 48 * 3600
+    run = tmp_path / "outputs" / "20260101-000000_G1-S1-Q"
+    spectrograms = tmp_path / "outputs" / "spectrograms"
+    export = tmp_path / "tmp" / "exports" / "0123abcd"
+    for folder in (run, spectrograms, export):
+        folder.mkdir(parents=True)
+        (folder / "a.txt").write_text("x", encoding="utf-8")
+        os.utime(folder, (old, old))
+    (tmp_path / "tmp" / "exports" / "fresh").mkdir()  # 刚导出的：保留，exports 文件夹本身也就一直是"新"的
+
+    messages = app.startup_cleanup(cfg)
+    assert not run.exists() and spectrograms.exists()
+    assert not export.exists() and (tmp_path / "tmp" / "exports" / "fresh").exists()
+    assert messages and all("24 小时" in m for m in messages)
+
+
 def test_main_launch_settings(tmp_path, monkeypatch, capsys):
     """main()：不真的启动服务，只检查启动前做的准备和传给 launch() 的参数。"""
     config_path = _write_config(tmp_path)
@@ -243,6 +266,18 @@ def test_main_launch_settings(tmp_path, monkeypatch, capsys):
     printed = capsys.readouterr().out
     assert str(fake_root) in printed and "纯英文路径" in printed
     assert "http://127.0.0.1:7898" in printed and "需要登录" in printed
+
+
+def test_require_auth_refuses_to_start_without_login(monkeypatch, capsys):
+    """云端演示（Dockerfile 设了 REQUIRE_AUTH=1）没设用户名、密码时不启动，免得变成谁都能上传的公开网页。"""
+    monkeypatch.setenv("REQUIRE_AUTH", "1")
+    monkeypatch.delenv("DEMO_USERNAME", raising=False)
+    monkeypatch.delenv("DEMO_PASSWORD", raising=False)
+    monkeypatch.setattr(app, "build_app", lambda cfg: pytest.fail("没设登录时不应该搭网页"))
+    with pytest.raises(SystemExit) as info:
+        app.main(["--port", "7999"])
+    assert info.value.code == 1
+    assert "DEMO_USERNAME" in capsys.readouterr().out
 
 
 def test_auth_from_env(monkeypatch):

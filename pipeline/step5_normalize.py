@@ -62,11 +62,11 @@
     剧本上的结果不代表真实录音的效果。
 """
 import re
-import warnings
 from typing import Callable
 
 import cn2an  # 纯 Python 小库，导入很快，不是重依赖
 
+from pipeline import quiet_warnings
 from pipeline.data import load_fictional_names, load_hotwords
 from pipeline.methods import register
 from pipeline.schema import LIST_SEP
@@ -293,8 +293,7 @@ def spoken_to_digits(text: str) -> str:
     text = _LIANG.sub("2", text)
 
     # ④ cn2an 转换。转不了的（如"三四十"）它会发警告并原样保留，这里不让警告刷屏
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
+    with quiet_warnings():  # 和收集提示的地方用同一把锁，几个人同时用网页工具时不互相干扰
         text = cn2an.transform(text, "cn2an")
 
     # 占位符换回原来的词

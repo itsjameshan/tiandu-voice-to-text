@@ -88,7 +88,8 @@ def load_classifier(model_dir) -> Callable[[list[str]], list[str]] | None:
     """加载 model_dir 里训练好的模型，返回一个函数：输入句子列表，输出类别名列表。
 
     没装 TensorFlow，或者文件夹里缺 model.h5、vocab.json、meta.json 任何一个，返回 None。
-    文件都在、但模型坏了或 meta.json 写错了，会抛出异常（由调用方决定怎么处理）。
+    文件都在、但 TensorFlow 导入失败（装坏了，Windows 上常见"DLL load failed"）、模型坏了或 meta.json 写错了，
+    会抛出异常（由调用方决定怎么处理，pipeline.step6_classify 会提示"分类模型加载失败"和原因）。
     """
     model_dir = Path(model_dir)
     if not is_tf_available():
@@ -103,8 +104,8 @@ def load_classifier(model_dir) -> Callable[[list[str]], list[str]] | None:
     try:
         import numpy as np
         import tensorflow as tf  # 可选依赖，只在这里导入
-    except ImportError:
-        return None
+    except ImportError as err:  # 找得到 TensorFlow 却导入不了：装坏了，不是"没有模型"
+        raise ImportError(f"TensorFlow 导入失败（可能没装好）：{err}") from err
 
     meta = json.loads((model_dir / "meta.json").read_text(encoding="utf-8"))
     vocab = json.loads((model_dir / "vocab.json").read_text(encoding="utf-8"))

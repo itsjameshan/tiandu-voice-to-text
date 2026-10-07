@@ -39,7 +39,6 @@ import sys
 import time
 import unicodedata
 import uuid
-import warnings
 from collections import Counter
 from pathlib import Path
 
@@ -51,7 +50,7 @@ os.environ.setdefault("GRADIO_TEMP_DIR", str(ROOT / "tmp"))
 
 import gradio as gr
 
-from pipeline import default_out_dir, run_pipeline, ui_text  # default_out_dir：输出文件夹的命名规则
+from pipeline import capture_warnings, default_out_dir, run_pipeline, ui_text  # default_out_dir：输出文件夹的命名规则
 from pipeline import methods as method_registry
 from pipeline.align import align_segments, cer_details
 from pipeline.audio import SR, FfmpegNotFound, convert_to_wav, has_non_ascii, probe, read_wav, remove_tree
@@ -87,6 +86,9 @@ PROOFREAD_WIDTHS = ["6%", "8%", "8%", "35%", "35%", "8%"]
 
 # 校对人只收 1—12 个英文字母或数字（学号后四位），不收姓名
 PROOFREADER_RE = re.compile(r"[A-Za-z0-9]{1,12}")
+
+# 网页工具自己的输出文件夹名（pipeline.default_out_dir：日期-时间_文件名），启动清理时只删这种
+RUN_FOLDER_RE = re.compile(r"\d{8}-\d{6}_")
 
 # 界面字体：Windows 用微软雅黑，Mac 用苹方，Linux 用思源黑体
 FONTS = ["Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "sans-serif"]
@@ -386,14 +388,12 @@ def run_demo_with_state(script_id):
     script_id = str(script_id).split()[0]
     if script_id not in {script["id"] for script in load_scripts()}:
         raise gr.Error(f"没有这个剧本编号：{script_id}（编号形如 G1-S1，从 G1-S1 到 G8-S3）")
-    with warnings.catch_warnings(record=True) as records:  # 分类模型用不了时会退回规则，把原因显示出来
-        warnings.simplefilter("always")
-        try:
-            segments, meta, stats = run_script_demo(script_id, cfg=_config())
-        except Exception as exc:  # 和 process_file 一样：中文原因显示在网页上，详细信息打印在黑色窗口里
-            logger.exception("剧本文本演示失败：%s", script_id)
-            raise gr.Error(f"处理失败：{exc}") from exc
-    meta["warnings"] = list(dict.fromkeys(str(record.message) for record in records))
+    try:  # 分类模型用不了时会退回规则，把原因收集起来显示在摘要里
+        (segments, meta, stats), messages = capture_warnings(run_script_demo, script_id, cfg=_config())
+    except Exception as exc:  # 和 process_file 一样：中文原因显示在网页上，详细信息打印在黑色窗口里
+        logger.exception("剧本文本演示失败：%s", script_id)
+        raise gr.Error(f"处理失败：{exc}") from exc
+    meta["warnings"] = messages
     summary = summary_markdown(segments, meta)
     return summary, segments_to_rows(segments), demo_contrast_markdown(segments, stats), new_state(segments, meta)
 
@@ -405,13 +405,13 @@ def run_demo(script_id):
 
 
 def clear_old_results():
-    """开始整理新录音前，清掉上一次的下载文件、选中段落的原声、说话人映射和各说话人时长，
-    返回 (下载, 原声, 映射, 说话人时长)。
+    """开始整理新录音前，清掉上一次的结果，返回 (下载, 原声, 映射, 说话人时长, 摘要, 核查表, 界面要记住的结果)。
 
     核查初稿、CSV、JSON 每次导出的文件名都一样，不清掉的话，复核人员容易下载到上一段录音的核查初稿；
+    新录音整理失败时（例如视频里没有声音），也不能还留着上一段录音的核查表，不然点“导出核查初稿”导出的是上一段的；
     上一段录音的“说话人1=导游”也不一定适用于新录音。
     """
-    return None, None, "", ""
+    return None, None, "", "", ui_text.PROCESS_PLACEHOLDER, [], None
 
 
 # ---------------- 数据池（“数据校对”和“录音质检”两页共用） ----------------
@@ -708,8 +708,8 @@ def _process_tab(cfg: dict) -> None:
         export_btn = gr.Button("导出核查初稿", variant="primary")
         files_out = gr.File(label="下载", file_count="multiple", interactive=False)
 
-        # 点“开始整理”：先清掉上一段录音的下载文件、原声、映射和说话人时长，再整理，最后显示各说话人时长
-        start.click(clear_old_results, None, [files_out, audio, mapping, speaker_md]).then(
+        # 点“开始整理”：先清掉上一段录音的结果（下载文件、原声、映射、说话人时长、摘要、核查表），再整理，最后显示各说话人时长
+        start.click(clear_old_results, None, [files_out, audio, mapping, speaker_md, summary, table, state]).then(
             start_processing, [file_in, speakers, denoise_on, hotword_on, hotword_text, *method_boxes],
             [summary, table, state]).success(speaker_summary, state, speaker_md)
         table.select(play_row, state, audio)
@@ -835,8 +835,11 @@ def build_app(cfg: dict | None = None) -> gr.Blocks:
 
 # ---------------- 启动 ----------------
 
-def cleanup_old(folder, hours) -> int:
-    """删除 folder 里（只看第一层）超过 hours 小时没改动的文件和文件夹，返回删了几个。folder 不存在时返回 0。"""
+def cleanup_old(folder, hours, only=None) -> int:
+    """删除 folder 里（只看第一层）超过 hours 小时没改动的文件和文件夹，返回删了几个。folder 不存在时返回 0。
+
+    only：可选的正则表达式，只删名字和它匹配的（如网页工具自己的输出文件夹 RUN_FOLDER_RE）。
+    """
     folder = Path(folder)
     if not folder.is_dir():
         return 0
@@ -844,6 +847,8 @@ def cleanup_old(folder, hours) -> int:
     removed = 0
     for path in folder.iterdir():
         try:
+            if only is not None and not only.match(path.name):
+                continue
             if path.stat().st_mtime >= limit:
                 continue
             if path.is_dir():
@@ -855,6 +860,24 @@ def cleanup_old(folder, hours) -> int:
         except OSError as exc:
             print(f"清理旧文件时跳过 {path}：{exc}")
     return removed
+
+
+def startup_cleanup(cfg: dict) -> list[str]:
+    """启动网页工具时清理旧内容，返回要打印的话。
+
+    - outputs：只删网页工具自己的输出文件夹（default_out_dir 起的名字，如 20260101-120000_G1-S1-Q），
+      同学们用 show_spectrogram.py、数字小实验画的图（outputs/spectrograms、outputs/tf_lab）不删；
+    - tmp/exports：每次"导出核查初稿"的副本各在一个随机编号的文件夹里，exports 本身一直在用，所以要进去一层删；
+    - tmp：其余临时文件（上传的录音、播放用的片段等）。
+    """
+    hours = cfg["app"]["cleanup_hours"]
+    tmp = Path(cfg["paths"]["tmp"])
+    messages = []
+    for folder, only in ((cfg["paths"]["outputs"], RUN_FOLDER_RE), (tmp / "exports", None), (tmp, None)):
+        removed = cleanup_old(folder, hours, only)
+        if removed:
+            messages.append(f"已清理 {folder} 里超过 {hours} 小时的 {removed} 项旧内容")
+    return messages
 
 
 def auth_from_env() -> tuple[str, str] | None:
@@ -877,6 +900,12 @@ def main(argv=None) -> None:
         pass
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")  # 打印每一步的用时和实时率
 
+    # 云端演示（Dockerfile 设了 REQUIRE_AUTH=1）必须要求登录：没设用户名、密码就不启动
+    if os.environ.get("REQUIRE_AUTH", "").strip() not in ("", "0") and not auth_from_env():
+        print("这是云端演示，必须设置环境变量 DEMO_USERNAME 和 DEMO_PASSWORD（要求登录）才能启动，"
+              "否则任何人都能打开网页上传文件。例：docker run -e DEMO_USERNAME=老师设的用户名 -e DEMO_PASSWORD=密码 ...")
+        sys.exit(1)
+
     cfg = load_config(args.config)
     tmp_dir = Path(cfg["paths"]["tmp"])
     tmp_dir.mkdir(parents=True, exist_ok=True)
@@ -886,10 +915,8 @@ def main(argv=None) -> None:
         print(ui_text.NON_ASCII_WARNING.format(path=ROOT))
 
     app_cfg = cfg["app"]
-    for folder in (cfg["paths"]["outputs"], cfg["paths"]["tmp"]):
-        removed = cleanup_old(folder, app_cfg["cleanup_hours"])
-        if removed:
-            print(f"已清理 {folder} 里超过 {app_cfg['cleanup_hours']} 小时的 {removed} 项旧内容")
+    for message in startup_cleanup(cfg):
+        print(message)
 
     host = args.host or app_cfg["host"]
     port = args.port or int(app_cfg["port"])

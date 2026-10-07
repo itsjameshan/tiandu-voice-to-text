@@ -53,6 +53,9 @@ NOTICE = "识别可能有误；所有标注均为疑似、待核查，必须人�
 # 写进 JSON 的 meta，标明这是机器生成的（红线第 6 条）
 GENERATED_BY = "由人工智能技术自动生成（旅游纠纷录音材料整理工具·教学原型）"
 
+# CSV 最后一列的表头：单独下载的 CSV 也写明要人工复核、由人工智能生成（这一列的格子空着，读回时忽略）
+CSV_NOTICE_HEADER = f"说明：{NOTICE}。{GENERATED_BY}"
+
 # 人工复核结论只有这四种
 REVIEW_CHOICES = ["未复核", "确认", "修改", "驳回"]
 
@@ -160,7 +163,9 @@ def write_csv(path, segments: list[dict]) -> None:
     - 可选列只写至少一个段落里出现过的，按 HEADERS 的顺序排在后面；
     - 不在 HEADERS 里的键（例如剧本演示用的 gold_label）不写出；
     - 数字、名称用"；"连接；热词纠错写成"错→对"再用"；"连接
-      （纠错记录里的其他信息，如 start，不写进 CSV；要完整保存请用 JSON）。
+      （纠错记录里的其他信息，如 start，不写进 CSV；要完整保存请用 JSON）；
+    - 最后一列的表头是 CSV_NOTICE_HEADER（"识别可能有误……"和"由人工智能技术自动生成"，红线第 4、6 条），
+      这一列的格子都空着：单独下载、转发 CSV 时也带着这句话；read_csv 读回时忽略这一列。
     """
     keys = list(FIELDS)
     for key in OPTIONAL_FIELDS:
@@ -171,9 +176,9 @@ def write_csv(path, segments: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8-sig", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow([HEADERS[key] for key in keys])
+        writer.writerow([HEADERS[key] for key in keys] + [CSV_NOTICE_HEADER])
         for seg in segments:
-            writer.writerow([_cell_text(key, seg.get(key)) for key in keys])
+            writer.writerow([_cell_text(key, seg.get(key)) for key in keys] + [""])
 
 
 def read_csv(path) -> list[dict]:

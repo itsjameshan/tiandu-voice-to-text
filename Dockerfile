@@ -6,7 +6,8 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONUTF8=1 \
-    GRADIO_ANALYTICS_ENABLED=False
+    GRADIO_ANALYTICS_ENABLED=False \
+    REQUIRE_AUTH=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg libsndfile1 \
     && rm -rf /var/lib/apt/lists/*
@@ -20,5 +21,5 @@ COPY . .
 RUN python models/download_models.py
 
 EXPOSE 7860
-# 云端演示必须设置 DEMO_USERNAME 和 DEMO_PASSWORD（启用登录）
+# 云端演示必须设置 DEMO_USERNAME 和 DEMO_PASSWORD（启用登录）；没设时 app.py 不启动（REQUIRE_AUTH=1）
 CMD ["python", "app.py", "--host", "0.0.0.0", "--port", "7860"]

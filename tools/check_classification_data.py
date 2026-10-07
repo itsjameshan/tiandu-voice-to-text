@@ -30,7 +30,6 @@
     故意写错的句子都能被查出来。
 """
 import argparse
-import csv
 import re
 import sys
 from collections import Counter
@@ -75,11 +74,10 @@ TARGETS = {"威胁消费": 200, "服务态度": 150, "行程变更": 150, "正�
 
 
 def read_rows(path) -> tuple[list[str], list[dict]]:
-    """读 CSV（utf-8-sig：用 Excel 另存时文件开头会带 BOM），返回 (表头, 每行一个字典)。"""
-    with open(path, encoding="utf-8-sig", newline="") as f:
-        reader = csv.DictReader(f)
-        rows = [dict(row) for row in reader]
-        return list(reader.fieldnames or []), rows
+    """读 CSV，返回 (表头, 每行一个字典)。Excel 另存的 GBK、带 BOM 的 UTF-8 都能读（见 pipeline.textio）。"""
+    from pipeline.textio import read_csv_dicts
+
+    return read_csv_dicts(path, hint="请用 Excel 另存为\"CSV UTF-8（逗号分隔）\"后再试。")
 
 
 def script_texts() -> dict[str, str]:
