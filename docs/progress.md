@@ -83,3 +83,8 @@
 
 - 第一次完整构建（提交 9b6f5af）：Python 3.11.9 嵌入版 + `pip install --target` 装依赖 + 下载必需模型 + 用便携 Python 跑 `tools/selfcheck.py`：Python 版本、安装路径、ffmpeg（imageio-ffmpeg 自带的 ffmpeg 7.1）、模型都通过；四人测试音频 56.9 秒完整流程用时 14.0 秒（实时率 0.24），导出核查初稿通过。压缩包 415.5 MB，整个构建约 3 分钟。
 - 构建脚本加了第 6b 步：用便携 Python 启动网页工具（`app.py --port 7861`），确认首页返回 200 再打包。
+
+- 发布便携包预览版 v0.1.0-pre（2026-10-07）：开发环境不能推送标签，改为在"构建 Windows 便携包"的手动触发里填"发布版本号"，由 GitHub Actions 建标签并发布（运行 37646306941，提交 b1c9289）。
+  这次构建在 GitHub 的 Windows 机器上自检全部通过（测试音频 56.9 秒，用时 13.9 秒，实时率 0.24；这是 GitHub 机器的数字，机房要另测），网页工具能正常打开；
+  zip 415.6 MB，公开下载地址：https://github.com/itsjameshan/tiandu-voice-to-text/releases/download/v0.1.0-pre/tiandu-portable-win64-v0.1.0-pre.zip（未登录也能下载）。
+  这一版还不含"数据校对""录音质检"两页和说话人、分类、片段三项测评（正在做，做完发 v0.2.0-pre）。
