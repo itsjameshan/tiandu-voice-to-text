@@ -1,0 +1,999 @@
+{
+  "group": 5,
+  "scripts": [
+    {
+      "id": "G5-S1",
+      "title": "杨导家的古树茶",
+      "setting": "从大理开往丽江的旅游大巴上，雾隐行舟旅行社的杨导用车载扩音器推销自家茶叶，一对退休夫妻边尝边比价。",
+      "roles": [
+        "导游",
+        "游客甲",
+        "游客乙",
+        "司机"
+      ],
+      "focus": "茶叶品牌与两家旅行社名称在全称、简称、口误之间反复切换并被纠正，夹杂生普、熟普、古树茶和多个云南地名，考察热词识别。",
+      "lines": [
+        {
+          "speaker": "导游",
+          "text": "各位朋友，下午好！咱们从大理出发，往丽江走，路上时间长，我先跟大家聊几句。",
+          "direction": "（用车载扩音器）",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": "大理；丽江"
+        },
+        {
+          "speaker": "导游",
+          "text": "我是雾隐行舟旅行社的老导游，大家叫我杨导就行，在雾隐行舟带团带了快二十年了。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "20年",
+          "hotwords": "雾隐行舟旅行社；杨导；雾隐行舟"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "快二十年，那是老资格了。杨导辛苦！",
+          "direction": "",
+          "label": "其他",
+          "numbers": "20年",
+          "hotwords": "杨导"
+        },
+        {
+          "speaker": "导游",
+          "text": "不辛苦。跟大家说句实在话，我老家就在普洱，家里有几片茶山，种的全是古树茶。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "普洱；古树茶"
+        },
+        {
+          "speaker": "导游",
+          "text": "今天呢，我带了点自家做的普洱茶，牌子叫百年茶语，给大家尝一尝，不买没关系。",
+          "direction": "（一边说一边给前排游客分小纸杯）",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "普洱茶；百年茶语"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "百年茶叶？这牌子没听说过。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "百年茶叶"
+        },
+        {
+          "speaker": "导游",
+          "text": "不是茶叶，是茶语，说话那个语，百年茶语。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "茶语；百年茶语"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "嗯，味道挺醇的。杨导，这个是生普还是熟普啊？",
+          "direction": "（喝了一口）",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "杨导；生普；熟普"
+        },
+        {
+          "speaker": "导游",
+          "text": "您手上这杯是熟普，颜色红亮，喝着顺口。等会儿再尝尝生普，那个清爽，回甘也好。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "熟普；生普"
+        },
+        {
+          "speaker": "司机",
+          "text": "前面弯道多，站着的朋友先坐下啊。",
+          "direction": "（与上一句部分重叠）",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "好嘞，听师傅的，大家坐稳了再喝。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "那这个熟普怎么卖啊？",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": "熟普"
+        },
+        {
+          "speaker": "导游",
+          "text": "熟普每饼三百五十七克，外面卖六百八，今天车上的朋友就收四百八。生普也是古树茶，贵一点，要一千二。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "357克；680元；480元；1200元",
+          "hotwords": "熟普；生普；古树茶"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "四百八也不便宜啊。我们在昆明逛的时候，差不多的熟普才两百多。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "480元；200多元",
+          "hotwords": "昆明；熟普"
+        },
+        {
+          "speaker": "导游",
+          "text": "大姐，那不一样。外面多半是普通茶园的，咱们这是正宗古树茶，茶山在普洱，挨着西双版纳。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "古树茶；普洱；西双版纳"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "杨导，你说是自己家的茶，那怎么还有个牌子呢？",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "杨导"
+        },
+        {
+          "speaker": "导游",
+          "text": "哎，百年茶语就是我们自家注册的牌子嘛。自己种、自己做、自己卖，价格才实在。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "百年茶语"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "去年我们跟松风晚渡旅行社去西双版纳，人家那个导游，一路上啥也没卖。",
+          "direction": "（压低声音对游客甲说）",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "松风晚渡旅行社；西双版纳"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "松风……松风行舟是吧？",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "松风；松风行舟"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "什么松风行舟，是松风晚渡！雾隐行舟是现在这家，你把两家搞混了。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "2家",
+          "hotwords": "松风行舟；松风晚渡；雾隐行舟"
+        },
+        {
+          "speaker": "导游",
+          "text": "对对，大姐记性好。松风是松风，咱们雾隐这边，就是想让大家带点真东西回去。",
+          "direction": "（听到了，笑着接话）",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "松风；松风；雾隐"
+        },
+        {
+          "speaker": "司机",
+          "text": "杨导，前面服务区要停一下，车要加水。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": "杨导"
+        },
+        {
+          "speaker": "导游",
+          "text": "要得。各位，前面服务区停二十分钟，下午三点十分准时上车啊。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "20分钟；15:10",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "趁还没到，大家看看要不要带点茶回去。买两饼熟普，我再送一盒鲜花饼。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "2饼；1盒",
+          "hotwords": "熟普；鲜花饼"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "老伴儿，要不买一饼熟普尝尝？我觉得味道真不错。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "1饼",
+          "hotwords": "熟普"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "你急什么，到了丽江、束河，茶叶店多的是，比一比再说。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "丽江；束河"
+        },
+        {
+          "speaker": "导游",
+          "text": "大姐，外面的店您不知道底细。大家多少支持一下我的工作，后面到丽江、束河的安排，我也好协调得周到一点。",
+          "direction": "（语气放慢）",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": "丽江；束河"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "杨导，这话就不对了。买不买茶，跟后面的安排有啥关系？",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": "杨导"
+        },
+        {
+          "speaker": "导游",
+          "text": "没关系没关系，大姐别误会，我就是随口一说，买不买都是自愿的。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "杨导，那熟普四百八，能不能再少点？三百八……不是，我是说四百，四百我就拿一饼。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "480元；380元；400元；400元；1饼",
+          "hotwords": "杨导；熟普"
+        },
+        {
+          "speaker": "导游",
+          "text": "四百……哎呀，这个价我真没赚头。看大哥爽快，四百二，鲜花饼照样送一盒。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "400元；420元；1盒",
+          "hotwords": "鲜花饼"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "四百二就四百二。那个生普就算了，一千二的古树茶，喝着心疼。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "420元；420元；1200元",
+          "hotwords": "生普；古树茶"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "买可以，杨导，你得开个收据，写清楚是哪家卖的，雾隐行舟还是百年茶语。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": "杨导；雾隐行舟；百年茶语"
+        },
+        {
+          "speaker": "导游",
+          "text": "这个……收据就写百年茶语吧，茶是茶语自己出的，跟雾隐行舟没关系。",
+          "direction": "（停顿约两秒）",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "百年茶语；茶语；雾隐行舟"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "那就是说，这茶要是有问题，雾隐那家旅行社不管？",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "雾隐那家旅行社"
+        },
+        {
+          "speaker": "导游",
+          "text": "管，肯定管！有问题随时找我，我杨导在雾隐行舟干了快二十年，跑不了的。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "20年",
+          "hotwords": "杨导；雾隐行舟"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "行吧。回去喝着要是跟昆明两百多的一个样，我可要打一二三零一。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "200多元；12301",
+          "hotwords": "昆明"
+        },
+        {
+          "speaker": "导游",
+          "text": "要得要得，欢迎大家随时监督。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "司机",
+          "text": "服务区到了啊，大家拿好随身物品，注意脚下。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "大家记住，下午三点十分，还是这辆车，车门边上插着雾隐行舟的小旗子。",
+          "direction": "（用车载扩音器）",
+          "label": "正常讲解",
+          "numbers": "15:10",
+          "hotwords": "雾隐行舟"
+        }
+      ]
+    },
+    {
+      "id": "G5-S2",
+      "title": "景区门口的服务费",
+      "setting": "大理一处景区入口外的集合点，地接社导游杨导发门票前要求每人交服务费，几位结伴出游的同事翻出合同质疑。",
+      "roles": [
+        "导游",
+        "游客甲",
+        "游客乙",
+        "游客丙"
+      ],
+      "focus": "组团社与地接社两个名称交替出现、被游客说串又改正，叠加行程地名和商品名，考察费用纠纷对话中的热词识别。",
+      "lines": [
+        {
+          "speaker": "导游",
+          "text": "来来来，雾隐行舟的朋友们，都往我这边靠一靠！咱们到景区门口了。",
+          "direction": "（举着小旗，提高音量）",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": "雾隐行舟"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "雾隐行舟？杨导，我们报的不是松风晚渡旅行社的团吗？",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "雾隐行舟；杨导；松风晚渡旅行社"
+        },
+        {
+          "speaker": "导游",
+          "text": "对，松风晚渡是组团社，在昆明跟大家签的合同；我们雾隐行舟旅行社是地接社，大理、丽江这一段，都归我们接待。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": "松风晚渡；昆明；雾隐行舟旅行社；大理；丽江"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "哦，就是松风那家把我们交给了雾隐晚渡。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "松风那家；雾隐晚渡"
+        },
+        {
+          "speaker": "导游",
+          "text": "雾隐行舟，不是雾隐晚渡。人家那家叫松风晚渡，两家名字是有点像。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "2家",
+          "hotwords": "雾隐行舟；雾隐晚渡；松风晚渡"
+        },
+        {
+          "speaker": "导游",
+          "text": "好，门票我已经统一买好了，发门票之前呢，跟大家说个事儿。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "按照惯例，咱们每位交一百块服务费，我这边统一收一下，现金、扫码都行。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "100元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "一百块？我们单位这次来了十二个人，那就是一千二了。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "100元；12人；1200元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "服务费？杨导，这个服务费，说白了是不是就是小费啊？",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": "杨导"
+        },
+        {
+          "speaker": "导游",
+          "text": "哎，也不能这么说。这一百块不白交，一路给大家讲解、拍照，晚上还请大家喝古树茶，普洱那边带过来的。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "100元",
+          "hotwords": "古树茶；普洱"
+        },
+        {
+          "speaker": "导游",
+          "text": "还有，后天去束河，在晓月银坊买东西，报我杨导的名字，能打九折。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "9折",
+          "hotwords": "束河；晓月银坊；杨导"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "晓月什么？我们也没说要买银器啊。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "晓月"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "等一下，报名是我经手的，松风晚渡发的电子合同，我存在手机里了。",
+          "direction": "（低头翻手机）",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": "松风晚渡"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "你们听啊：团费包含景点首道门票、住宿、团餐，还有导游服务费。",
+          "direction": "（照着手机念）",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "听见没有？导游服务费已经包含在团费里了，每人三千八，我们早就交过了。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "3800元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "合同上那个是导服费，就是说，是松风晚渡跟我们雾隐行舟结算的。我说的是给我个人的服务费，两码事。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": "松风晚渡；雾隐行舟"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "那合同里有没有写，还要另外交个人服务费？",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "合同里是没写，但我们这行一直都是这个惯例，大家出来玩，图个开心嘛。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "合同里没写的，就不该收。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "算了吧，一百块钱，给就给了，别闹得大家不愉快。",
+          "direction": "（小声对游客乙说）",
+          "label": "费用",
+          "numbers": "100元",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "不是钱多钱少的问题。去年我们去西双版纳，也是报的松风晚渡，那边的导游可没多收过钱。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": "西双版纳；松风晚渡"
+        },
+        {
+          "speaker": "导游",
+          "text": "西双版纳那边是那边嘛。大家出来玩，和和气气的，后面丽江、束河的行程，我也好给大家安排得顺当一点。",
+          "direction": "",
+          "label": "威胁消费",
+          "numbers": "",
+          "hotwords": "西双版纳；丽江；束河"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "杨导，你这话什么意思？不交服务费，后面就不顺当了？",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": "杨导"
+        },
+        {
+          "speaker": "导游",
+          "text": "不是不是，您误会了！行程肯定按合同走，大理、丽江、束河，哪个景点都不会少。",
+          "direction": "（与上一句部分重叠）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": "大理；丽江；束河"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "那这个服务费，到底是必须交，还是自愿交？",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "这个……原则上是自愿，但一般大家都会交。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "原则上自愿，那我就不交了。实在说不清，我们就打一二三零一问问。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "12301",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "对，要不然直接找松风晚渡，向旅行社投诉，合同上就印着他们的电话。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": "松风晚渡"
+        },
+        {
+          "speaker": "导游",
+          "text": "莫急莫急，不用打，不用打！自愿的，真的是自愿的，不交也没关系。",
+          "direction": "（连忙摆手）",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "刚才是我没说清楚，给大家道个歉。服务费的事，就当我没提。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "这样就好嘛。杨导，我们也不是不讲理，合同里写了的，我们都认。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": "杨导"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "那晚上的古树茶还请不请？别到时候又说要另外收钱。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": "古树茶"
+        },
+        {
+          "speaker": "导游",
+          "text": "请，照样请！普洱茶管够，还有鲜花饼，都不收钱。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": "普洱茶；鲜花饼"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "那还差不多。杨导，那你把门票发一下吧。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "杨导"
+        },
+        {
+          "speaker": "导游",
+          "text": "好，每人一张，拿好了。进去以后自由活动，上午十一点半还在这个门口集合，吃完午饭去喜洲。",
+          "direction": "（一边发门票一边说）",
+          "label": "正常讲解",
+          "numbers": "1张；11:30",
+          "hotwords": "喜洲"
+        },
+        {
+          "speaker": "导游",
+          "text": "里面人多，大家看好随身物品。认准这面旗子，上面写着雾隐行舟，别跟着松风……别跟着别的团走了啊。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": "雾隐行舟；松风"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "雾隐行舟，十一点半，记住了。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "11:30",
+          "hotwords": "雾隐行舟"
+        }
+      ]
+    },
+    {
+      "id": "G5-S3",
+      "title": "饭桌上的三家店",
+      "setting": "丽江一家餐馆的晚饭桌上，杨导向一对来拍婚纱照的准新人和他们的朋友推荐玉器行、珠宝店和银坊。",
+      "roles": [
+        "导游",
+        "游客甲",
+        "游客乙",
+        "游客丙"
+      ],
+      "focus": "三家店名的全称、简称和口误反复出现并被逐字纠正，叠加冰种、糯种、飘花、足银九九九等行话，考察热词识别。",
+      "lines": [
+        {
+          "speaker": "导游",
+          "text": "来，先喝口普洱茶，菜马上就上。今天在丽江古城逛累了吧？",
+          "direction": "（给大家倒茶）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "普洱茶；丽江"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "还行还行。杨导，明天上午是去束河吧？",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "杨导；束河"
+        },
+        {
+          "speaker": "导游",
+          "text": "对，明天上午去束河，下午自由活动。哎，听说你们俩是专门来拍婚纱照的？",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": "束河"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "是啊，年底办酒，先出来玩玩。",
+          "direction": "（笑）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "那可得好好挑件纪念品。结婚嘛，买个玉镯子、银手镯，戴一辈子，多有意义。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "我给你们推荐三家店。第一家，听松阁玉器行，就在丽江古城里头，专门卖玉镯子，冰种、糯种都有。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "3家；第1家",
+          "hotwords": "听松阁玉器行；丽江；冰种；糯种"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "杨导，冰种、糯种是啥意思啊？",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "杨导；冰种；糯种"
+        },
+        {
+          "speaker": "导游",
+          "text": "冰种就是透亮，跟冰一样；糯种没那么透，看着润润的。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "冰种；糯种"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "那另外两家呢？",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "2家",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "第二家，古城边上的翠微坊珠宝店，飘花的镯子特别多。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "第2家",
+          "hotwords": "翠微坊珠宝店；飘花"
+        },
+        {
+          "speaker": "导游",
+          "text": "第三家就在束河，叫晓月银坊，专门做银饰，全是足银，九九九的。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "第3家；999",
+          "hotwords": "束河；晓月银坊；足银；九九九"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "等一下，杨导，这三家，到底哪家最正宗啊？",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "3家",
+          "hotwords": "杨导"
+        },
+        {
+          "speaker": "导游",
+          "text": "要说玉器，那还是听松阁正宗，二十多年的老店了。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "20多年",
+          "hotwords": "听松阁"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "我前几天在大理，满街都是冰种、糯种的牌子，家家都说自己是老店。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "大理；冰种；糯种"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "可是那个……我在网上看，好多人说翠微坊的更正宗，价格也透明。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "翠微坊"
+        },
+        {
+          "speaker": "导游",
+          "text": "翠微坊也不错，就是贵。同样是冰种的镯子，听松阁一万二起，翠微坊得一万五往上。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "12000元；15000元",
+          "hotwords": "翠微坊；冰种；听松阁；翠微坊"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "一万二？那也太贵了！糯种的呢？",
+          "direction": "",
+          "label": "费用",
+          "numbers": "12000元",
+          "hotwords": "糯种"
+        },
+        {
+          "speaker": "导游",
+          "text": "糯种便宜多了，带点飘花的，四千五左右，自己戴、送人都合适。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "4500元",
+          "hotwords": "糯种；飘花"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "老公，要不回头去那个听松坊，看看糯种的？",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "听松坊；糯种"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "什么听松坊，是听松阁！坊是翠微坊的坊，你把两家拼一块儿了。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "2家",
+          "hotwords": "听松坊；听松阁；翠微坊"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "我也晕了。还有那个做银饰的，叫晓月阁？",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "晓月阁"
+        },
+        {
+          "speaker": "导游",
+          "text": "晓月银坊，银子的银，作坊的坊。阁是听松阁，别记混了。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "晓月银坊；听松阁"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "我记一下啊：听松阁玉器行，翠微坊珠宝店，晓月银坊。",
+          "direction": "（拿出手机边念边打字）",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "听松阁玉器行；翠微坊珠宝店；晓月银坊"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "杨导，晓月银坊那个足银，真是九九九的？",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "999",
+          "hotwords": "杨导；晓月银坊；足银；九九九"
+        },
+        {
+          "speaker": "导游",
+          "text": "那当然，每件都打了钢印，足银九九九，假不了。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "999",
+          "hotwords": "足银；九九九"
+        },
+        {
+          "speaker": "导游",
+          "text": "一对足银手镯三百八，还能刻上你们俩的名字，当场就做好。",
+          "direction": "",
+          "label": "费用",
+          "numbers": "1对；380元",
+          "hotwords": "足银"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "三百八倒还行。不过杨导，你推荐的这三家，是不是都有提成啊？",
+          "direction": "",
+          "label": "费用",
+          "numbers": "380元；3家",
+          "hotwords": "杨导"
+        },
+        {
+          "speaker": "导游",
+          "text": "这个……不瞒你们说，介绍客人过去，店里多少会给点辛苦费，但东西肯定是真的。",
+          "direction": "（停顿约两秒，笑了笑）",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "那我们自己去，不说是杨导介绍的，是不是还能便宜点？",
+          "direction": "",
+          "label": "费用",
+          "numbers": "",
+          "hotwords": "杨导"
+        },
+        {
+          "speaker": "导游",
+          "text": "那可不一定，报我名字才有折扣。要不这样，明天上午在束河，我先带你们去晓月银坊；下午自由活动那会儿，我再陪你们去趟翠微坊？",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "束河；晓月银坊；翠微坊"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "下午我们约了拍照，行程就别改了吧。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "就是。东西好不好，我们得先回去查一查，不着急。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "行行行，听你们的。不过冰种的好货不多，去晚了可能就被人挑走了。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "冰种"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "没事，真喜欢的话，回昆明之前再买也来得及。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "昆明"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "对了杨导，你说的听松阁，跟我们在喜洲路过的那家玉器店，是不是同一个老板开的？",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "杨导；听松阁；喜洲"
+        },
+        {
+          "speaker": "导游",
+          "text": "不是的。喜洲那家我不了解，不好乱说，我推荐的就这三家。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "3家",
+          "hotwords": "喜洲"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "好，那我们回去比一比。听松阁、翠微坊、晓月银坊，我都记下来了。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "听松阁；翠微坊；晓月银坊"
+        },
+        {
+          "speaker": "导游",
+          "text": "要得，你们慢慢比。来来来，鲜花饼上来了，先吃饭，先吃饭。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "鲜花饼"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "这个鲜花饼不错，比在昆明吃的还香。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "鲜花饼；昆明"
+        },
+        {
+          "speaker": "导游",
+          "text": "喜欢的话，晓月银坊隔壁就有卖鲜花饼的，明天顺手带两盒。",
+          "direction": "",
+          "label": "购物安排",
+          "numbers": "2盒",
+          "hotwords": "晓月银坊；鲜花饼"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "你看，又绕回晓月那家了。",
+          "direction": "（小声对游客丙说）",
+          "label": "购物安排",
+          "numbers": "",
+          "hotwords": "晓月那家"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "先吃饭，回去再说。",
+          "direction": "（小声）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        }
+      ]
+    }
+  ]
+}

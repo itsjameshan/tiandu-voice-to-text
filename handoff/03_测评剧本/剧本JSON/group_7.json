@@ -1,0 +1,1039 @@
+{
+  "group": 7,
+  "scripts": [
+    {
+      "id": "G7-S1",
+      "title": "迟到的二十分钟",
+      "setting": "昆明临湖酒店门口，早上，半山观澜旅行社一日游约好八点集合去翠湖和滇池，导游迟到二十分钟且没有解释。",
+      "roles": [
+        "导游",
+        "游客甲",
+        "游客乙",
+        "司机"
+      ],
+      "focus": "迟到场景中导游先敷衍、后道歉并调整安排，提供抱怨、敷衍、道歉等“服务态度”句，并混有行程变更、正常讲解和其他句，作为 TensorFlow 话术分类（模型 B）与第六组模型对比的测试素材。",
+      "lines": [
+        {
+          "speaker": "游客甲",
+          "text": "师傅，这都八点十分了，刘导咋个还没来？",
+          "direction": "（站在酒店门口，看了看手表）",
+          "label": "服务态度",
+          "numbers": "8:10",
+          "hotwords": "刘导"
+        },
+        {
+          "speaker": "司机",
+          "text": "我也在等呢，刚才给他打了两个电话，都没人接。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "2个电话",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "群里也一句话都没有。我们七点五十就下来了，早饭都是赶着吃的。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "7:50",
+          "hotwords": ""
+        },
+        {
+          "speaker": "司机",
+          "text": "莫急，我再打一个试试。",
+          "direction": "（拿出手机拨号）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "司机",
+          "text": "喂，刘导，你到哪儿了？客人都在临湖酒店门口等着呢。",
+          "direction": "（打电话，开着免提）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "刘导；临湖酒店"
+        },
+        {
+          "speaker": "导游",
+          "text": "快了快了，马上到，你让他们再等一下嘛。",
+          "direction": "（从免提里传出，声音较小，有车流声）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "还要等？我们都等了快二十分钟了！",
+          "direction": "（对着手机说，与上一句部分重叠）",
+          "label": "服务态度",
+          "numbers": "20分钟",
+          "hotwords": ""
+        },
+        {
+          "speaker": "司机",
+          "text": "他说马上到。大家先到树荫底下站一下，太阳有点晒。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "好了好了，人都到齐了吧？上车上车，赶紧走。",
+          "direction": "（快步走过来，有点喘）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "刘导，先等一下。说好八点集合，现在都八点二十了，你迟到了整整二十分钟。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "8:00；8:20；20分钟",
+          "hotwords": "刘导"
+        },
+        {
+          "speaker": "导游",
+          "text": "哎呀，路上有点事，耽搁了一下嘛，上车再说。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "有事你也提前说一声啊。电话不接，群里不回，我们就在门口干站着。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "二十分钟而已，又不影响玩，今天的景点一个都不会少。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "20分钟",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "刘导，我们不是要为难你。我就把事情说清楚：你迟到了二十分钟，没提前通知，司机师傅打了两个电话你都没接，到现在一句解释都没有。",
+          "direction": "（语气平静）",
+          "label": "服务态度",
+          "numbers": "20分钟；2个电话",
+          "hotwords": "刘导"
+        },
+        {
+          "speaker": "导游",
+          "text": "行行行，知道了知道了，那你们想怎么样嘛？",
+          "direction": "（不耐烦）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "你这个态度就不对了吧？我们是出来玩的，不是来看脸色的。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "我们的要求也简单：先跟大家道个歉，再说说今天耽误的时间怎么补。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "今天的安排行程单上都写着呢，这个你们自己看手机就知道了。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "要是一直是这个态度，我们只能打一二三零一反映了。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "12301",
+          "hotwords": ""
+        },
+        {
+          "speaker": "司机",
+          "text": "刘导，客人说得也在理，你先跟大家好好说两句，我这边不急着发车。",
+          "direction": "（压低声音）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": "刘导"
+        },
+        {
+          "speaker": "导游",
+          "text": "好，是我不对。各位，对不起，今天这个事是我的问题。",
+          "direction": "（停顿约三秒，语气缓和下来）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "早上我出门晚了，路上又堵，那个，手机还调成了静音，师傅前面打的两个电话我都没听到，第三个才看到。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "2个电话；第3个",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "我应该一早就在群里跟大家说一声的，结果让大家在门口白白等了二十分钟，真的不好意思。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "20分钟",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "师傅，也对不住你，害你也跟着等。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "司机",
+          "text": "没事，人到了就好。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "嗯，话说开了就好。那今天耽误的时间怎么安排？",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "我跟大家说一下调整。原来九点到翠湖，现在大概九点半到，翠湖的游览时间不压缩。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "9:00；9:30",
+          "hotwords": "翠湖"
+        },
+        {
+          "speaker": "导游",
+          "text": "中午饭从十二点推到十二点半，下午去滇池的时间也相应往后挪。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "12:00；12:30",
+          "hotwords": "滇池"
+        },
+        {
+          "speaker": "导游",
+          "text": "晚上原定六点回临湖酒店，现在争取六点半以前把大家送回来。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "18:00；18:30",
+          "hotwords": "临湖酒店"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "往后推的话，滇池那边会不会少看一个地方？",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "滇池"
+        },
+        {
+          "speaker": "导游",
+          "text": "不会，下午的点一个都不减，只是整体往后顺延。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "司机",
+          "text": "那我换条路走，这个点那边车少一点。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "好，大家上车吧，系好安全带，贵重物品随身带好。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "司机",
+          "text": "好嘞，大家坐稳，我们出发了。",
+          "direction": "（关车门，车辆启动）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "各位早上好，再正式介绍一下，我是半山观澜旅行社的导游，大家叫我刘导就行。",
+          "direction": "（车上，用车载扩音器）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "半山观澜旅行社；刘导"
+        },
+        {
+          "speaker": "导游",
+          "text": "我们先去翠湖。翠湖在昆明市中心，平时很多市民在湖边散步、锻炼，冬天还能看到红嘴鸥。",
+          "direction": "（用车载扩音器）",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": "翠湖；昆明"
+        },
+        {
+          "speaker": "导游",
+          "text": "下午去滇池，湖边风比较大，大家记得带件外套。",
+          "direction": "（用车载扩音器）",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": "滇池"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "刘导，到了翠湖在哪儿集合？",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": "刘导；翠湖"
+        },
+        {
+          "speaker": "导游",
+          "text": "到了以后自由活动，十一点在下车的地方集合，我会提前十分钟在那儿等大家。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "11:00；10分钟",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "刘导，以后要是有什么情况，你早点在群里说一声，我们也好安排。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": "刘导"
+        },
+        {
+          "speaker": "导游",
+          "text": "要得，我记住了。今天手机我一直开着声音，有事随时找我。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "好，那今天就辛苦刘导了。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "刘导"
+        }
+      ]
+    },
+    {
+      "id": "G7-S2",
+      "title": "别再催我爸了",
+      "setting": "大理古城的石板街上，下午，半山观澜旅行社的团步行游览，一位七十多岁的游客走得慢，导游一再催促。",
+      "roles": [
+        "导游",
+        "游客甲",
+        "游客乙",
+        "游客丙"
+      ],
+      "focus": "反复催促年长游客的场景，提供多种温和的催促说法和替人说话、道歉的句子，并与安全提醒、集合通知等“正常讲解”句对照，测试模型 B 区分催促与正常提醒的能力。",
+      "lines": [
+        {
+          "speaker": "导游",
+          "text": "各位，前面就进大理古城了，大家跟紧我，别走散了。",
+          "direction": "（用随身扩音器）",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": "大理古城"
+        },
+        {
+          "speaker": "导游",
+          "text": "古城里的路很多是石板铺的，有的地方不太平，大家注意脚下。",
+          "direction": "（用随身扩音器）",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "这个路是有点滑。闺女，你扶我一把。",
+          "direction": "（走在队伍最后面）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "爸，莫急，扶着我慢慢走。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "后面的叔叔，稍微快一点哈，大家都在前面等着呢。",
+          "direction": "（回头，用扩音器）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "哎，好，好，我快点。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "大家走快一点，后面还有好几个点要看，时间不多了。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "刘导，附近哪里有洗手间？",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "刘导"
+        },
+        {
+          "speaker": "导游",
+          "text": "前面路口右手边就有，需要的去一下，五分钟后在这棵大树下集合。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "5分钟",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "人齐了没有？叔叔呢？哎呀，又落在后面了。",
+          "direction": "（五分钟后，用扩音器，语气有点急）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "叔叔，快点快点，大家都在等您一个人。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "来了来了，刚才那段台阶，我歇了一下。",
+          "direction": "（有点喘）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "叔叔，我这儿有水，您先喝一口，歇一歇再走。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "这点路很快就走完了，您跟紧一点，别老停下来。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "刘导，你等一下，我跟你说个事。",
+          "direction": "（走到导游身边）",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "刘导"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "我爸今年七十二岁了，膝盖不太好，上下台阶都得有人扶，你一直催，他心里一急，反而更容易摔。",
+          "direction": "（语气平静）",
+          "label": "服务态度",
+          "numbers": "72岁",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "刚才下台阶的时候，他一着急，脚下还滑了一下，幸好我扶住了。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "从进古城到现在，你已经催了他三回了，还拿扩音器当着大家的面喊。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "3回",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "我也是为大家着想嘛，二十个人等一个人，别人也会有意见的。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "20个人",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "刘导，我说句公道话，我们几个都没意见，慢一点逛反而能多看看。",
+          "direction": "（与上一句部分重叠）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": "刘导"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "刚才那段台阶又高又窄，我走着都得扶墙，叔叔慢一点很正常。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "我们是跟团游，不是自由行，总不能让大家都陪着慢慢走吧。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "算了算了，是我拖大家后腿了，我走快一点就是。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "爸，不是你的问题，你别跟着急。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "那也不能一直这么慢呀，晚饭是订好了的，六点要到饭店。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "18:00",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "现在才三点四十，离六点还早，真的没必要这么赶。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "15:40；18:00",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "我们不要求别的，就希望你别再当着大家的面催他，也跟我爸道个歉。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "好，是我太着急了。",
+          "direction": "（停顿约三秒）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "叔叔，对不起，刚才一直催您，还拿扩音器喊，是我做得不对。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "我带团习惯了赶时间，光想着按点走，没顾上看大家的情况，以后我一定注意。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "没事没事，你们当导游的也不容易。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "接下来我们放慢节奏，我走在队伍最后面，陪着叔叔一起走。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "路线也调整一下，前面那段台阶多，我们不走了，改走旁边平一点的那条街。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "原来五点在城门口集合，现在改到五点半，晚饭我打电话让饭店往后推一推。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "17:00；17:30",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "这样挺好，大家都能慢慢看。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "那我们慢慢往前走，路上谁想拍照就跟我说一声，我等大家。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "大家看，这条街两边的房子大多是白墙青瓦，拍照很好看。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "古城里电动车比较多，大家靠边走，拍照的时候注意身后。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "这条路平，走着舒服多了。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "叔叔，前面有个小坎，您扶着我，慢慢下。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "谢谢刘导。你这样带，我爸也放心多了。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "刘导"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "刘导，晚饭往后推，饭店那边没问题吧？",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "",
+          "hotwords": "刘导"
+        },
+        {
+          "speaker": "导游",
+          "text": "我刚打过电话了，饭店说没问题，改成六点半到就行。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "18:30",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "最后再提醒一下，五点半在城门口集合，走累了随时喊我，我们不赶。",
+          "direction": "（用扩音器，语速放慢）",
+          "label": "正常讲解",
+          "numbers": "17:30",
+          "hotwords": ""
+        }
+      ]
+    },
+    {
+      "id": "G7-S3",
+      "title": "我讲过一遍了",
+      "setting": "石林景区入口附近的观景平台，上午，半山观澜旅行社的团刚到，一个孩子问石林是怎么形成的，导游起初敷衍应付。",
+      "roles": [
+        "导游",
+        "游客甲",
+        "游客乙",
+        "游客丙"
+      ],
+      "focus": "同一景点里先有敷衍回答、后有正常讲解，测试模型 B 能否区分“服务态度”和“正常讲解”这两类内容相近的句子。",
+      "lines": [
+        {
+          "speaker": "导游",
+          "text": "好，石林到了。大家自由拍照，十一点半在这个入口集合。",
+          "direction": "（用随身扩音器）",
+          "label": "正常讲解",
+          "numbers": "11:30",
+          "hotwords": "石林"
+        },
+        {
+          "speaker": "游客甲",
+          "text": "哇，这么多石头，一根一根的，真壮观。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "刘导，这些石头怎么都是竖着长的？它们是怎么形成的呀？",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": "刘导"
+        },
+        {
+          "speaker": "导游",
+          "text": "有什么好问的，石头就是石头嘛，拍拍照就行了。",
+          "direction": "（边看手机边说）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "可是老师让我们回去写游记，要写清楚它们是怎么来的。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "我在车上讲过一遍了，你们没听吗？",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "刘导，车上那会儿扩音器声音很小，坐后面几排的基本听不清。",
+          "direction": "（语气平静）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": "刘导"
+        },
+        {
+          "speaker": "游客丙",
+          "text": "对，我坐在最后一排，就听到半句什么地形，不是，地貌，后面全是车子的声音。",
+          "direction": "（与上一句部分重叠）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "这个网上一搜全都有，你们自己查一下嘛。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "那你能再讲一次吗？就讲一小段。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "一会儿再说，一会儿再说，先拍照，人多了就不好拍了。",
+          "direction": "（摆摆手）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "网上是有，可我们报团就是想听导游讲。你认真讲一遍，也就几分钟的事。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "我一天要讲好几遍，嗓子都哑了，你们问这么细干什么嘛。",
+          "direction": "（不耐烦）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "你辛苦大家都理解，但讲解本来就是导游的工作，这么回答孩子不太合适。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "要是一直这样，回去我们只能向半山观澜旅行社反映一下了。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": "半山观澜旅行社"
+        },
+        {
+          "speaker": "导游",
+          "text": "好吧，是我刚才态度不好。小朋友，对不起，我给你好好讲一讲。",
+          "direction": "（停顿约三秒，叹了口气）",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "大家往这边站一点，靠着栏杆，别挡着后面的游客。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "嗯，我们眼前的石林，是很典型的喀斯特地貌，这些石头主要是石灰岩。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": "石林"
+        },
+        {
+          "speaker": "导游",
+          "text": "很久很久以前，这一带是一片海，海底慢慢沉积出了厚厚的石灰岩。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "后来地壳抬升，海水退了，这些石灰岩就露出了地面。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "石灰岩有个特点，就是容易被水溶蚀。雨水和地下水长年累月地冲刷、溶蚀，石头就被切成了一根一根的石柱、石峰。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "那石头上这一道一道竖着的纹路，也是水弄出来的吗？",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "对，这就是雨水顺着石头往下流，一点一点溶蚀出来的，有点像水滴石穿的道理。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "那为什么叫石林呢？",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": "石林"
+        },
+        {
+          "speaker": "导游",
+          "text": "因为石柱一根挨着一根，远远看过去就像一大片树林，所以叫石林。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": "石林"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "那它们现在还会继续变吗？",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "会的，溶蚀一直都在进行，只是非常慢，平常根本看不出来。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "所以大家参观的时候，不要攀爬，也不要在石头上刻字，这些石头形成真的很不容易。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客乙",
+          "text": "我记下来了，喀斯特地貌，石灰岩，被水溶蚀。",
+          "direction": "（边说边在手机上打字）",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "你看，这样一讲，孩子回去写游记就有东西可写了。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客丙",
+          "text": "刘导，这一段讲得清楚，我站在后面也听明白了。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": "刘导"
+        },
+        {
+          "speaker": "导游",
+          "text": "谢谢大家。刚才确实是我没耐心，下一个点我先讲清楚，大家有问题随时问。",
+          "direction": "",
+          "label": "服务态度",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "刚才耽误了几分钟，集合时间往后推十分钟，改成十一点四十，还是在入口这里。",
+          "direction": "",
+          "label": "行程变更",
+          "numbers": "10分钟；11:40",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "石林里面小路多、岔路也多，大家跟紧一点，不要钻太窄的石缝。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": "石林"
+        },
+        {
+          "speaker": "游客乙",
+          "text": "刘导，要是走散了怎么办？",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": "刘导"
+        },
+        {
+          "speaker": "导游",
+          "text": "走散了就在原地等，给我打电话，我的电话群里有。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "导游",
+          "text": "前面这一段我带着大家沿步道边走边讲，讲完了大家再自由拍照。",
+          "direction": "",
+          "label": "正常讲解",
+          "numbers": "",
+          "hotwords": ""
+        },
+        {
+          "speaker": "游客甲",
+          "text": "好，那我们跟着你走。",
+          "direction": "",
+          "label": "其他",
+          "numbers": "",
+          "hotwords": ""
+        }
+      ]
+    }
+  ]
+}

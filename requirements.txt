@@ -1,0 +1,13 @@
+# 运行依赖（不含 PyTorch、不含 TensorFlow）。写兼容范围，不锁死版本。
+gradio>=5,<7
+sherpa-onnx>=1.12,<2
+numpy
+soundfile
+PyYAML
+python-docx>=1.1
+pypinyin
+cn2an
+rapidfuzz
+noisereduce
+matplotlib
+imageio-ffmpeg

@@ -1,0 +1,62 @@
+# 旅游纠纷录音材料整理 · 参数配置
+# 改动后重新启动程序生效。路径可以是相对路径（相对于本文件所在的项目文件夹）或绝对路径。
+
+paths:
+  models: models          # 模型文件夹
+  data_pool: data_pool    # 全班数据池（可以改成 U 盘或共享文件夹，如 E:/data_pool）
+  outputs: outputs        # 处理结果
+  tmp: tmp                # 临时文件（放在项目里，避开中文用户名路径）
+
+# 每个槽位用哪种做法：baseline 是基线做法；各组的改进做法叫 g1、g2……
+# 可以在网页的“高级设置”里临时切换，也可以在这里改默认值。
+methods:
+  denoise: baseline       # 降噪（第 1 组）
+  enhance: baseline       # 远距离增强（第 2 组）
+  vad: baseline           # 端点检测（第 1、2 组）
+  hotword: baseline       # 热词纠错（第 5 组）
+  diarize: baseline       # 说话人分离（第 3 组）
+  normalize: baseline     # 数字规范化（第 4 组）
+  classify: baseline      # 话术分类（第 6、7 组）
+  clips: baseline         # 疑似片段（第 8 组）
+
+vad:                      # Silero VAD 端点检测
+  threshold: 0.5
+  min_silence_duration: 0.3
+  min_speech_duration: 0.25
+  max_speech_duration: 15
+
+asr:                      # SenseVoice 识别
+  num_threads: 4
+  batch_size: 20          # 每批识别多少段（每批更新一次进度条）
+  language: zh
+
+hotword:                  # 热词纠错（识别后按拼音相似度替换）
+  enabled: false
+  min_len: 3              # 只用 3 个字以上的热词
+  max_syllable_mismatch: 0
+
+diarize:                  # 说话人分离
+  num_speakers: -1        # -1 表示自动；知道人数时一定要填
+  threshold: 0.5
+  min_duration_on: 0.3
+  min_duration_off: 0.5
+
+qc:                       # 入池质检（只报告、不修改录音）
+  min_rms_dbfs: -40.0     # 整体音量低于这个值算“音量太小”
+  clip_ratio: 0.001       # 削波采样点超过这个比例算“削波”
+  long_silence_seconds: 10.0
+  silence_dbfs: -50.0     # 低于这个音量的 0.1 秒小段算静音
+  duration_tolerance: 0.4 # 实际时长与剧本预计时长相差超过 40% 就提示
+  min_sample_rate: 16000
+
+clips:
+  padding: 1.0            # 疑似片段前后各多留几秒
+
+script_demo:
+  chars_per_minute: 220   # 剧本文本演示时估算时间用的语速
+
+app:
+  host: 0.0.0.0           # 局域网内其他电脑可以用“本机 IP:端口”访问
+  port: 7860
+  max_file_size: 500mb
+  cleanup_hours: 24       # 超过这么多小时的处理结果和临时文件在启动时清理

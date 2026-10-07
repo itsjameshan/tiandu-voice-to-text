@@ -1,0 +1,39 @@
+# 模型、录音和处理结果都不进 git
+models/*
+!models/download_models.py
+data_pool/
+outputs/
+tmp/
+wheels/
+.gradio/
+flagged/
+*.wav
+*.mp3
+*.m4a
+*.aac
+*.flac
+*.ogg
+*.mp4
+*.mov
+*.mkv
+*.zip
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+
+# 本地配置与密钥
+.env
+*.local.yaml
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 数据池里的缓存、测评临时输出
+reports/*/outputs/
+dist/
