@@ -104,7 +104,7 @@ def _row_index(row: list, count: int) -> int | None:
     """这一行对应第几个段落（从 0 开始）；序号空着或超出范围（例如界面里新加的空行）返回 None。"""
     try:
         index = int(float(_cell_text(row[COL_NO]))) - 1
-    except (ValueError, IndexError):
+    except (ValueError, OverflowError, IndexError):
         return None
     return index if 0 <= index < count else None
 

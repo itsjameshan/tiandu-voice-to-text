@@ -51,7 +51,8 @@ DEFAULT_CATEGORY = "其他"
 
 def _read_rules() -> dict:
     """读关键词表并检查格式；写错时给出中文提示。每次都重新读，改了文件不用重启。"""
-    data = json.loads(RULES_PATH.read_text(encoding="utf-8"))
+    # utf-8-sig：用记事本另存时文件开头可能带 BOM
+    data = json.loads(RULES_PATH.read_text(encoding="utf-8-sig"))
     keywords = data.get("keywords")
     if not isinstance(keywords, dict) or set(keywords) != set(LABEL_NAMES):
         found = "、".join(keywords) if isinstance(keywords, dict) else "（没有 keywords）"

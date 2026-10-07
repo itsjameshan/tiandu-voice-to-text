@@ -24,6 +24,7 @@ Word 初稿的内容依次是（照 docs/build_spec.md 5.8）：
     用 python-docx 按上面的顺序写 Word；正文用宋体、标题用微软雅黑（设置中文字体 eastAsia，
     Windows 上的 Word 才不会把中文显示成别的字体）；纸张 A4。
     用标准库 zipfile 打包，ZIP 里的中文文件名按 UTF-8 存。
+    python-docx 在函数里导入：只装了 TensorFlow 和 numpy 的机房电脑导入 pipeline 时用不到它。
 可改进方向：
     这是教师模板，学生不改。界面上的表格改了说话人、文字、标签、复核结论后再导出，
     导出用的就是改过的段落（见 pipeline/table.py 的 rows_to_segments）。
@@ -34,10 +35,6 @@ Word 初稿的内容依次是（照 docs/build_spec.md 5.8）：
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
-
-from docx import Document
-from docx.oxml.ns import qn
-from docx.shared import Cm, Pt, RGBColor
 
 from pipeline.data import FLAG_OUTPUTS
 from pipeline.methods import SLOT_TITLES
@@ -70,7 +67,7 @@ HEADING_FONT = "微软雅黑"
 
 # 疑似片段表的表头
 SUSPECT_HEADERS = ["序号", "起止时间", "说话人", "文字", "标签", "数字和名称", "复核结论", "复核意见"]
-SUSPECT_WIDTHS_CM = [1.0, 2.6, 1.6, 4.6, 2.2, 2.4, 1.4, 2.0]
+SUSPECT_WIDTHS_CM = [1.1, 2.4, 1.5, 4.6, 2.1, 2.0, 1.7, 1.6]  # 加起来 17 厘米，正好是 A4 去掉页边距的宽度
 
 # meta 里英文键的中文名（文件信息表里用）
 MODEL_TITLES = {"asr": "语音识别", "vad": "端点检测", "diarization": "说话人分离"}
@@ -122,6 +119,8 @@ def _short(value) -> str:
 
 def _format_mapping(mapping, titles: dict) -> str:
     """{"asr": "sense-voice…", …} → "语音识别：sense-voice…；…"；空的返回 ""。"""
+    if isinstance(mapping, str):
+        return mapping
     if not isinstance(mapping, dict) or not mapping:
         return ""
     return LIST_SEP.join(f"{titles.get(key, key)}：{_short(value)}" for key, value in mapping.items())
@@ -139,6 +138,8 @@ def _set_style_font(style, font_name: str) -> None:
 
     样式里原来写的"主题字体"（asciiTheme、eastAsiaTheme 等）优先级更高，会盖过我们设的字体，所以要删掉。
     """
+    from docx.oxml.ns import qn
+
     style.font.name = font_name  # 西文字体
     fonts = style.element.get_or_add_rPr().get_or_add_rFonts()
     fonts.set(qn("w:eastAsia"), font_name)  # 中文字体
@@ -148,6 +149,8 @@ def _set_style_font(style, font_name: str) -> None:
 
 def _setup_document(doc) -> None:
     """纸张 A4、页边距 2 厘米、中文字体、页脚通知语、文档属性。"""
+    from docx.shared import Cm, Pt
+
     section = doc.sections[0]
     section.page_width, section.page_height = Cm(21.0), Cm(29.7)
     section.left_margin = section.right_margin = Cm(2.0)
@@ -173,6 +176,8 @@ def _setup_document(doc) -> None:
 
 def _fill_cells(cells, values, bold: bool = False, size: float = 9) -> None:
     """把一行文字写进表格的格子里（小号字，表头加粗）。"""
+    from docx.shared import Pt
+
     for cell, value in zip(cells, values):
         run = cell.paragraphs[0].add_run(str(value))
         run.bold = bold
@@ -181,6 +186,8 @@ def _fill_cells(cells, values, bold: bool = False, size: float = 9) -> None:
 
 def _set_widths(table, widths_cm) -> None:
     """设置每一列的宽度：列宽（WPS、LibreOffice 看这个）和每个格子的宽度（Word 看这个）都设一遍。"""
+    from docx.shared import Cm
+
     table.autofit = False
     for column, width in zip(table.columns, widths_cm):
         column.width = Cm(width)
@@ -266,6 +273,8 @@ def _add_suspect_table(doc, flagged: list[tuple[int, dict]]) -> None:
 
 
 def _add_transcript(doc, segments: list[dict]) -> None:
+    from docx.shared import RGBColor
+
     doc.add_heading("四、全文时间轴转写", level=1)
     if not segments:
         doc.add_paragraph("没有识别出文字。")
@@ -289,6 +298,9 @@ def _add_signature(doc) -> None:
 
 def build_docx(segments: list[dict], meta: dict, path) -> None:
     """生成 Word 核查初稿，写到 path。内容顺序见本文件开头的说明。"""
+    from docx import Document
+    from docx.shared import Pt, RGBColor
+
     meta = meta or {}
     doc = Document()
     _setup_document(doc)
@@ -332,7 +344,7 @@ def _readme_text(meta: dict, clip_count: int) -> str:
     lines = [
         "旅游纠纷录音材料核查初稿 · 说明",
         "",
-        f"本压缩包{DOC_COMMENTS}（{AUTHOR}）。",
+        f"本压缩包{DOC_COMMENTS}，生成工具：{AUTHOR}。",
         f"{NOTICE}。",
         DISCLAIMER,
         "",

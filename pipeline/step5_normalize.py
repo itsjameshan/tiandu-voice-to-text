@@ -69,6 +69,7 @@ import cn2an  # 纯 Python 小库，导入很快，不是重依赖
 
 from pipeline.data import load_fictional_names, load_hotwords
 from pipeline.methods import register
+from pipeline.schema import LIST_SEP
 
 # 数字的类型；前 7 个是主指标（与纠纷核查直接相关），后 3 个是次要指标
 NUMBER_TYPES = ["金额", "电话", "证号", "合同号", "订单号", "时刻", "日期", "数量", "时长", "其他"]
@@ -91,7 +92,7 @@ QUANTIFIERS = ["号门", "房间", "毫米", "公里", "人", "家", "盒", "克
 
 # 不带"块""元"的数后面如果跟着这些字，就不当成金额（extract_numbers 最后一条规则用）：
 # 时间、年龄、次数等单位，以及"来""余""几"（"二十来分钟"）
-OTHER_UNITS = "点分秒岁周回次对遍趟层楼号届度斤件套只片句来余几"
+OTHER_UNITS = "点分秒岁周回次对遍趟层楼号届度斤件套只片句来余几月米公站路级"
 
 # 时长的结尾（number_type 用）
 DURATION_ENDINGS = ["分钟", "小时", "天", "晚", "年", "个月", "个多月", "个工作日"]
@@ -249,16 +250,22 @@ def _convert_times(text: str) -> str:
 
 
 # 保护词：前面不能紧挨着数字（"十一点半"里的"一点"、"一万一千"里的"万一"不算）
+# "一点"后面紧跟数字时是小数（"一点五元"），不保护
 _PROTECTED = re.compile(
-    rf"(?<![{NUMERAL_CHARS}\d])(" + "|".join(sorted(PROTECTED_WORDS, key=len, reverse=True)) + ")")
+    rf"(?<![{NUMERAL_CHARS}\d])("
+    + "|".join(re.escape(w) + (rf"(?![{NUMERAL_CHARS}\d])" if w == "一点" else "")
+               for w in sorted(PROTECTED_WORDS, key=len, reverse=True))
+    + ")")
 _PLACEHOLDER_START = 0xE000  # Unicode 私用区的字符，cn2an 不认识，不会动它
 # 紧跟在量词前面、前面又不是数字的"两"
 _LIANG = re.compile(rf"(?<![{NUMERAL_CHARS}\d])两(?=[人家盒克张饼个泡样笔排页条折晚天年位次回对岁])")
 
 
-def _protected_names() -> re.Pattern:
-    """热词表里的名称（长名优先）拼成一个正则，用来整个保护起来。"""
-    names = sorted(load_hotwords(), key=len, reverse=True)
+def _protected_names() -> re.Pattern | None:
+    """热词表里的名称（长名优先）拼成一个正则，用来整个保护起来。热词表为空时返回 None。"""
+    names = sorted((n for n in load_hotwords() if n), key=len, reverse=True)
+    if not names:
+        return None
     return re.compile("|".join(re.escape(name) for name in names))
 
 
@@ -277,7 +284,9 @@ def spoken_to_digits(text: str) -> str:
         saved.append(m.group(0))
         return chr(_PLACEHOLDER_START + len(saved) - 1)
 
-    text = _protected_names().sub(hide, text)
+    names = _protected_names()
+    if names is not None:
+        text = names.sub(hide, text)
     text = _PROTECTED.sub(hide, text)
 
     # cn2an 有时不转"两"（"两盒""两家"原样保留），量词前面的"两"先改成"2"
@@ -486,7 +495,7 @@ def numbers_accuracy(lines: list[dict], method: Callable | None = None, cfg: dic
     for line in lines:
         gold = line.get("numbers") or []
         if isinstance(gold, str):  # 也接受没拆开的 "2800元；15:40"
-            gold = gold.split("；")
+            gold = gold.split(LIST_SEP)
         gold = {value.strip() for value in gold if value.strip()}
         if method is None:
             pred = set(extract_numbers(spoken_to_digits(line["text"])))

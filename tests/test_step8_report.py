@@ -78,7 +78,7 @@ def test_constants_verbatim():
     assert DISCLAIMER == ("本初稿由语音识别等人工智能技术自动生成，识别和分类都可能出错。所有标注均为“疑似、待核查”，"
                           "不代表任何定性结论，必须由工作人员对照原始录音逐条复核。本工具不鉴定录音的真伪。")
     assert AUTHOR == "旅游纠纷录音材料整理工具（教学原型）"
-    assert len(FORBIDDEN_WORDS) == 4
+    assert FORBIDDEN_WORDS == ["违规", "违法", "执法级准确率", "可作为法律证据"]
 
 
 @pytest.mark.parametrize("seconds, text", [

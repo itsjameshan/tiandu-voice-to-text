@@ -311,3 +311,24 @@ def test_numbers_accuracy_with_method():
     result = numbers_accuracy([{"text": "两千八百块", "numbers": ["2800元"]}], method=empty_method)
     assert result["main"]["hit"] == 0
     assert result["main"]["recall"] == 0.0
+
+
+# ---- 集成时补的回归测试（审查意见）----
+
+def test_decimal_after_yidian_not_protected():
+    """"一点五元"是小数，不能因为保护"一点"而变成"一点5元"（再被提取成 5元）。"""
+    assert extract_numbers(spoken_to_digits("一共一点五元")) == ["1.5元"]
+    assert "1" not in spoken_to_digits("再便宜一点吧")
+
+
+def test_bare_numbers_with_other_units_not_money():
+    """带"月""米"等单位的数不能被当成金额。"""
+    assert extract_numbers("我们10月份报的团，海拔3000米") == []
+
+
+def test_empty_hotword_list_does_not_break(monkeypatch):
+    """热词表为空时，保护名称的正则不能匹配到每个位置。"""
+    import pipeline.step5_normalize as s5
+
+    monkeypatch.setattr(s5, "load_hotwords", lambda: [])
+    assert s5.spoken_to_digits("这个手镯两千八百块") == "这个手镯2800元"
