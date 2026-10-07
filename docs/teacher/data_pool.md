@@ -1,0 +1,94 @@
+# 数据池管理（老师）
+
+数据池是全班录音、参考文本、标注和清单的统一存放处。放在老师电脑或 U 盘上，**不进代码仓库、不上传网络**。
+
+## 一、建数据池（第 0 周）
+
+1. 在老师电脑上建一个纯英文路径的文件夹，例如 `D:\data_pool`。
+2. 把便携包（或仓库）里 `config.yaml` 的 `paths.data_pool` 改成这个路径；也可以每条命令都加 `--pool D:\data_pool`。
+3. 生成 72 份待校对的参考文本（内容先照抄剧本）：
+   ```bat
+   python\python.exe tools\export_references.py --pool D:\data_pool
+   ```
+   已存在的文件不会被覆盖（校对过的不会丢）。
+
+文件夹结构（工具自动建）：
+
+```
+D:\data_pool\
+  raw\                  学生交来的原始录音（入池后设为只读）
+  normalized\           统一格式后的 16kHz 单声道 WAV
+  references\           72 份参考文本，如 G1-S1-Q.txt
+  annotations\speakers\ 说话人时间标注
+  annotations\clips\    疑似片段起止标注
+  asr_cache\            "数据校对"页的识别结果缓存
+  digits\               选做：中文数字录音
+  manifest.csv          清单（文件、剧本、条件、时长、采样率、质检、上传时间、SHA-256 指纹）
+  qc_report.csv         质检报告
+  proofread_log.csv     校对记录（谁、什么时候校对了哪段）
+  acceptance.csv        验收表（每段录音一行）
+  acceptance_summary.csv 各组汇总
+  versions\v1\          冻结的版本
+```
+
+## 二、入池（第 2、4、5 周，每次录完）
+
+1. 数据负责人把本组录音（文件名如 `G1-S1-Q.m4a`）拷进 `D:\data_pool\raw\`。
+2. 运行：
+   ```bat
+   python\python.exe tools\ingest_pool.py --pool D:\data_pool
+   ```
+3. 看输出：
+   - **文件名不合格**的会列出来并说明原因（小写、多了"(1)"、组号不对……），不会被处理。让学生改名后重新放进 `raw\`，再运行一次；
+   - 合格的会转成 `normalized\G1-S1-Q.wav`，写进 `manifest.csv`，原始文件设为只读；
+   - **质检有问题**的会写出问题（时长不对、音量太小、削波、大段无声、采样率低）。质检只报告、不修改录音。是否重录由老师和数据负责人判断。
+4. 已经入池的文件（按 SHA-256 指纹判断）再运行时会跳过，可以放心重复运行。
+5. 质检阈值在 `config.yaml` 的 `qc` 一节，第 2 周试录后可以根据实际录音调整（第 1 组负责试定）。
+
+## 三、校对和标注（第 5—6 周）
+
+- 学生在网页"数据校对"页校对参考文本，保存时自动写 `proofread_log.csv`。网页工具的"数据池路径"要指向同一个 `D:\data_pool`（共享文件夹也可以，如 `\\老师电脑\data_pool`）。
+- 如果学生在自己电脑上校对（拷了一份数据池），收回来时只需要把 `references\` 里改过的 txt 和 `proofread_log.csv` 里新增的行合并回来。
+- 标注用 Audacity 导出标签，再用 `tools\labels_to_csv.py` 放进 `annotations\`（见 [../guides/annotation.md](../guides/annotation.md)）。
+
+## 四、验收（第 6 周末）
+
+```bat
+python\python.exe tools\check_pool.py --pool D:\data_pool
+```
+
+生成 `acceptance.csv`（每段录音一行）和 `acceptance_summary.csv`（每组一行），并在屏幕上打印各组汇总：
+
+| 列 | 含义 |
+|---|---|
+| 已交 | `raw\` 里有没有这个文件 |
+| 命名 | 文件名是否合格 |
+| 质检 | 合格 / 具体问题 / 未入池 |
+| 校对遍数 | 有几个不同的人校对过 |
+| 说话人标注（秒） | 这段录音标了多少秒 |
+| 片段标注 | 有没有片段标注 |
+| 通过 | 已交 且 质检合格 且 校对遍数 ≥ 2 |
+
+各组汇总看：已交/应交（每组 9 段）、通过数、说话人标注总分钟（要求 ≥ 10 分钟）。
+
+## 五、冻结版本（验收后）
+
+```bat
+python\python.exe tools\freeze_pool.py --pool D:\data_pool --version v1
+```
+
+把清单、参考文本、标注、校对记录、验收表复制到 `versions\v1\`，并记下每个文件（包括录音）的 SHA-256 指纹。之后所有测评报告都会写明"数据池版本 v1"。
+
+- 冻结后发现参考文本还有错：改好后冻结一个新版本 `v2`，并通知各组用 v2 重新测基线和改进（**基线和改进必须用同一个版本**）。
+- 同一个版本名不能覆盖，工具会拒绝。
+
+## 六、分发给各组测评（第 7 周起）
+
+各组跑测评需要 `normalized\`、`references\`、`annotations\`、`manifest.csv`。可以：
+
+- 共享文件夹：各组直接用 `--pool \\老师电脑\data_pool`（只读访问即可，测评不会修改数据池）；
+- U 盘：把整个数据池（约 700 MB）拷给每组一份。
+
+## 七、课程结束后
+
+按同意书约定的期限删除录音和由它产生的结果（`raw\`、`normalized\`、`asr_cache\`、各组 U 盘里的副本）。参考文本和统计结果不含声音，可以保留用于教学。
