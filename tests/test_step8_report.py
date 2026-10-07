@@ -9,6 +9,7 @@ import json
 import zipfile
 from pathlib import Path
 
+import docx
 import numpy as np
 import pytest
 
@@ -25,8 +26,6 @@ from pipeline.step8_report import (
     export_bundle,
     fmt_mmss,
 )
-
-docx = pytest.importorskip("docx")
 
 
 def _segments() -> list[dict]:

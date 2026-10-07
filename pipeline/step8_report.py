@@ -45,7 +45,10 @@ from pipeline.schema import GENERATED_BY, LIST_SEP, NOTICE, REVIEW_CHOICES, writ
 from pipeline.step7_clips import CLIPS_INDEX_NAME
 
 TITLE = "旅游纠纷录音材料核查初稿（疑似、待核查）"
-DISCLAIMER = "本初稿由语音识别等人工智能技术自动生成，识别和分类都可能出错。所有标注均为“疑似、待核查”，不代表任何定性结论，必须由工作人员对照原始录音逐条复核。本工具不鉴定录音的真伪。"
+DISCLAIMER = (
+    "本初稿由语音识别等人工智能技术自动生成，识别和分类都可能出错。所有标注均为“疑似、待核查”，"
+    "不代表任何定性结论，必须由工作人员对照原始录音逐条复核。本工具不鉴定录音的真伪。"
+)
 AUTHOR = "旅游纠纷录音材料整理工具（教学原型）"
 
 # 界面、初稿、导出文件里都不能出现的说法（红线第 4 条）。这一行以外，pipeline/ 里不要再写这些词
@@ -177,7 +180,10 @@ def _fill_cells(cells, values, bold: bool = False, size: float = 9) -> None:
 
 
 def _set_widths(table, widths_cm) -> None:
-    """设置每一列的宽度（Word 要求每个格子都设一遍）。"""
+    """设置每一列的宽度：列宽（WPS、LibreOffice 看这个）和每个格子的宽度（Word 看这个）都设一遍。"""
+    table.autofit = False
+    for column, width in zip(table.columns, widths_cm):
+        column.width = Cm(width)
     for row in table.rows:
         for cell, width in zip(row.cells, widths_cm):
             cell.width = Cm(width)
