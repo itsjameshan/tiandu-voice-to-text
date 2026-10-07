@@ -128,3 +128,6 @@
   8. Dockerfile 设 REQUIRE_AUTH=1：云端演示没设用户名、密码时不启动。
   9. 便携包里带上 requirements.txt 和 requirements-tf.txt（训练脚本的提示里提到它）。
   审查确认：红线（不开公网分享、关统计、没有联网、outputs 和数据池不对浏览器开放、标签只有"疑似·"、机器生成标记）、轻量导入、空白/极短/没有声音的视频等输入、指标算法（说话人标错比例和穷举结果一致）都没问题。
+- 任务 26 全面验收（提交 e1490eb）：开发环境 `pytest -q` 846 通过、9 跳过（没有 TensorFlow）、3 个已知失败（留给第 4 组）；`ruff check .` 通过；
+  GitHub Actions 自动测试（Windows、Linux）和"构建 Windows 便携包"（自检 + 网页能打开）都通过。
+  Playwright 走查五个页面：整理录音（四人测试音频，7 段，导出 ZIP、Word、CSV、JSON）、剧本文本演示、数据校对、录音质检、使用说明，浏览器控制台没有错误；数据池不存在时两页只显示中文提示。
