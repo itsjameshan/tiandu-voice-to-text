@@ -20,7 +20,8 @@
     - 不联网，不用语音合成。
 
 可以试的方向（由易到难）
-    1. 调 config.yaml 里 vad 一节的参数（threshold、min_silence_duration……），看会不会漏切人声或多切。
+    1. 调端点检测参数（threshold、min_silence_duration……），看会不会漏切人声或多切。可以先在 config.yaml 里摸索，
+       正式对比时把参数写进 vad_g1（复制一份 cfg 再改），config.yaml 改回原值（基线也读它，对比会全是 0）。
     2. 用模板自带的 noisereduce 做法（--method denoise=noisereduce），再在这里调它的参数
        （例如 noisereduce.reduce_noise 的 prop_decrease、stationary）。
     3. 自己写谱减法：用录音开头一小段没人说话的声音估计噪声频谱，再从每一帧里减掉。

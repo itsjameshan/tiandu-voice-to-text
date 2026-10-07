@@ -61,7 +61,7 @@ python\python.exe tools\evaluate.py cer --pool D:\data_pool --method denoise=g1 
 ## 6. 对比表
 
 ```bat
-python\python.exe tools\compare.py --slot denoise --method g1 --metric cer --pool D:\data_pool --out reports\g1
+python\python.exe tools\compare.py --slot denoise --method g1 --metric cer --pool D:\data_pool --out reports\g1\denoise
 python\python.exe tools\compare.py --slot vad --method g1 --metric cer --pool D:\data_pool --out reports\g1\vad
 ```
 

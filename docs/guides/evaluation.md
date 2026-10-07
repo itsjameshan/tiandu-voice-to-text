@@ -8,7 +8,7 @@
 4. **如实写**：变差了也写；剧本数据上的结果不代表真实场景。
 
 命令都在便携包文件夹里运行（`python\python.exe tools\...`），`--pool` 填数据池路径。加 `--out reports\gN` 把结果存进本组报告文件夹。
-**基线和改进做法的结果放不同的文件夹**：基线放 `reports\gN`，本组做法（带 `--method`）放 `reports\gN\after`，放在同一个文件夹会互相覆盖；`compare.py` 写的是 `compare_*.md`，可以和基线放在一起。
+**基线和改进做法的结果放不同的文件夹**：基线放 `reports\gN`，本组做法（带 `--method`）放 `reports\gN\after`，放在同一个文件夹会互相覆盖；`compare.py` 写的是 `compare_*.md`，可以和基线放在一起。有几种基线的组按本组报告模板分文件夹：第 5 组热词纠错关、开两次基线放 `reports\g5\off`、`reports\g5\on`；第 6、7 组关键词规则基线放 `reports\gN\baseline`。
 
 ## 一、字错率（CER）—— 全员；第 1、2 组主指标
 
@@ -29,7 +29,8 @@ python\python.exe tools\evaluate.py cer --pool D:\data_pool --out reports\g1
 ## 二、专名正确率、过度纠正 —— 第 5 组
 
 ```bat
-python\python.exe tools\evaluate.py hotwords --pool D:\data_pool --hotword on --out reports\g5
+python\python.exe tools\evaluate.py hotwords --pool D:\data_pool --hotword off --out reports\g5\off
+python\python.exe tools\evaluate.py hotwords --pool D:\data_pool --hotword on --out reports\g5\on
 python\python.exe tools\evaluate.py hotwords --pool D:\data_pool --method hotword=g5 --hotword on --out reports\g5\after
 ```
 
@@ -70,7 +71,7 @@ python\python.exe tools\evaluate.py speakers --pool D:\data_pool --method diariz
 
 ```bat
 :: 关键词规则基线（在剧本台词文字上测，不需要录音和数据池）
-python\python.exe tools\evaluate.py classify --out reports\g6
+python\python.exe tools\evaluate.py classify --out reports\g6\baseline
 :: 训练并按组留一测评 TensorFlow 模型（用机房自带的 Python；第 7 组把 g6 换成 g7）
 python tools\train_classifier.py --model g6 --eval logo
 ```

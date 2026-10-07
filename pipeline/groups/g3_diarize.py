@@ -22,7 +22,8 @@
     - 不联网，不建声纹库，不识别"是谁"，只区分"不是同一个人"。
 
 可以试的方向（由易到难）
-    1. 比较"自动"和"设对人数"的说话人标错比例；调 config.yaml 里 diarize 的 threshold、min_duration_on/off。
+    1. 比较"自动"和"设对人数"的说话人标错比例；调 diarize 的 threshold、min_duration_on/off：
+       参数写进 diarize_g3（复制一份 cfg 再改），不要改 config.yaml（基线也读它，对比会全是 0）。
     2. 按说话人边界再切分：如果一段话和两个说话人的时间都重叠很多，就在边界处切成两段。
     3. 换声纹模型：python models/download_models.py --optional eres2net，比较 CAM++ 和 ERes2Net。
 """

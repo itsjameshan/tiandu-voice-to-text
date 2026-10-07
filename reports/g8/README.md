@@ -64,6 +64,7 @@ python\python.exe tools\evaluate.py clips --pool D:\data_pool --method clips=g8 
 | 终点平均误差（秒） |  |
 | 没配上的片段数 |  |
 | 和标注都不重叠的工具片段 |  |
+| 类别不同的工具片段 |  |
 
 ## 6. 对比表
 
@@ -82,7 +83,7 @@ python\python.exe tools\compare.py --slot clips --method g8 --metric clips --poo
 | 全体·和标注都不重叠的工具片段 |  |  |  |
 
 第 9 周在全部做法（第 6、7 组的分类模型）下再比一次误报率。关键词规则的数字取 `classify.md`；
-模型的数字**向第 6、7 组要按组留一的训练报告**（`train_g6_logo_extra.md`、`train_g7_logo_extra.md` 里的
+模型的数字**向第 6、7 组要按组留一的训练报告**（`reports\g6\model_a\train_g6_logo_extra.md`、`reports\g7\model_b\train_g7_logo_extra.md`，不要用 `cnn_baseline\` 里模板卷积模型的报告；这两份报告里的
 "误报率（全部剧本）""误报率（只看第 8 组剧本）"）。不要用 `evaluate.py classify --method classify=g6` 测模型的误报率：
 模型是用全部剧本台词训练的，在同样的台词上测等于"考原题"，误报率会虚低。
 
