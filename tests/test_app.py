@@ -17,9 +17,9 @@ from conftest import FOUR_SPEAKERS_WAV, ROOT, requires_models
 import app
 from pipeline import ui_text
 from pipeline.config import load_config
-from pipeline.data import get_script
+from pipeline.data import get_script, script_reference_text
 from pipeline.methods import SLOT_TITLES, SLOTS
-from pipeline.pool import export_references, ingest_pool, init_pool
+from pipeline.pool import MANIFEST_COLUMNS, export_references, ingest_pool, init_pool, write_csv_rows
 from pipeline.schema import NOTICE, new_segment
 from pipeline.script_demo import DEMO_NOTICE, run_script_demo
 from pipeline.table import COL_NOTE, COL_REVIEW, COL_SPEAKER, COL_TEXT, TABLE_HEADERS, segments_to_rows
@@ -103,9 +103,9 @@ def test_build_app(app_cfg):
     script_box = next(props for props in dropdowns.values()
                       if any("G1-S1 石林路上推特产" in str(choice) for choice in props["choices"]))
     assert len(script_box["choices"]) == 24
-    # 核查表的表头
-    tables = [c for c in components if c["type"] == "dataframe"]
-    assert tables and all(t["props"]["value"]["headers"] == TABLE_HEADERS for t in tables)
+    # 核查表的表头（“整理录音”和“剧本文本演示”各一张；“数据校对”的对照表另有表头，见 test_app_has_five_tabs）
+    tables = [c for c in components if c["type"] == "dataframe" and c["props"].get("label") == "核查表"]
+    assert len(tables) == 2 and all(t["props"]["value"]["headers"] == TABLE_HEADERS for t in tables)
     # “演示模式”提示只在演示的摘要里出现一次，标签页开头不再重复
     assert not any(DEMO_NOTICE in text for text in texts)
 
@@ -455,6 +455,27 @@ def test_app_has_five_tabs(app_cfg):
     assert sum(box.get("value") == str(app_cfg["paths"]["data_pool"]) for box in boxes) == 2
 
 
+def test_new_comparison_and_check_clear_old_results(app_cfg):
+    """点“生成对照”“检查上传的录音”“检查池内录音”时，先清掉上一次的结果再处理。
+
+    出错时页面上不会留着上一段录音的结果；“数据校对”还要清掉记住的结果，免得把参考文本存到别的录音里。
+    """
+    config = app.build_app(app_cfg).get_config_file()
+    components = {c["id"]: c for c in config["components"]}
+    buttons = {c["props"].get("value"): c["id"] for c in config["components"] if c["type"] == "button"}
+
+    def first_outputs(label: str) -> set[str]:
+        dep = next(dep for dep in config["dependencies"]
+                   if (buttons[label], "click") in [tuple(t) for t in dep["targets"]])
+        return {components[i]["type"] for i in dep["outputs"]}
+
+    assert first_outputs("生成对照") == {"markdown", "dataframe", "textbox", "state", "audio"}
+    assert app.clear_comparison() == (ui_text.PROOFREAD_PLACEHOLDER, [], "", None, None, "")
+    for label in ["检查上传的录音", "检查池内录音"]:
+        assert first_outputs(label) == {"plot", "markdown"}
+        assert len(_outputs_after_click(config, buttons[label])) == 2
+
+
 def test_no_browser_access_to_pool_or_outputs():
     """安全决定：不对网页开放 outputs 和数据池（不加 allowed_paths）。"""
     source = (ROOT / "app.py").read_text(encoding="utf-8")
@@ -562,6 +583,71 @@ def test_save_reference(tmp_path):
         log = list(csv.DictReader(f))
     assert [(row["文件编号"], row["校对人"], row["第几遍"], row["备注"]) for row in log] == [
         ("G1-S1-Q", "1234", "1", "第 3 句重叠"), ("G1-S1-Q", "5678", "2", "")]
+
+
+def test_pool_recordings_reads_manifest(tmp_path):
+    """录音下拉框只列清单 manifest.csv 里的录音，不去翻 normalized/ 文件夹（没入池的文件不能混进来）。"""
+    root = tmp_path / "pool"
+    init_pool(root)
+    (root / "normalized" / "G2-S1-Q.wav").write_bytes(b"x")  # 没入池的文件
+    write_csv_rows(root / "manifest.csv", MANIFEST_COLUMNS,
+                   [{"文件编号": "G1-S2-N", "转换后文件": "normalized/G1-S2-N.wav"},
+                    {"文件编号": "G1-S1-Q", "转换后文件": "normalized/G1-S1-Q.wav"}])
+    assert app.pool_recordings(root) == ["G1-S1-Q", "G1-S2-N"]
+    update, hint = app.refresh_recordings(f"  {root}  ")  # 路径前后多打了空格也认
+    assert update["choices"] == ["G1-S1-Q", "G1-S2-N"] and update["value"] == "G1-S1-Q"
+    assert "2 段" in hint
+    _, hint = app.refresh_recordings("")
+    assert "数据池路径" in hint
+    with pytest.raises(gr.Error) as info:  # 清单里有、但转换后的录音不见了
+        app.generate_comparison(str(root), "G1-S1-Q")
+    assert "G1-S1-Q" in str(info.value) and "normalized" in str(info.value)
+
+
+def test_comparison_cache_follows_wav(tmp_path, make_audio, monkeypatch, app_cfg):
+    """“生成对照”的识别结果缓存在 asr_cache/<编号>.json：录音没变就直接用；录音换了（复录）就重新识别。
+
+    用假的端点检测和识别代替模型，只检查缓存和对照的逻辑。
+    """
+    from pipeline import step2_vad, step3_asr
+
+    root = tmp_path / "pool"
+    init_pool(root)
+    wav = root / "normalized" / "G1-S1-Q.wav"
+    shutil.copyfile(make_audio("tone", "wav", seconds=3.0, sr=16000, channels=1), wav)
+    write_csv_rows(root / "manifest.csv", MANIFEST_COLUMNS,
+                   [{"文件编号": "G1-S1-Q", "转换后文件": "normalized/G1-S1-Q.wav"}])
+    calls = []
+
+    def fake_detect(samples, sr, cfg, methods=None):
+        return samples, [new_segment(0.0, 1.0), new_segment(1.0, 2.5)]
+
+    def fake_recognize(samples, sr, segments, cfg, mode="display", progress=None):
+        assert mode == "eval", "数据校对要用测评模式（汉字读法、没有标点），和参考文本口径一致"
+        calls.append(mode)
+        return [dict(seg, text_raw=text) for seg, text in zip(segments, ["今天去石林", "下午回昆名"])]
+
+    monkeypatch.setattr(step2_vad, "detect_speech", fake_detect)
+    monkeypatch.setattr(step3_asr, "recognize", fake_recognize)
+
+    # 还没有参考文本文件：先照抄剧本台词，并提示保存后才写进 references
+    summary, rows, reference, state = app.generate_comparison(str(root), "G1-S1-Q")
+    assert reference == script_reference_text("G1-S1")
+    assert "还没有参考文本文件" in summary
+    assert state["meta"]["stem"] == "G1-S1-Q" and Path(state["meta"]["wav"]) == wav
+    assert calls == ["eval"]
+    assert (root / "asr_cache" / "G1-S1-Q.json").is_file()
+
+    (root / "references" / "G1-S1-Q.txt").write_text("今天去石林。下午回昆明。", encoding="utf-8")
+    summary, rows, reference, _ = app.generate_comparison(str(root), "G1-S1-Q")
+    assert calls == ["eval"], "录音没变，应该直接用缓存"
+    assert rows == [[1, 0.0, 1.0, "今天去石林", "今天去石林。", "相同"],
+                    [2, 1.0, 2.5, "下午回昆名", "下午回昆明。", "不同"]]
+    assert "10.0%" in summary and "还没有参考文本文件" not in summary
+
+    shutil.copyfile(make_audio("silence", "wav", seconds=3.0, sr=16000, channels=1), wav)  # 复录：换了录音
+    app.generate_comparison(str(root), "G1-S1-Q")
+    assert calls == ["eval", "eval"], "录音换了，要重新识别"
 
 
 def test_check_upload_qc(app_cfg, make_audio, monkeypatch, tmp_path):

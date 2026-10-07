@@ -3,6 +3,7 @@
 红线：云端开发环境里不报告任何字错率数字。这里只检查流程能跑通、字段齐全、缓存有效，
 不打印、不记录字错率的具体数值。
 测试音频：模型自带的 0-four-speakers-zh.wav 改名成 G1-S1-Q.wav 放进临时数据池（不用语音合成）。
+说话人标注、片段标注是测试里手写的（不是这段音频真正的说话时间），只用来检查流程和计算接得对不对。
 数据池建在 pytest 的临时文件夹里，不碰仓库里的 data_pool/。
 """
 import copy
@@ -17,20 +18,29 @@ import pytest
 import soundfile as sf
 
 from conftest import FOUR_SPEAKERS_WAV, ROOT, requires_models
+from pipeline.annotations import write_clips_csv, write_turns_csv
 from pipeline.config import load_config
 from pipeline.evaluation import (
     FIXED_LIMITATION,
     NOT_FROZEN,
+    annotated_items,
     cache_key,
+    clip_details,
     count_names,
     eval_cer,
+    eval_classify_rules,
+    eval_clips,
     eval_hotwords,
     eval_numbers_lines,
+    eval_speakers,
     hotword_stats,
+    parse_num_speakers,
     pool_items,
     pool_version,
+    speaker_details,
     write_report,
 )
+from pipeline.metrics import false_positive_rate
 from pipeline.pool import MANIFEST_COLUMNS, export_references, ingest_pool, pool_paths, write_csv_rows
 
 LIMITATION = "剧本数据上的测评结果不代表真实场景的效果"
@@ -424,11 +434,14 @@ def test_evaluate_cli_numbers(tmp_path):
     assert {"金额", "电话", "主指标"} <= {row["分组项"] for row in rows}
 
 
-@pytest.mark.parametrize("metric", ["speakers", "classify", "clips"])
-def test_evaluate_cli_later_metrics(metric, capsys):
+@pytest.mark.parametrize("metric", ["speakers", "clips"])
+def test_evaluate_cli_annotation_metrics_on_empty_pool(metric, tmp_path, capsys):
+    """speakers、clips 已经做好（不再提示"后续任务"）；数据池是空的时给中文提示，退出码 1。"""
     evaluate = _load_tool("evaluate.py")
-    assert evaluate.main([metric]) == 2
-    assert "这个测评将在后续任务中加入" in capsys.readouterr().out
+    assert evaluate.main([metric, "--pool", str(tmp_path / "empty_pool")]) == 1
+    out = capsys.readouterr().out
+    assert "还没有入池" in out
+    assert "后续任务" not in out
 
 
 def test_evaluate_cli_method_repeatable_and_checked(capsys):
@@ -448,3 +461,320 @@ def test_compare_rejects_unrelated_slot(capsys):
     compare = _load_tool("compare.py")
     assert compare.main(["--slot", "denoise", "--method", "g1", "--metric", "numbers"]) == 2
     assert "不影响" in capsys.readouterr().out
+
+
+# ======================== Task 19：speakers / classify / clips ========================
+
+
+def _fake_pool(root, stems):
+    """只有清单和转换后录音（0.1 秒静音）的小数据池，不用模型。"""
+    rows = [{"文件编号": stem, "转换后文件": f"normalized/{stem}.wav"} for stem in stems]
+    write_csv_rows(pool_paths(root)["manifest"], MANIFEST_COLUMNS, rows)
+    (root / "normalized").mkdir(exist_ok=True)
+    for stem in stems:
+        sf.write(root / "normalized" / f"{stem}.wav", np.zeros(1600, dtype=np.float32), 16000, subtype="PCM_16")
+
+
+def _no_g6_model(monkeypatch, tmp_path):
+    """让第 6 组的做法找不到训练好的模型（不管这台电脑有没有 TensorFlow、有没有训练过），一定退回关键词规则。"""
+    monkeypatch.setattr("pipeline.groups.g6_classifier_a.classifier_dir",
+                        lambda cfg, name="classifier": tmp_path / "no_models" / name)
+
+
+def test_eval_classify_rules(cfg):
+    from pipeline.data import LABEL_NAMES, load_lines
+
+    result = eval_classify_rules(cfg)
+    matrix = result["confusion"]
+    assert len(matrix) == 7 and all(len(row) == 7 for row in matrix)
+    assert sum(sum(row) for row in matrix) == len(load_lines()) == 1055
+    assert "fp_rate_g8" in result
+    assert 0 <= result["fp_rate"] <= 1 and 0 <= result["fp_rate_g8"] <= 1
+    assert result["normal_count_g8"] > 0  # 第 8 组（正常讲解对照组）剧本里有正常讲解
+    assert result["normal_count"] >= result["normal_count_g8"]
+    assert result["labels"] == LABEL_NAMES and list(result["per_class"]) == LABEL_NAMES
+    assert result["warnings"] == []
+    assert result["info"]["pool_version"]  # 每份报告都写明数据来源
+    assert result["info"]["methods"] == {"classify": "baseline"}
+    # 每句台词一行；误报率和 pipeline.metrics 的定义一致（用类别名，不是"疑似·…"标签）
+    predictions = result["predictions"]
+    assert len(predictions) == 1055
+    gold = [row["label"] for row in predictions]
+    pred = [row["predicted"] for row in predictions]
+    assert result["fp_rate"] == false_positive_rate(gold, pred)
+    g8 = [i for i, row in enumerate(predictions) if row["group"] == 8]
+    assert result["fp_rate_g8"] == false_positive_rate([gold[i] for i in g8], [pred[i] for i in g8])
+    # 对比表用的汇总：比例 = 分子 ÷ 分母
+    labels = [row["分组项"] for row in result["overview"]]
+    assert labels[:3] == ["7 类正确率", "误报率（全部剧本）", "误报率（第 8 组剧本）"]
+    assert "威胁消费·召回率" in labels and "费用·准确率" in labels and "第 8 组·7 类正确率" in labels
+    for row in result["overview"]:
+        assert row["rate"] == (row["count"] / row["n"] if row["n"] else 0.0)
+
+
+def test_eval_classify_g6_falls_back_to_rules_with_warning(cfg, monkeypatch, tmp_path):
+    _no_g6_model(monkeypatch, tmp_path)
+    base = eval_classify_rules(cfg)
+    g6 = eval_classify_rules(cfg, method="g6")
+    assert g6["warnings"] and all("关键词规则" in w for w in g6["warnings"])
+    assert g6["confusion"] == base["confusion"]
+    assert g6["info"]["methods"] == {"classify": "g6"}
+    with pytest.raises(ValueError, match="g99"):
+        eval_classify_rules(cfg, method="g99")
+
+
+def test_eval_classify_rejects_display_labels(cfg, monkeypatch):
+    """做法返回了"疑似·费用"这样的显示标签（应该返回类别名"费用"）：明确报错。"""
+    from pipeline.methods import _REGISTRY
+
+    monkeypatch.setitem(_REGISTRY["classify"], "shown", lambda texts, cfg: ["疑似·费用"] * len(texts))
+    with pytest.raises(ValueError, match="疑似·费用"):
+        eval_classify_rules(cfg, method="shown")
+    monkeypatch.setitem(_REGISTRY["classify"], "short", lambda texts, cfg: ["费用"])
+    with pytest.raises(ValueError, match="1055"):
+        eval_classify_rules(cfg, method="short")
+
+
+def test_evaluate_cli_classify(tmp_path, capsys):
+    evaluate = _load_tool("evaluate.py")
+    assert evaluate.main(["classify", "--out", str(tmp_path)]) == 0
+    text = (tmp_path / "classify.md").read_text(encoding="utf-8")
+    assert LIMITATION in text and "数据池版本" in text
+    assert "参照剧本台词写的" in text  # 关键词规则是参照剧本写的，数字偏乐观
+    assert "误报率（第 8 组剧本）" in text and "混淆矩阵" in text
+    assert "classify=baseline" in text
+    rows = _read_csv(tmp_path / "classify.csv")
+    assert len(rows) == 1055
+    assert {"剧本编号", "台词", "标准答案", "预测", "对错"} <= set(rows[0])
+    assert "误报率" in capsys.readouterr().out
+
+
+def test_compare_classify_g6_without_model(tmp_path, monkeypatch):
+    _no_g6_model(monkeypatch, tmp_path)
+    compare = _load_tool("compare.py")
+    out = tmp_path / "g6"
+    assert compare.main(["--metric", "classify", "--slot", "classify", "--method", "g6", "--out", str(out)]) == 0
+    rows = _read_csv(out / "compare_classify.csv")
+    labels = [row["分组项"] for row in rows]
+    assert labels[:3] == ["7 类正确率", "误报率（全部剧本）", "误报率（第 8 组剧本）"]
+    assert "第 8 组·7 类正确率" in labels
+    assert all(float(row["差值"]) == 0 for row in rows)  # 没有模型：g6 退回关键词规则，和基线一样
+    text = (out / "compare_classify.md").read_text(encoding="utf-8")
+    assert LIMITATION in text and "关键词规则" in text  # 退回规则的提示写进了报告
+    assert compare.main(["--metric", "classify", "--slot", "denoise", "--method", "g1"]) == 2
+
+
+def test_speaker_details_counts_seconds():
+    ref = [(0, 10, "导游"), (10, 20, "游客甲")]
+    hyp = [(0, 10, "说话人1"), (10, 15, "说话人2"), (15, 20, "说话人1")]
+    details = speaker_details(ref, hyp)
+    # 最优对应：导游↔说话人1（重叠 10 秒）、游客甲↔说话人2（5 秒）；15—20 秒的"说话人1"标错
+    assert details["speaker_error_rate"] == pytest.approx(0.25)
+    assert details["scored_seconds"] == pytest.approx(20.0)
+    assert details["error_seconds"] == pytest.approx(5.0)
+    # 只有一边有人说话的时间不比对
+    one_side = speaker_details([(0, 10, "导游")], [(5, 20, "说话人1")])
+    assert one_side["scored_seconds"] == pytest.approx(5.0) and one_side["error_seconds"] == 0
+    assert speaker_details(ref, [])["scored_seconds"] == 0
+    # 两人同时说话：按人数算
+    both = speaker_details([(0, 10, "导游"), (0, 10, "游客甲")], [(0, 10, "说话人1"), (0, 10, "说话人2")])
+    assert both["scored_seconds"] == pytest.approx(20.0) and both["speaker_error_rate"] == 0
+
+
+def test_clip_details_counts_category_and_outside():
+    ref = [(10.0, 20.0, "费用"), (40.0, 50.0, "购物安排")]
+    tool = [(9.0, 21.0, "费用"), (41.0, 45.0, "行程变更"), (45.0, 50.0, "购物安排"), (70.0, 75.0, "费用")]
+    details = clip_details(ref, tool)
+    assert details["ref_clips"] == 2 and details["tool_clips"] == 4 and details["matched"] == 2
+    # 配对：(10,20)↔(9,21) 起点差 1、终点差 1；(40,50)↔(45,50)（重叠 5 秒，比 (41,45) 的 4 秒多）起点差 5、终点差 0
+    assert details["start_mae"] == pytest.approx(3.0) and details["end_mae"] == pytest.approx(0.5)
+    assert details["unmatched_ref"] == 0 and details["unmatched_hyp"] == 2 and details["unmatched"] == 2
+    assert details["wrong_category"] == 1  # (41,45) 的"行程变更"落在"购物安排"的标注里
+    assert details["tool_outside"] == 1  # (70,75) 和哪个标注片段都不重叠
+    empty = clip_details(ref, [])
+    assert empty["start_mae"] is None and empty["end_mae"] is None and empty["unmatched"] == 2
+
+
+def test_parse_num_speakers():
+    assert parse_num_speakers("auto") == -1 and parse_num_speakers("自动") == -1 and parse_num_speakers("-1") == -1
+    assert parse_num_speakers("4") == 4 and parse_num_speakers(" 3 ") == 3
+    assert parse_num_speakers("ref") == "ref" and parse_num_speakers("标注") == "ref"
+    for bad in ("四", "x", "2.5", ""):
+        with pytest.raises(ValueError, match="--speakers"):
+            parse_num_speakers(bad)
+
+
+def test_annotated_items_only_files_with_annotations(tmp_path):
+    root = tmp_path / "pool"
+    _fake_pool(root, ["G1-S1-Q", "G3-S1-Q"])
+    with pytest.raises(ValueError, match="说话人标注"):
+        annotated_items(root, "speakers")
+    write_turns_csv(pool_paths(root)["annotations_speakers"] / "G3-S1-Q.csv", [(0.0, 0.1, "导游")])
+    items = annotated_items(root, "speakers")
+    assert [item["stem"] for item in items] == ["G3-S1-Q"]  # 没有标注的 G1-S1-Q 不评
+    assert items[0]["annotation"] == [(0.0, 0.1, "导游")]
+    assert items[0]["group"] == 3 and items[0]["condition"] == "Q"
+    with pytest.raises(ValueError, match="G1-S1-Q"):  # 指定了没有标注的录音：明确报错
+        annotated_items(root, "speakers", files=["G1-S1-Q"])
+    with pytest.raises(ValueError, match="疑似片段标注"):
+        annotated_items(root, "clips")
+    write_clips_csv(pool_paths(root)["annotations_clips"] / "G1-S1-Q.csv", [(0.0, 0.1, "消费施压")])
+    assert annotated_items(root, "clips")[0]["annotation"] == [(0.0, 0.1, "威胁消费")]
+    with pytest.raises(ValueError, match="还没有入池"):
+        annotated_items(tmp_path / "empty_pool", "speakers")
+
+
+def test_evaluate_cli_rejects_bad_speakers_value(capsys):
+    evaluate = _load_tool("evaluate.py")
+    assert evaluate.main(["speakers", "--speakers", "四"]) == 2
+    assert "--speakers" in capsys.readouterr().out
+    compare = _load_tool("compare.py")
+    assert compare.main(["--slot", "diarize", "--method", "g3", "--metric", "speakers", "--speakers", "四"]) == 2
+    assert "--speakers" in capsys.readouterr().out
+
+
+# ---------- 需要模型：四人测试音频 + 手写的标注 ----------
+
+# 手写的说话人标注和片段标注（不是这段音频真正的说话时间，只检查流程）
+HAND_TURNS = [(0.0, 14.0, "导游"), (14.0, 28.0, "游客甲"), (28.0, 42.0, "游客乙"), (42.0, 56.0, "店员")]
+HAND_CLIPS = [(5.0, 15.0, "费用"), (30.0, 40.0, "购物安排")]
+
+
+@pytest.fixture(scope="module")
+def annotated_pool(renamed_pool):
+    paths = pool_paths(renamed_pool)
+    write_turns_csv(paths["annotations_speakers"] / "G1-S1-Q.csv", HAND_TURNS)
+    write_clips_csv(paths["annotations_clips"] / "G1-S1-Q.csv", HAND_CLIPS)
+    return renamed_pool
+
+
+@requires_models
+def test_eval_speakers_runs_on_renamed_test_audio(annotated_pool, cfg):
+    rows, summary = eval_speakers(annotated_pool, cfg)
+    assert len(rows) == 1
+    row = rows[0]
+    for key in ("stem", "group", "condition", "speaker_error_rate", "annotated_seconds", "scored_seconds",
+                "error_seconds", "ref_speakers", "hyp_speakers", "num_speakers", "seconds"):
+        assert key in row
+    assert row["stem"] == "G1-S1-Q" and row["group"] == 1 and row["condition"] == "Q"
+    assert 0 <= row["speaker_error_rate"] <= 1
+    assert row["annotated_seconds"] == pytest.approx(56.0)
+    assert 0 < row["scored_seconds"] <= row["annotated_seconds"]
+    assert row["ref_speakers"] == 4 and row["hyp_speakers"] >= 1
+    assert row["num_speakers"] == "自动"  # config.yaml 默认 -1
+    assert summary["all"]["files"] == 1
+    assert set(summary["by_condition"]) == {"Q"} and set(summary["by_group"]) == {1}
+    assert summary["all"]["speaker_error_rate"] == pytest.approx(row["speaker_error_rate"])
+    assert summary["info"]["pool_version"] == NOT_FROZEN
+    assert summary["info"]["methods"]["diarize"] == "baseline"
+
+
+@requires_models
+def test_eval_speakers_zero_when_annotation_copies_tool_output(annotated_pool, cfg, tmp_path):
+    """标注照抄工具的结果（只把"说话人N"换成角色名）：标错比例是 0，说明时间、对应关系都接对了。"""
+    from pipeline.audio import read_wav
+    from pipeline.evaluation import recognize_item
+    from pipeline.step4_diarize import diarize_baseline
+
+    recognize_item(annotated_pool, pool_items(annotated_pool, ["G1-S1-Q"])[0], cfg)  # 确保有识别结果缓存
+    copy_root = tmp_path / "pool_copy"
+    shutil.copytree(annotated_pool, copy_root)  # 连识别结果缓存一起复制，不用重新识别
+    try:
+        item = pool_items(copy_root, ["G1-S1-Q"])[0]
+        segments, info = recognize_item(copy_root, item, cfg)
+        assert info["cached"]
+        four = load_config(overrides={"diarize": {"num_speakers": 4}})
+        result = diarize_baseline(read_wav(item["wav"]), 16000, segments, four)
+        roles = {}
+        turns = [(seg["start"], seg["end"], roles.setdefault(seg["speaker"], f"角色{len(roles) + 1}"))
+                 for seg in result if seg["speaker"] != "未知"]
+        write_turns_csv(pool_paths(copy_root)["annotations_speakers"] / "G1-S1-Q.csv", turns)
+
+        rows, summary = eval_speakers(copy_root, cfg, num_speakers=4)
+        assert rows[0]["speaker_error_rate"] == 0
+        assert rows[0]["hyp_speakers"] == rows[0]["ref_speakers"] == len(roles)
+        assert rows[0]["num_speakers"] == "4"
+        assert summary["info"]["params"]["diarize.num_speakers"] == 4
+        # 按标注的人数（设对人数）
+        rows, summary = eval_speakers(copy_root, cfg, num_speakers="ref")
+        assert rows[0]["num_speakers"] == str(len(roles))
+        assert "标注" in str(summary["info"]["params"]["diarize.num_speakers"])
+    finally:
+        _make_writable(copy_root)
+
+
+@requires_models
+def test_eval_clips_with_fixed_methods(annotated_pool, cfg, monkeypatch):
+    """用固定的分类和片段做法，检查片段测评的接线：片段做法拿到原始录音、类别取自段落。"""
+    from pipeline.methods import _REGISTRY
+
+    seen = []
+
+    def fixed_clips(segments, samples, sr, cfg):
+        seen.append((segments, len(samples), sr))
+        return [(5.5, 14.0, 0)]
+
+    monkeypatch.setitem(_REGISTRY["classify"], "all_fee", lambda texts, cfg: ["费用"] * len(texts))
+    monkeypatch.setitem(_REGISTRY["classify"], "all_shop", lambda texts, cfg: ["购物安排"] * len(texts))
+    monkeypatch.setitem(_REGISTRY["clips"], "fixed", fixed_clips)
+
+    rows, summary = eval_clips(annotated_pool, cfg, methods={"classify": "all_fee", "clips": "fixed"})
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["ref_clips"] == 2 and row["tool_clips"] == 1 and row["matched"] == 1
+    assert row["start_mae"] == pytest.approx(0.5) and row["end_mae"] == pytest.approx(1.0)
+    assert row["unmatched"] == 1 and row["wrong_category"] == 0 and row["tool_outside"] == 0
+    segments, n_samples, sr = seen[0]
+    assert sr == 16000 and n_samples > 50 * 16000  # 整段原始录音
+    assert segments and all(seg["label"] == "疑似·费用" for seg in segments)
+    assert all(seg["text_raw"] for seg in segments)  # 测评模式：保留汉字读法
+    assert summary["all"]["start_mae"] == pytest.approx(0.5)
+    assert summary["info"]["methods"]["clips"] == "fixed" and summary["info"]["pool_version"] == NOT_FROZEN
+
+    rows, _ = eval_clips(annotated_pool, cfg, methods={"classify": "all_shop", "clips": "fixed"})
+    assert rows[0]["wrong_category"] == 1  # 工具片段是"购物安排"，标注是"费用"
+
+
+@requires_models
+def test_eval_clips_baseline_and_g6_warning(annotated_pool, cfg, monkeypatch, tmp_path):
+    rows, summary = eval_clips(annotated_pool, cfg)
+    row = rows[0]
+    for key in ("ref_clips", "tool_clips", "matched", "unmatched_ref", "unmatched_hyp", "unmatched",
+                "start_mae", "end_mae", "wrong_category", "tool_outside", "seconds"):
+        assert key in row
+    assert row["ref_clips"] == 2
+    assert row["unmatched"] == row["ref_clips"] + row["tool_clips"] - 2 * row["matched"]
+    assert summary["warnings"] == []
+    _no_g6_model(monkeypatch, tmp_path)
+    _, summary = eval_clips(annotated_pool, cfg, methods={"classify": "g6"})
+    assert summary["warnings"] and "关键词规则" in summary["warnings"][0]
+
+
+@requires_models
+def test_evaluate_cli_speakers_clips_and_compare(annotated_pool, tmp_path, capsys):
+    evaluate = _load_tool("evaluate.py")
+    compare = _load_tool("compare.py")
+
+    out = tmp_path / "g3"
+    assert evaluate.main(["speakers", "--pool", str(annotated_pool), "--speakers", "4", "--out", str(out)]) == 0
+    text = (out / "speakers.md").read_text(encoding="utf-8")
+    assert LIMITATION in text and "未冻结" in text and "diarize.num_speakers=4" in text
+    rows = _read_csv(out / "speakers.csv")
+    assert rows[0]["文件编号"] == "G1-S1-Q" and rows[0]["人数设置"] == "4"
+    assert "[1/1] G1-S1-Q" in capsys.readouterr().out
+
+    assert compare.main(["--slot", "diarize", "--method", "g3", "--metric", "speakers",
+                         "--pool", str(annotated_pool), "--speakers", "ref", "--out", str(out)]) == 0
+    rows = _read_csv(out / "compare_speakers.csv")
+    assert [row["分组项"] for row in rows] == ["全体", "Q（安静）", "第 1 组"]
+    assert all(float(row["差值"]) == 0 for row in rows)  # g3 初始等于基线
+
+    out = tmp_path / "g8"
+    assert evaluate.main(["clips", "--pool", str(annotated_pool), "--out", str(out)]) == 0
+    text = (out / "clips.md").read_text(encoding="utf-8")
+    assert LIMITATION in text and "起点平均误差" in text
+    assert compare.main(["--slot", "clips", "--method", "g8", "--metric", "clips",
+                         "--pool", str(annotated_pool), "--out", str(out)]) == 0
+    rows = _read_csv(out / "compare_clips.csv")
+    assert rows[0]["分组项"].startswith("全体·")
+    assert all(row["差值"] == "" or float(row["差值"]) == 0 for row in rows)  # g8 初始等于基线

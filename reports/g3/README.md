@@ -1,6 +1,6 @@
 # 第 3 组报告：说话人分离
 
-> **填写说明**：把"（填写）"换成你们自己的内容，表格里的数字从本文件夹里的测评报告（`speakers.md`、`compare_speakers.md`）复制。
+> **填写说明**：把"（填写）"换成你们自己的内容，表格里的数字从本文件夹里的测评报告复制：`auto\speakers.md`（人数自动）、`ref\speakers.md`（人数设对）、`after\speakers.md`（改进后）、`compare_speakers.md`（对比表）。
 > 只写角色和学号后四位，**不写真实姓名、学号、手机号**。变差了也要如实写。
 > 剧本数据上的测评结果不代表真实场景的效果。
 >
@@ -25,12 +25,21 @@
 python\python.exe tools\evaluate.py speakers --pool D:\data_pool --out reports\g3
 ```
 
-分别在"人数设自动"（`config.yaml` 的 `diarize.num_speakers: -1`）和"人数设对"两种情况下各测一次：
+上面这条命令按 `config.yaml` 的 `diarize.num_speakers`（默认 -1，自动）。分别在"人数设自动"和"人数设对"两种情况下各测一次，
+`--speakers ref` 表示每段录音按它的标注里有几个人来设人数（不同录音人数不同，所以不要全部写成同一个数）：
 
-| 录音 | 实际人数 | 标错比例（人数自动） | 标错比例（人数设对） |
-|---|---|---|---|
-| （填写，如 G3-S1-Q） |  |  |  |
-| 全体 |  |  |  |
+```bat
+python\python.exe tools\evaluate.py speakers --pool D:\data_pool --speakers auto --out reports\g3\auto
+python\python.exe tools\evaluate.py speakers --pool D:\data_pool --speakers ref --out reports\g3\ref
+```
+
+数字从两份 `speakers.md` 的"明细"表复制（"标注的人数"就是实际人数）。**同时看"比对的时长"**：
+只在工具和标注两边都有人说话的时间里比，比对的时长很短时，标错比例再低也说明不了什么。
+
+| 录音 | 标注的人数 | 分出的人数（自动） | 标错比例（人数自动） | 标错比例（人数设对） | 比对的时长（秒，人数设对） |
+|---|---|---|---|---|---|
+| （填写，如 G3-S1-Q） |  |  |  |  |  |
+| 全体 |  |  |  |  |  |
 
 观察：（填写：错在哪里？快速换人、重叠说话、电话外放、声音相近的两个人……挑一两处举例）
 
@@ -44,8 +53,10 @@ python\python.exe tools\evaluate.py speakers --pool D:\data_pool --out reports\g
 ## 5. 改进后结果
 
 ```bat
-python\python.exe tools\evaluate.py speakers --pool D:\data_pool --method diarize=g3 --out reports\g3\after
+python\python.exe tools\evaluate.py speakers --pool D:\data_pool --method diarize=g3 --speakers ref --out reports\g3\after
 ```
+
+和基线用同样的人数设置比（这里都用"人数设对"，基线的数字取第 3 节 `ref\speakers.md`）：
 
 | 录音 | 标错比例（基线） | 标错比例（改进） |
 |---|---|---|
@@ -55,14 +66,18 @@ python\python.exe tools\evaluate.py speakers --pool D:\data_pool --method diariz
 ## 6. 对比表
 
 ```bat
-python\python.exe tools\compare.py --slot diarize --method g3 --metric speakers --pool D:\data_pool --out reports\g3
+python\python.exe tools\compare.py --slot diarize --method g3 --metric speakers --pool D:\data_pool --speakers ref --out reports\g3
 ```
 
-把 `compare_speakers.md` 里的对比表复制到这里（差值 = 改进 − 基线，标错比例的差值为负表示变好）：
+把 `compare_speakers.md` 里的对比表复制到这里（差值 = 改进 − 基线，标错比例的差值为负表示变好）。
+分组项有全体、各录音条件（Q 安静 / N 嘈杂教室 / F 口袋或远距离）和各组，只列有标注的：
 
 | 分组项 | 基线 | 改进 | 差值 |
 |---|---|---|---|
 | 全体 |  |  |  |
+| Q（安静） |  |  |  |
+| N（嘈杂教室） |  |  |  |
+| F（口袋或远距离） |  |  |  |
 
 ## 7. 结论与局限
 

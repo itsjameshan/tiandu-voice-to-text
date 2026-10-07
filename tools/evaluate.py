@@ -6,12 +6,18 @@
     python tools/evaluate.py cer --pool D:\\data_pool --files G1-S1-Q G1-S1-N        只测这几段录音
     python tools/evaluate.py hotwords --pool D:\\data_pool --method hotword=g5 --hotword on --out reports/g5
     python tools/evaluate.py numbers --method normalize=g4 --out reports/g4         不用录音，不用 --pool
+    python tools/evaluate.py speakers --pool D:\\data_pool --speakers auto --out reports/g3/auto
+    python tools/evaluate.py speakers --pool D:\\data_pool --speakers ref --out reports/g3/ref     设对人数
+    python tools/evaluate.py classify --method classify=baseline --out reports/g6   不用录音，不用 --pool
+    python tools/evaluate.py clips --pool D:\\data_pool --method clips=g8 --out reports/g8
 
 子命令（指标）：
     cer       字错率，按录音、录音条件（Q/N/F）、组汇总                  —— 全员；第 1、2 组主指标
     hotwords  专名正确率、过度纠正次数                                  —— 第 5 组
     numbers   数字提取正确率、召回率，按类型分开（在剧本台词文字上测）    —— 第 4 组
-    speakers、classify、clips 将在后续任务中加入。
+    speakers  说话人标错的时长比例（只评有说话人标注的录音）            —— 第 3 组
+    classify  话术分类各类准确率、召回率、混淆矩阵、误报率（在剧本台词文字上测）—— 第 6、7、8 组
+    clips     疑似片段起止误差（只评有片段标注的录音）                    —— 第 8 组
 
 常用参数：
     --pool DIR          数据池文件夹（不填就用 config.yaml 里的 paths.data_pool）
@@ -22,9 +28,14 @@
     --hotword on|off    临时打开或关闭热词纠错（不填就按 config.yaml 的 hotword.enabled，默认关闭）；
                         测热词纠错的做法（如 --method hotword=g5）时要加 --hotword on，不然基线不做任何纠错
     --no-cache          不用缓存的识别结果，全部重新识别
+    --speakers 人数      只有 speakers 有：auto 自动判断人数、ref 每段录音按标注里的人数（设对人数）、
+                        或一个正整数（如 4）；不填就按 config.yaml 的 diarize.num_speakers（-1 表示自动）
+
+classify 测的是剧本台词：关键词规则是参照剧本写的，数字偏乐观；第 6、7 组训练好的模型是用全部剧本台词训练的，
+在同样的台词上测等于"考原题"，模型的主结果看 tools/train_classifier.py 的按组留一报告（详见报告里的说明）。
 
 识别结果会缓存在 数据池/asr_cache/ 里：第一次测 72 段录音要几十分钟（每段录音都会显示进度），
-以后只换热词纠错的做法、或者再测一遍时，几秒钟就出结果（缓存的规则见 pipeline/evaluation.py 开头）。
+以后只换热词纠错、说话人分离、分类、片段的做法，或者再测一遍时，不用重新识别（缓存的规则见 pipeline/evaluation.py 开头）。
 中途按 Ctrl+C 停下也没关系：已经识别完的录音都有缓存，再运行一次会接着往下测。
 指标怎么算、怎么看，见 docs/guides/evaluation.md。报告里写明数据池版本；剧本数据上的测评结果不代表真实场景的效果。
 """
@@ -39,9 +50,6 @@ if str(ROOT) not in sys.path:
 # 不写 --out 时，报告放在这里
 DEFAULT_OUT = ROOT / "reports" / "eval"
 
-# 还没做的子命令打印这句话
-LATER_MESSAGE = "这个测评将在后续任务中加入"
-
 # 中途按 Ctrl+C 停下时打印这句话
 STOPPED_MESSAGE = "\n已停止（按了 Ctrl+C）。已经识别完的录音都有缓存，再运行一次会接着往下测。"
 
@@ -54,10 +62,14 @@ METRIC_HELP = {
     "cer": "字错率（错字、漏字、多字），按录音、录音条件、组汇总",
     "hotwords": "专名正确率、过度纠正次数（第 5 组）",
     "numbers": "数字提取正确率、召回率，按类型分开（在剧本台词文字上测，第 4 组）",
-    "speakers": "说话人标错的时长比例（第 3 组）——将在后续任务中加入",
-    "classify": "话术分类的准确率、召回率、误报率（第 6、7、8 组）——将在后续任务中加入",
-    "clips": "疑似片段起止误差（第 8 组）——将在后续任务中加入",
+    "speakers": "说话人标错的时长比例，只评有说话人标注的录音（第 3 组）",
+    "classify": "话术分类的准确率、召回率、混淆矩阵、误报率（在剧本台词文字上测，第 6、7、8 组）",
+    "clips": "疑似片段起止误差，只评有片段标注的录音（第 8 组）",
 }
+
+# --speakers 的说明（evaluate.py 的 speakers 和 compare.py 都用）
+SPEAKERS_HELP = ("说话人数：auto 自动判断、ref 每段录音按标注里的人数（设对人数）、或一个正整数（如 4）；"
+                 "不填就按 config.yaml 的 diarize.num_speakers")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -74,7 +86,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="测评：算指标，写 CSV 和 Markdown 报告（详见 docs/guides/evaluation.md）")
     sub = parser.add_subparsers(dest="metric", required=True, metavar="指标")
     for name, text in METRIC_HELP.items():
-        sub.add_parser(name, parents=[common], help=text, description=text)
+        metric_parser = sub.add_parser(name, parents=[common], help=text, description=text)
+        if name == "speakers":
+            metric_parser.add_argument("--speakers", metavar="人数", help=SPEAKERS_HELP)
     return parser
 
 
@@ -205,22 +219,95 @@ def run_numbers(args, cfg: dict, methods: dict, out: Path) -> int:
     return _write(out, "numbers", result["overview"], result, NUMBERS_NOTES)
 
 
+def _print_warnings(summary: dict) -> None:
+    """做法在运行时发出的提示（如第 6、7 组的模型用不了、退回关键词规则），醒目地打印出来。"""
+    for message in summary.get("warnings") or []:
+        print(f"注意：{message}")
+
+
 def run_speakers(args, cfg: dict, methods: dict, out: Path) -> int:
-    """说话人标错的时长比例（第 3 组）。TODO：后续任务加入。"""
-    print(LATER_MESSAGE)
-    return 2
+    """说话人标错的时长比例：识别结果（缓存）→ 说话人分离 → 和人工标注的说话人时间比。"""
+    from pipeline.evaluation import SPEAKER_NOTES, describe_num_speakers, eval_speakers, parse_num_speakers
+
+    try:
+        num_speakers = parse_num_speakers(args.speakers) if args.speakers else None
+    except ValueError as e:
+        print(e)
+        return 2
+    root = _pool_root(args, cfg)
+    print("== 测评：说话人标错的时长比例（speakers） ==")
+    print(f"数据池：{root}")
+    _print_methods(methods)
+    if num_speakers is None:
+        print(f"说话人数：按 config.yaml，{describe_num_speakers((cfg.get('diarize') or {}).get('num_speakers'))}")
+    else:
+        print(f"说话人数：{describe_num_speakers(num_speakers)}")
+    try:
+        rows, summary = eval_speakers(root, cfg, methods, args.files, progress=_say, use_cache=not args.no_cache,
+                                      num_speakers=num_speakers)
+    except (ValueError, FileNotFoundError) as e:
+        print(e)
+        return 1
+    except OSError as e:
+        print(f"无法访问数据池文件夹：{e}。请检查路径是否写对、U 盘或共享文件夹是否连上。")
+        return 1
+    print("\n汇总（说话人标错比例越低越好；比对的时长太短时比例说明不了什么）：")
+    _print_overview(summary, [("speaker_error_rate", "说话人标错比例"), ("scored_seconds", "比对的时长（秒）"),
+                              ("files", "录音数")])
+    return _write(out, "speakers", rows, summary, SPEAKER_NOTES)
 
 
 def run_classify(args, cfg: dict, methods: dict, out: Path) -> int:
-    """话术分类的准确率、召回率、误报率（第 6、7、8 组）。TODO：后续任务加入。"""
-    print(LATER_MESSAGE)
-    return 2
+    """话术分类：在剧本台词文字上测，不用录音。"""
+    from pipeline.evaluation import CLASSIFY_NOTES, eval_classify_rules
+
+    method = methods.get("classify") or (cfg.get("methods") or {}).get("classify") or "baseline"
+    print("== 测评：话术分类准确率、召回率与误报率（classify），在剧本台词文字上测 ==")
+    print(f"分类做法：classify={method}")
+    if args.pool or args.files:
+        print("提示：这个指标在剧本台词文字上测，用不到 --pool 和 --files。")
+    others = [slot for slot in methods if slot != "classify"]
+    if others:
+        print(f"提示：这个指标只看话术分类（classify）的做法，{'、'.join(others)} 不影响结果。")
+    try:
+        result = eval_classify_rules(cfg, method)
+    except ValueError as e:  # 做法名写错了、做法返回了不认识的类别等
+        print(e)
+        return 1
+    _print_warnings(result)
+    print("\n汇总（比例 = 分子 ÷ 分母；误报率越低越好）：")
+    for row in result["overview"]:
+        print(f"  {row['分组项']}：{row['rate']:.4f}（{row['count']}/{row['n']}）")
+    if method != "baseline" and not result["warnings"]:
+        print("注意：训练好的模型是用全部剧本台词训练的，在同样的台词上测会虚高；模型的主结果看按组留一的训练报告。")
+    return _write(out, "classify", result["predictions"], result, CLASSIFY_NOTES)
 
 
 def run_clips(args, cfg: dict, methods: dict, out: Path) -> int:
-    """疑似片段起止误差（第 8 组）。TODO：后续任务加入。"""
-    print(LATER_MESSAGE)
-    return 2
+    """疑似片段起止误差：识别结果（缓存）→ 热词纠错 → 数字规范化 → 分类 → 片段做法 → 和人工标注的片段比。"""
+    from pipeline.evaluation import CLIPS_NOTES, eval_clips
+
+    root = _pool_root(args, cfg)
+    print("== 测评：疑似片段起止误差（clips） ==")
+    print(f"数据池：{root}")
+    _print_methods(methods)
+    _hint_hotword_off(cfg, methods)
+    try:
+        rows, summary = eval_clips(root, cfg, methods, args.files, progress=_say, use_cache=not args.no_cache)
+    except (ValueError, FileNotFoundError) as e:
+        print(e)
+        return 1
+    except OSError as e:
+        print(f"无法访问数据池文件夹：{e}。请检查路径是否写对、U 盘或共享文件夹是否连上。")
+        return 1
+    _print_warnings(summary)
+    print("\n汇总（误差越小越好，没配上的越少越好）：")
+    for row in summary["overview"]:
+        start = "—" if row["start_mae"] is None else f"{row['start_mae']:.2f} 秒"
+        end = "—" if row["end_mae"] is None else f"{row['end_mae']:.2f} 秒"
+        print(f"  {row['分组项']}：起点平均误差 {start}，终点平均误差 {end}，"
+              f"没配上的片段 {row['unmatched']} 个，和标注都不重叠的工具片段 {row['tool_outside']} 个")
+    return _write(out, "clips", rows, summary, CLIPS_NOTES)
 
 
 # 子命令 → 处理函数

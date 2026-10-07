@@ -4,18 +4,22 @@
      可选参数：--host、--port、--inbrowser（自动打开浏览器）、--config（换一份配置文件）。
 本文件只是一层薄薄的“外壳”：真正的处理都在 pipeline/ 里，这里只负责把按钮、表格和处理函数连起来。
 
-界面有三个标签页（每个标签页一个函数，以后加标签页就加一个函数，再在 build_app 里调用）：
+界面有五个标签页（每个标签页一个函数，以后加标签页就加一个函数，再在 build_app 里调用）：
     整理录音      _process_tab：上传 → 开始整理 → 核查表里复核、说话人映射、点行听原声 → 导出核查初稿
     剧本文本演示  _demo_tab：没有录音时直接用剧本台词演示步骤 5—8，并和剧本标注对照
+    数据校对      _proofread_tab：数据池里的录音 → 测评模式识别（有缓存）→ 和参考文本逐段对照、点行听原声
+                  → 改参考文本、保存并记下校对人（做法见 docs/guides/proofreading.md）
+    录音质检      _qc_tab：上传或从数据池选一段录音 → 波形、语谱图、MFCC 三张图 + 五项质检和中文解释
     使用说明      _help_tab
-处理函数（process_file、play_row、apply_mapping、export_files、run_demo 等）都写在模块里，
-不启动网页也能直接调用和测试（见 tests/test_app.py）。
+处理函数（process_file、play_row、apply_mapping、export_files、run_demo、generate_comparison、
+save_reference、check_upload 等）都写在模块里，不启动网页也能直接调用和测试（见 tests/test_app.py）。
 
 基线做法：
     Gradio 6 搭界面；主题、样式传给 launch()；同一时间每种操作只处理一个任务（队列）；
     只在本机和局域网提供服务，不开公网分享；关闭 Gradio 的使用统计（GRADIO_ANALYTICS_ENABLED=False）；
     上传的临时文件放在项目里的 tmp/（避开 Windows 中文用户名路径）；启动时清理超过 cleanup_hours 的旧结果；
-    导出时把文件复制到 tmp/exports/<随机编号>/ 再给浏览器下载，不对网页开放 outputs 文件夹；
+    导出时把文件复制到 tmp/exports/<随机编号>/ 再给浏览器下载，不对网页开放 outputs 文件夹和数据池；
+    数据池里的录音只在服务端读，播放时把采样数组交给浏览器，不给浏览器文件路径；
     设置了环境变量 DEMO_USERNAME 和 DEMO_PASSWORD 才要求登录（云端演示用）。
 可改进方向：
     这是教师模板，学生一般不改。各组的改进做法写在 pipeline/groups/ 里，会自动出现在“高级设置”的下拉框中。
@@ -48,12 +52,18 @@ import gradio as gr
 
 from pipeline import default_out_dir, run_pipeline, ui_text  # default_out_dir：输出文件夹的命名规则
 from pipeline import methods as method_registry
-from pipeline.audio import SR, has_non_ascii, read_wav, remove_tree
-from pipeline.data import DISPLAY_NAMES, FLAG_LABELS, FLAG_OUTPUTS, load_hotwords, load_scripts
+from pipeline import step2_vad, step3_asr  # 数据校对用：按“模块.函数”调用，测试时可以换成假的
+from pipeline.align import align_segments, cer_details
+from pipeline.audio import SR, convert_to_wav, has_non_ascii, probe, read_wav, remove_tree, sha256_file
+from pipeline.data import (DISPLAY_NAMES, FLAG_LABELS, FLAG_OUTPUTS, load_hotwords, load_recording_plan,
+                           load_scripts, script_reference_text)
+from pipeline.evaluation import read_reference
+from pipeline.features import plot_recording
 from pipeline.methods import SLOT_TITLES, SLOTS
-from pipeline.schema import NOTICE
+from pipeline.pool import log_proofread, parse_recording_name, pool_paths, read_csv_rows
+from pipeline.schema import NOTICE, read_json, write_json
 from pipeline.script_demo import run_script_demo
-from pipeline.step1_ingest import SUPPORTED_EXTS
+from pipeline.step1_ingest import SUPPORTED_EXTS, quality_check
 from pipeline.step4_diarize import apply_speaker_map, speaker_durations
 from pipeline.step7_clips import export_clips
 from pipeline.step8_report import CSV_NAME, DOCX_NAME, JSON_NAME, export_bundle, fmt_mmss
@@ -69,6 +79,14 @@ SWITCH_CHOICES = ["关", "开"]
 TABLE_TYPES = ["number", "number", "number", "str", "str", "str", "str", "str", "str"]
 TABLE_STATIC_COLUMNS = [0, 1, 2, 6]
 TABLE_WIDTHS = ["5%", "7%", "7%", "9%", "34%", "12%", "10%", "8%", "8%"]
+
+# “数据校对”页的对照表：每一段的时间、识别结果、参考文本里对应的部分、是否不同（只给人看，不能改）
+PROOFREAD_HEADERS = ["序号", "开始", "结束", "识别结果", "参考文本", "是否不同"]
+PROOFREAD_TYPES = ["number", "number", "number", "str", "str", "str"]
+PROOFREAD_WIDTHS = ["6%", "8%", "8%", "35%", "35%", "8%"]
+
+# 校对人只收 1—12 个英文字母或数字（学号后四位），不收姓名
+PROOFREADER_RE = re.compile(r"[A-Za-z0-9]{1,12}")
 
 # 界面字体：Windows 用微软雅黑，Mac 用苹方，Linux 用思源黑体
 FONTS = ["Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "sans-serif"]
@@ -396,6 +414,275 @@ def clear_old_results():
     return None, None, "", ""
 
 
+# ---------------- 数据池（“数据校对”和“录音质检”两页共用） ----------------
+
+def pool_recordings(root) -> list[str]:
+    """数据池清单（manifest.csv）里的录音编号，按编号排好；数据池不存在或还没有入池的录音时返回空列表。
+
+    只看清单，不去翻 normalized/ 文件夹：没入池、入池失败的文件不会混进来（和测评工具一样）。
+    """
+    text = str(root or "").strip()
+    if not text:
+        return []
+    rows = read_csv_rows(pool_paths(text)["manifest"])  # 文件不存在时是空列表
+    return sorted({(row.get("文件编号") or "").strip() for row in rows} - {""})
+
+
+def _pool_listing(root) -> tuple[list[str], str]:
+    """数据池里的录音编号和一句中文提示。出了问题也只给提示、不报错（搭界面时也要调用它）。"""
+    text = str(root or "").strip()
+    if not text:
+        return [], ui_text.POOL_NO_PATH
+    if not Path(text).is_dir():
+        return [], ui_text.POOL_MISSING.format(root=text)
+    try:
+        stems = pool_recordings(text)
+    except (OSError, ValueError) as exc:  # 清单打不开、编码认不出来
+        return [], f"数据池清单 manifest.csv 读不了：{exc}"
+    if not stems:
+        return [], ui_text.POOL_EMPTY.format(root=text)
+    return stems, ui_text.POOL_READY.format(count=len(stems))
+
+
+def refresh_recordings(root):
+    """“刷新录音列表”：返回 (录音下拉框的新选项，默认选第一个；提示文字)。"""
+    stems, hint = _pool_listing(root)
+    return gr.update(choices=stems, value=stems[0] if stems else None), hint
+
+
+def _pool_recording(root, stem) -> tuple[Path, str, dict, Path]:
+    """检查数据池路径和选中的录音，返回 (数据池文件夹, 录音编号, 清单里这一行, 转换后的录音)。有问题时报中文错误。"""
+    text = str(root or "").strip()
+    if not text:
+        raise gr.Error(ui_text.POOL_NO_PATH)
+    if not Path(text).is_dir():
+        raise gr.Error(ui_text.POOL_MISSING.format(root=text))
+    if not stem or not str(stem).strip():
+        raise gr.Error(ui_text.NEED_RECORDING)
+    root, stem = Path(text), str(stem).strip()
+    try:
+        parse_recording_name(f"{stem}.wav")  # 编号必须是 G1-S1-Q 这样的写法
+        rows = read_csv_rows(pool_paths(root)["manifest"])
+    except (OSError, ValueError) as exc:
+        raise gr.Error(str(exc)) from exc
+    row = next((row for row in rows if (row.get("文件编号") or "").strip() == stem), None)
+    if row is None:
+        raise gr.Error(f"录音 {stem} 不在数据池清单（manifest.csv）里。请先入池（python tools/ingest_pool.py），"
+                       "或检查数据池路径后点“刷新录音列表”")
+    # 入池时转换后的录音一律是 normalized/<编号>.wav；只读这个位置，不按表格里写的路径去读别处的文件
+    wav = pool_paths(root)["normalized"] / f"{stem}.wav"
+    if not wav.is_file():
+        raise gr.Error(f"清单里有录音 {stem}，但找不到转换后的录音 {wav}。请检查数据池是否拷全了")
+    return root, stem, row, wav
+
+
+# ---------------- 数据校对 ----------------
+
+def check_proofreader(value) -> str:
+    """校对人编号：去掉前后空格，必须是 1—12 个英文字母或数字（学号后四位），否则报错。不收姓名。"""
+    who = str(value or "").strip()
+    if not PROOFREADER_RE.fullmatch(who):
+        raise gr.Error(ui_text.PROOFREADER_ERROR)
+    return who
+
+
+def _recognize_for_proofreading(root: Path, stem: str, wav: Path, progress=None) -> list[dict]:
+    """用测评模式识别一段池内录音（汉字读法、没有标点，和参考文本口径一致），返回带 text_raw 的段落。
+
+    结果缓存在 数据池/asr_cache/<编号>.json，里面记着录音的 SHA-256 指纹和降噪、增强、端点检测用的做法；
+    录音换了（复录）或做法换了才重新识别，否则直接用缓存，第二次“生成对照”几乎不用等。
+    入池工具复录时会删掉 asr_cache/<编号>.*；测评工具的缓存叫 <编号>.eval-<钥匙>.json，和这里的互不影响。
+    """
+    cfg = _config()
+    cache = pool_paths(root)["asr_cache"] / f"{stem}.json"
+    fingerprint = sha256_file(wav)
+    chosen = cfg.get("methods") or {}
+    methods = {slot: chosen.get(slot) or "baseline" for slot in step2_vad.STEP_SLOTS}
+    if cache.is_file():
+        try:
+            segments, meta = read_json(cache)
+            if meta.get("wav_sha256") == fingerprint and meta.get("methods") == methods:
+                return segments
+        except (OSError, ValueError):
+            pass  # 缓存文件坏了：重新识别
+
+    if progress is not None:
+        progress(0, "端点检测")
+    processed, segments = step2_vad.detect_speech(read_wav(wav), SR, cfg)
+    segments = step3_asr.recognize(processed, SR, segments, cfg, mode="eval", progress=progress)
+
+    meta = {"stem": stem, "mode": "eval", "wav_sha256": fingerprint, "methods": methods,
+            "created": time.strftime("%Y-%m-%d %H:%M:%S")}
+    tmp = cache.with_name(cache.name + ".tmp")  # 先写临时文件再改名：写到一半出错不会留下半个缓存
+    try:
+        write_json(tmp, segments, meta)
+        os.replace(tmp, cache)
+    except OSError as exc:
+        logger.warning("识别结果缓存写不进去（不影响这次校对，只是下次要重新识别）：%s", exc)
+        if tmp.exists():
+            tmp.unlink()
+    return segments
+
+
+def _pool_reference(root: Path, stem: str) -> tuple[str, bool]:
+    """读这段录音的参考文本 references/<编号>.txt，返回 (文字, 文件是否存在)。
+
+    文件还不存在时（老师还没运行 tools/export_references.py），先照抄剧本台词，保存时再写进文件。
+    """
+    path = pool_paths(root)["references"] / f"{stem}.txt"
+    if path.is_file():
+        return read_reference(path).replace("\r\n", "\n"), True  # 记事本存的换行是 \r\n
+    return script_reference_text(parse_recording_name(f"{stem}.wav")["script_id"]), False
+
+
+def proofread_rows(segments: list[dict], reference: str) -> list[list]:
+    """对照表的行：[序号, 开始, 结束, 识别结果, 参考文本里对应的部分, "相同"/"不同"]。"""
+    pieces = align_segments([seg.get("text_raw", "") for seg in segments], reference)
+    return [[n, round(seg["start"], 2), round(seg["end"], 2), piece["hyp"], piece["ref"],
+             "不同" if piece["diff"] else "相同"]
+            for n, (seg, piece) in enumerate(zip(segments, pieces), start=1)]
+
+
+def proofread_summary(stem: str, segments: list[dict], reference: str) -> str:
+    """对照的摘要：整体字错率（拆成错字、漏字、多字）、有几段不同。"""
+    details = cer_details(reference, "".join(seg.get("text_raw", "") for seg in segments))
+    pieces = align_segments([seg.get("text_raw", "") for seg in segments], reference)
+    different = sum(1 for piece in pieces if piece["diff"])
+    lines = [
+        f"### 录音 {stem}",
+        f"- 整体字错率：**{details['cer']:.1%}**（参考文本 {details['n_ref']} 字：错字 {details['sub']}、"
+        f"漏字 {details['dele']}、多字 {details['ins']}）",
+        f"- 不同的段：{different}/{len(segments)}（重点听这些段）",
+    ]
+    if not segments:
+        lines.append("- 没有检测到人声：请到“录音质检”页看看这段录音有没有声音")
+    lines.append(f"\n{ui_text.PROOFREAD_CER_NOTE}")
+    return "\n".join(lines)
+
+
+def generate_comparison(root, stem, progress=gr.Progress()):
+    """“生成对照”：返回 (摘要 Markdown, 对照表的行, 参考文本, 界面要记住的结果)。
+
+    界面记住的结果和“整理录音”页同一种格式（段落 + 元信息，元信息里有 wav），所以点行播放直接用 play_row。
+    """
+    root, stem, _, wav = _pool_recording(root, stem)
+    try:
+        segments = _recognize_for_proofreading(root, stem, wav, progress)
+    except Exception as exc:  # 模型没下载、录音读不了等：中文原因显示在网页上，详细信息打印在黑色窗口里
+        logger.exception("数据校对识别失败：%s", stem)
+        raise gr.Error(f"识别失败：{exc}") from exc
+    reference, exists = _pool_reference(root, stem)
+    summary = proofread_summary(stem, segments, reference)
+    if not exists:
+        summary = f"**{ui_text.REFERENCE_MISSING_NOTE}**\n\n{summary}"
+    state = new_state(segments, {"root": str(root), "stem": stem, "wav": str(wav)})
+    return summary, proofread_rows(segments, reference), reference, state
+
+
+def clear_comparison():
+    """点“生成对照”后、识别之前，清掉上一段录音的结果，返回 (摘要, 对照表, 参考文本, 记住的结果, 原声, 保存提示)。"""
+    return ui_text.PROOFREAD_PLACEHOLDER, [], "", None, None, ""
+
+
+def save_reference(state, text, proofreader, note="") -> str:
+    """“保存参考文本”：写回 references/<编号>.txt（UTF-8），在 proofread_log.csv 里记下校对人和时间。返回提示文字。"""
+    meta = (state or {}).get("meta") or {}
+    if not meta.get("stem") or not meta.get("root"):
+        raise gr.Error(ui_text.NEED_COMPARISON)
+    who = check_proofreader(proofreader)
+    text = str(text or "")
+    if not text.strip():
+        raise gr.Error("参考文本是空的，没有保存。请按录音里实际说的话填写（可以先点“生成对照”取回原来的参考文本）")
+
+    root, stem = Path(meta["root"]), meta["stem"]
+    path = pool_paths(root)["references"] / f"{stem}.txt"
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+    except OSError as exc:
+        raise gr.Error(f"参考文本没保存上：{exc}。请确认数据池所在的 U 盘或共享文件夹还连着、可以写入") from exc
+    try:
+        log_proofread(root, stem, who, note or "")
+    except (OSError, ValueError) as exc:  # 比如 proofread_log.csv 正用 Excel 打开着
+        raise gr.Error(f"参考文本已保存，但校对记录没记上：{exc}。如果 proofread_log.csv 正用 Excel 打开着，"
+                       "关掉后再点一次“保存参考文本”") from exc
+    return (f"已保存 {stem} 的参考文本，并记下校对人 {who} 和时间。"
+            "请再点“生成对照”看一遍：“不同”的行应该只剩识别错的。")
+
+
+# ---------------- 录音质检 ----------------
+
+def _expected_seconds(file_name: str) -> tuple[float | None, str]:
+    """按文件名找录音计划里的预计时长（秒）。文件名不是 G1-S1-Q.m4a 这样的写法时返回 (None, 原因)。"""
+    try:
+        stem = parse_recording_name(file_name)["stem"]
+    except ValueError as exc:
+        return None, f"没有检查时长（{exc}）"
+    for item in load_recording_plan():
+        if Path(item["file_name"]).stem == stem:
+            return round(item["expected_minutes"] * 60, 1), ""
+    return None, f"没有检查时长（录音计划里没有 {stem}）"
+
+
+def _qc_result(samples, original_sr: int, name: str, file_name: str):
+    """画三张图、做五项质检，返回 (图, 质检结果 Markdown)。samples 是 16000 Hz 单声道的采样。"""
+    expected, reason = _expected_seconds(file_name)
+    problems = quality_check(samples, original_sr, _config(), expected)
+    figure = plot_recording(samples, SR, title=name)
+
+    seconds = len(samples) / SR
+    lines = [f"### 质检结果：{name}",
+             f"- 时长：{fmt_mmss(seconds)}（{seconds:.1f} 秒）；原始采样率：{original_sr or '读不出'} Hz"]
+    if expected:
+        lines.append(f"- 剧本预计时长：{fmt_mmss(expected)}")
+    else:
+        lines.append(f"- {reason}")
+    if problems:
+        lines.append("- **发现的问题**（只提示，不修改录音；每一项的意思和怎么办见本页下方）：")
+        lines.extend(f"  - {problem}" for problem in problems)
+    else:
+        lines.append("- 质检：没有发现问题")
+    return figure, "\n".join(lines)
+
+
+def check_upload(file_path):
+    """“检查上传的录音”：返回 (三张图, 质检结果 Markdown)。
+
+    任何格式先用 ffmpeg 转成 16000 Hz 单声道 WAV，放在 tmp/qc/ 里，读完就删掉。
+    文件名是 G1-S1-Q.m4a 这样的录音编号时，和录音计划里的预计时长比较。
+    """
+    if not file_path:
+        raise gr.Error("请先上传一个录音或视频文件")
+    src = Path(file_path)
+    wav = Path(_config()["paths"]["tmp"]) / "qc" / f"{uuid.uuid4().hex}.wav"
+    try:
+        original_sr = probe(src)["sample_rate"]
+        convert_to_wav(src, wav)
+        samples = read_wav(wav)
+    except (OSError, RuntimeError, ValueError) as exc:
+        logger.warning("录音质检读不了文件 %s：%s", src.name, exc)
+        raise gr.Error(f"读不了这个文件：{src.name}。文件可能已损坏，或者不是录音、视频文件，"
+                       "请重新从手机拷贝后再试") from exc
+    finally:
+        if wav.exists():
+            wav.unlink()
+    return _qc_result(samples, original_sr, src.name, src.name)
+
+
+def check_pool_recording(root, stem):
+    """“检查池内录音”：返回 (三张图, 质检结果 Markdown)。原始采样率用清单里记的（转换后的录音都是 16000 Hz）。"""
+    root, stem, row, wav = _pool_recording(root, stem)
+    try:
+        original_sr = int(float(row.get("原始采样率") or 0))
+    except ValueError:
+        original_sr = 0
+    try:
+        samples = read_wav(wav)
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise gr.Error(f"读不了转换后的录音 {wav}：{exc}。文件可能已损坏，请老师检查数据池") from exc
+    return _qc_result(samples, original_sr, stem, f"{stem}.wav")
+
+
 # ---------------- 搭界面 ----------------
 
 def _table() -> gr.Dataframe:
@@ -474,6 +761,75 @@ def _demo_tab(cfg: dict) -> None:
         export_btn.click(export_files, [state, table], files_out)
 
 
+def _pool_picker(cfg: dict) -> tuple[gr.Textbox, gr.Dropdown]:
+    """数据池路径框、录音下拉框、“刷新录音列表”按钮和提示（“数据校对”“录音质检”两页各放一套），返回路径框和下拉框。
+
+    打开网页时按 config.yaml 的 paths.data_pool 先列一次；数据池不存在或是空的，只显示中文提示。
+    """
+    stems, hint = _pool_listing(cfg["paths"]["data_pool"])
+    pool = gr.Textbox(str(cfg["paths"]["data_pool"]), label=ui_text.POOL_PATH_LABEL, info=ui_text.POOL_PATH_INFO)
+    with gr.Row():
+        recording = gr.Dropdown(stems, value=stems[0] if stems else None, label=ui_text.RECORDING_LABEL, scale=3)
+        refresh_btn = gr.Button("刷新录音列表", scale=1)
+    hint_md = gr.Markdown(hint)
+    refresh_btn.click(refresh_recordings, pool, [recording, hint_md])
+    pool.submit(refresh_recordings, pool, [recording, hint_md])  # 在路径框里按回车也刷新
+    return pool, recording
+
+
+def _proofread_tab(cfg: dict) -> None:
+    """标签页“数据校对”。"""
+    with gr.Tab("数据校对"):
+        state = gr.State(None)
+        gr.Markdown(ui_text.PROOFREAD_INTRO)
+        with gr.Row():
+            with gr.Column(scale=3):
+                pool, recording = _pool_picker(cfg)
+            with gr.Column(scale=1):
+                proofreader = gr.Textbox(label=ui_text.PROOFREADER_LABEL, info=ui_text.PROOFREADER_INFO,
+                                         max_length=12)
+                run_btn = gr.Button("生成对照", variant="primary")
+        summary = gr.Markdown(ui_text.PROOFREAD_PLACEHOLDER)
+        gr.Markdown(ui_text.PROOFREAD_TABLE_HINT)
+        table = gr.Dataframe(headers=PROOFREAD_HEADERS, datatype=PROOFREAD_TYPES, type="array", interactive=False,
+                             column_widths=PROOFREAD_WIDTHS, wrap=True, label="对照表")
+        audio = gr.Audio(label=ui_text.AUDIO_LABEL, type="numpy", interactive=False, autoplay=True,
+                         buttons=["download"])  # 只留“下载”，不要“分享”按钮
+        reference = gr.Textbox(label=ui_text.REFERENCE_LABEL, info=ui_text.REFERENCE_INFO, lines=10, max_lines=30,
+                               interactive=True)
+        note = gr.Textbox(label=ui_text.PROOFREAD_NOTE_LABEL, info=ui_text.PROOFREAD_NOTE_INFO)
+        save_btn = gr.Button("保存参考文本", variant="primary")
+        save_msg = gr.Markdown()
+
+        # 点“生成对照”：先清掉上一段录音的对照、参考文本、原声和保存提示，再识别（或用缓存）、对照。
+        # 这样出错时页面上不会留着上一段录音的结果，也不会把它的参考文本错存到别的录音里
+        run_btn.click(clear_comparison, None, [summary, table, reference, state, audio, save_msg]).then(
+            generate_comparison, [pool, recording], [summary, table, reference, state])
+        table.select(play_row, state, audio)
+        save_btn.click(save_reference, [state, reference, proofreader, note], save_msg)
+
+
+def _qc_tab(cfg: dict) -> None:
+    """标签页“录音质检”。"""
+    with gr.Tab("录音质检"):
+        gr.Markdown(ui_text.QC_INTRO)
+        with gr.Row():
+            with gr.Column():
+                file_in = gr.File(label=ui_text.QC_UPLOAD_LABEL, file_types=sorted(SUPPORTED_EXTS), type="filepath")
+                upload_btn = gr.Button("检查上传的录音", variant="primary")
+            with gr.Column():
+                pool, recording = _pool_picker(cfg)
+                pool_btn = gr.Button("检查池内录音", variant="primary")
+        result = gr.Markdown()
+        figure = gr.Plot(label=ui_text.QC_PLOT_LABEL, format="png")
+        gr.Markdown(ui_text.QC_EXPLAIN)
+
+        # 每次检查前先清掉上一次的图和结果：出错时不会让人误以为显示的是这一次的结果
+        upload_btn.click(lambda: (None, ""), None, [figure, result]).then(check_upload, file_in, [figure, result])
+        pool_btn.click(lambda: (None, ""), None, [figure, result]).then(check_pool_recording, [pool, recording],
+                                                                         [figure, result])
+
+
 def _help_tab() -> None:
     """标签页“使用说明”。"""
     with gr.Tab("使用说明"):
@@ -492,6 +848,8 @@ def build_app(cfg: dict | None = None) -> gr.Blocks:
         with gr.Tabs():
             _process_tab(_current_cfg)
             _demo_tab(_current_cfg)
+            _proofread_tab(_current_cfg)
+            _qc_tab(_current_cfg)
             _help_tab()
     demo.queue(default_concurrency_limit=1)  # 同一时间每种操作只处理一个任务
     return demo

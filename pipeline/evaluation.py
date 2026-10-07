@@ -3,11 +3,16 @@
 tools/evaluate.py（测一种做法）和 tools/compare.py（基线和改进各测一遍、出对比表）都调用这里的函数，
 命令行工具本身只负责读参数、打印进度。指标怎么算、怎么看，见 docs/guides/evaluation.md。
 
-现在有三个指标（说话人、话术分类、片段起止三个指标以后加在本文件后面）：
+六个指标：
     cer       字错率：录音 → 降噪 → 增强 → 端点检测 → 识别（测评模式，汉字读法）→ 热词纠错，
               把各段 text_raw 连起来，和参考文本 references/<文件编号>.txt 比（pipeline.align.cer_details）。
     hotwords  专名正确率、过度纠正次数：识别流程同上，数法见 hotword_stats 的说明。
     numbers   数字提取的正确率、召回率：不用录音，在剧本 1055 句台词上测（pipeline.step5_normalize.numbers_accuracy）。
+    speakers  说话人标错的时长比例：只评有说话人标注 annotations/speakers/<文件编号>.csv 的录音。
+              识别结果（缓存的段落）→ 说话人分离（用原始录音）→ 和标注比（pipeline.metrics.speaker_error_rate）。
+    classify  话术分类的准确率、召回率、混淆矩阵、误报率：不用录音，在剧本 1055 句台词上测。
+    clips     疑似片段起止误差：只评有片段标注 annotations/clips/<文件编号>.csv 的录音。
+              识别结果 → 热词纠错 → 数字规范化 → 话术分类 → 片段做法定起止 → 和标注比（pipeline.metrics.clip_boundary_error）。
 
 基线做法：
     1. 要测哪些录音：只看数据池清单 manifest.csv（入池时写的），不去翻 normalized/ 文件夹，
@@ -21,13 +26,17 @@ tools/evaluate.py（测一种做法）和 tools/compare.py（基线和改进各�
        只要这些都没变，就直接用缓存，不再识别；所以只换热词纠错（hotword）做法、开关热词纠错时，
        不用重新识别，几秒钟就出结果。入池工具在复录时会删掉 asr_cache/<文件编号>.* ，缓存也跟着失效。
        怀疑缓存有问题时，命令行加 --no-cache 强制重新识别。
+       说话人、片段两个指标也用同一份缓存：说话人分离、分类、片段这些识别之后的步骤每次都重新做（很快）。
     3. 汇总：全体、按录音条件（Q 安静 / N 嘈杂教室 / F 口袋或远距离）、按组。
-       汇总行的字错率 =（各段错字 + 漏字 + 多字之和）÷（各段参考文本字数之和），不是各段字错率的平均。
+       汇总行的字错率 =（各段错字 + 漏字 + 多字之和）÷（各段参考文本字数之和），不是各段字错率的平均；
+       说话人标错比例、片段起止误差的汇总也一样，先把分子、分母分别加起来再除。
     4. 报告：write_report 写 <名字>.csv（UTF-8 带 BOM，Excel 能直接打开）和 <名字>.md，
        Markdown 开头写数据池版本、做法、关键参数、生成时间和固定的局限说明 FIXED_LIMITATION。
+       做法在运行时发出的提示（如第 6、7 组的模型用不了、退回关键词规则）也写在报告开头。
 可改进方向：
     这是教师模板，各组不改本文件（改自己的 pipeline/groups/gN_*.py，再用这里的工具测）。可以讨论的有：
-    过度纠正现在按次数估算，可以改成逐字对齐后逐处判断；字错率还可以按说话人、按段落长短分开看。
+    过度纠正现在按次数估算，可以改成逐字对齐后逐处判断；字错率还可以按说话人、按段落长短分开看；
+    说话人指标还可以另算漏掉、多出来的说话时间（合起来就是常见的 DER）。
 测评指标：
     本文件就是测评工具；tests/test_evaluation.py 用模型自带的测试音频改名建一个临时数据池，
     检查流程能跑通、缓存有效、报告格式正确。在云端开发环境里不报告任何字错率数字。
@@ -55,17 +64,42 @@ FIXED_LIMITATION = "剧本数据上的测评结果不代表真实场景的效果
 # 数据池还没冻结过任何版本时，报告里"数据池版本"写这个
 NOT_FROZEN = "未冻结（请先运行 tools/freeze_pool.py）"
 
+# 在剧本台词文字上测的指标（numbers、classify），报告里"数据池版本"写这个
+NO_POOL = "不用数据池（在剧本台词文字上测）"
+
 # 识别（步骤 2）用到的槽位：这几个槽位换了做法，识别结果就会变，要重新识别
 ASR_SLOTS = ("denoise", "enhance", "vad")
 
 # 字错率、专名正确率涉及的槽位（报告里列出这几个槽位用的做法）
 AUDIO_SLOTS = ("denoise", "enhance", "vad", "hotword")
 
+# 说话人指标涉及的槽位；片段指标涉及的槽位（识别之后要经过热词纠错、数字规范化、话术分类才定片段）
+SPEAKER_SLOTS = ("denoise", "enhance", "vad", "diarize")
+CLIP_SLOTS = ("denoise", "enhance", "vad", "hotword", "normalize", "classify", "clips")
+
+# 说话人分离没配上任何人的段落写成这个（见 pipeline/step4_diarize.py），不算工具分出的说话人
+UNKNOWN_SPEAKER = "未知"
+
+# 命令行 --speakers ref：每段录音按它的标注里有几个人设说话人数（"设对人数"）
+SPEAKERS_BY_ANNOTATION = "ref"
+
+# 第 8 组的剧本是"正常讲解"对照组，单独算一个误报率
+FP_GROUP = 8
+
+# 两种人工标注：放在数据池的哪个文件夹（pipeline.pool.pool_paths 的键）、中文名
+ANNOTATION_KINDS = {
+    "speakers": ("annotations_speakers", "说话人标注"),
+    "clips": ("annotations_clips", "疑似片段标注"),
+}
+
 # 报告的中文标题
 REPORT_TITLES = {
     "cer": "字错率（cer）",
     "hotwords": "专名正确率与过度纠正（hotwords）",
     "numbers": "数字提取正确率（numbers）",
+    "speakers": "说话人标错的时长比例（speakers）",
+    "classify": "话术分类准确率、召回率与误报率（classify）",
+    "clips": "疑似片段起止误差（clips）",
 }
 
 # CSV 和 Markdown 表格里，英文字段名对应的中文列名（本来就是中文的列名原样写出）
@@ -91,6 +125,37 @@ COLUMN_TITLES = {
     "hit": "命中个数",
     "precision": "正确率",
     "recall": "召回率",
+    # 说话人（speakers）
+    "speaker_error_rate": "说话人标错比例",
+    "annotated_seconds": "标注的说话时长（秒）",
+    "scored_seconds": "比对的时长（秒）",
+    "error_seconds": "标错的时长（秒）",
+    "ref_speakers": "标注的人数",
+    "hyp_speakers": "分出的人数",
+    "num_speakers": "人数设置",
+    # 话术分类（classify）
+    "rate": "比例",
+    "count": "分子（句数）",
+    "n": "分母（句数）",
+    "script_id": "剧本编号",
+    "line_no": "行号",
+    "speaker": "角色",
+    "text": "台词",
+    "label": "标准答案",
+    "predicted": "预测",
+    "correct": "对错",
+    "false_positive": "误报",
+    # 片段（clips）
+    "ref_clips": "标注片段数",
+    "tool_clips": "工具片段数",
+    "matched": "配上的对数",
+    "unmatched_ref": "没配上的标注片段",
+    "unmatched_hyp": "没配上的工具片段",
+    "unmatched": "没配上的片段数",
+    "tool_outside": "和标注都不重叠的工具片段",
+    "wrong_category": "类别不同的工具片段",
+    "start_mae": "起点平均误差（秒）",
+    "end_mae": "终点平均误差（秒）",
 }
 
 # 对比表（compare.py）里每个指标比较哪几个数：[(字段名, 中文名)]。
@@ -99,6 +164,10 @@ COMPARE_VALUES = {
     "cer": [("cer", "字错率")],
     "hotwords": [("name_accuracy", "专名正确率"), ("overcorrected", "过度纠正次数")],
     "numbers": [("precision", "正确率"), ("recall", "召回率")],
+    "speakers": [("speaker_error_rate", "说话人标错比例")],
+    "classify": [("rate", "比例")],
+    "clips": [("start_mae", "起点平均误差（秒）"), ("end_mae", "终点平均误差（秒）"),
+              ("unmatched", "没配上的片段数"), ("tool_outside", "和标注都不重叠的工具片段")],
 }
 
 # 每个指标的报告里写的说明（数法、口径）
@@ -142,7 +211,56 @@ NUMBERS_NOTES = [
     "类型判断规则见 pipeline/step5_normalize.py 的 number_type。",
 ]
 
-NOTES = {"cer": CER_NOTES, "hotwords": HOTWORD_NOTES, "numbers": NUMBERS_NOTES}
+SPEAKER_NOTES = [
+    "只评有人工说话人标注（数据池 annotations/speakers/<文件编号>.csv，列 start,end,speaker）的录音；"
+    "怎么标见 docs/guides/annotation.md。",
+    "流程：识别结果（测评模式的段落，和字错率共用缓存）→ diarize 做法用原始录音（没降噪的）给每段配说话人 → 和标注比。"
+    "配成\"未知\"（和哪个说话人都不重叠）的段落不算工具分出的说话人。",
+    "说话人标错比例（pipeline.metrics.speaker_error_rate）：时间切成 10 毫秒一格；工具的\"说话人1、说话人2\"和标注的角色名"
+    "先找最佳对应（匈牙利算法，让对上的总时长最多，所以只是编号不同不算错）；只在两边都有人说话的时间里比，"
+    "标错的时长 ÷ 比对的时长。越低越好。",
+    "比对的时长：两边都有人说话的时间（两人同时说话时按人数算）。只有一边有人说话的时间（工具漏掉的、多出来的）不算在内，"
+    "所以要同时看\"比对的时长\"和\"标注的说话时长\"：比对的时长很短时，标错比例再低也说明不了什么。",
+    "工具的说话时间用的是端点检测切出来的段落（不是分离模型的原始结果），段落之间的停顿不算；"
+    "一个段落中间换了人（没有停顿）时整段只算给一个人，这会算进标错的时长。",
+    "人数设置：\"自动\"表示 diarize.num_speakers = -1（工具自己判断人数）；命令行 --speakers ref 表示每段录音按标注里的人数设（设对人数）。"
+    "知道人数时一定要设人数，\"自动\"和\"设对人数\"两种都要报告。",
+    "汇总行的标错比例 = 各段录音标错的时长之和 ÷ 比对的时长之和，不是各段比例的平均。",
+]
+
+CLASSIFY_NOTES = [
+    "在剧本台词文字上测（data/lines.csv 的 1055 句，不用录音）：每句台词的文字直接交给 classify 做法，"
+    "和这一句的 label（类别名）比较。剧本台词没有经过语音识别，真实录音的识别文字有错字，效果会更差。",
+    "准确率（精确率）= 预测成这一类的句子里真是这一类的比例；召回率 = 这一类的句子里被找出来的比例；"
+    "分母为 0 时记 0，请同时看句数。混淆矩阵：行是标准答案，列是预测，对角线上是分对的句数。",
+    "误报率 = 标准答案为\"正常讲解\"的句子中，被预测成 5 个疑似类别（购物安排、费用、行程变更、服务态度、威胁消费）之一的比例。"
+    "全部 24 个剧本算一次，第 8 组（正常讲解对照组）的剧本再单独算一次；正常讲解被分成\"其他\"不算误报，"
+    "第 8 组里标为费用、行程变更、购物安排的句子分错了也不算误报。误报会冤枉人，越低越好。",
+    "关键词规则（baseline）的关键词是参照剧本台词写的，在同一批剧本上测，数字偏乐观（虚高），换个说法就可能失效。",
+    "训练好的模型（tf_model、g6、g7）最后是用全部剧本台词训练的，在同样的台词上测等于\"考原题\"，数字会明显虚高，"
+    "不能当成模型的效果；模型的主结果看训练脚本的按组留一报告"
+    "（如 reports/g6/train_g6_logo_extra.md、train_g6_logo_no_extra.md）。",
+    "没装 TensorFlow 或没有训练好的模型时，tf_model、g6、g7 会退回关键词规则，报告开头的\"运行时的提示\"会写明；"
+    "这时测出来的就是关键词规则的结果。",
+    "类别名用数据里的写法：\"威胁消费\"在界面上显示为\"消费施压\"。比例都写成小数，如 0.1234 即 12.34%。",
+]
+
+CLIPS_NOTES = [
+    "只评有人工片段标注（数据池 annotations/clips/<文件编号>.csv，列 start,end,label）的录音；怎么标见 docs/guides/annotation.md。",
+    "流程和整理录音的测评模式一样：识别结果（和字错率共用缓存）→ 热词纠错 → 数字规范化（mode=\"spoken\"）→ 话术分类 → "
+    "clips 做法定每个片段的起止（只算起止，不剪音频、不写文件）。为了省时间不做说话人分离，片段做法拿到的段落里没有说话人。",
+    "配对（pipeline.metrics.clip_boundary_error）：两边的片段按重叠秒数从多到少一一配对，只是挨着（重叠 0 秒）不算配上。"
+    "起点、终点平均误差 = 每对 |工具 − 标注| 的平均（秒），越小越好；一对也没配上时空着。",
+    "没配上的片段数 = 没配上的标注片段（工具漏掉的）+ 没配上的工具片段（多出来的）。基线一个段落出一个片段，"
+    "标注的一个片段往往包含好几句话，只有一个工具片段能和它配对，其余的都算\"没配上的工具片段\"——合并相邻的片段是第 8 组的改进方向。",
+    "和标注都不重叠的工具片段：和任何标注片段都不重叠，即标注人认为没有纠纷的地方被剪成了疑似片段（片段层面的误报），越少越好。",
+    "类别不同的工具片段：和它重叠最多的标注片段类别不一样（时间对上了，类别标错了）。这主要由话术分类（第 6、7 组）决定。",
+    "汇总行的平均误差 = 各段录音误差之和 ÷ 配上的对数之和，不是各段平均误差的平均。",
+    "句子层面的误报率（正常讲解被标成疑似的比例）用 tools/evaluate.py classify 在剧本台词上测。",
+]
+
+NOTES = {"cer": CER_NOTES, "hotwords": HOTWORD_NOTES, "numbers": NUMBERS_NOTES,
+         "speakers": SPEAKER_NOTES, "classify": CLASSIFY_NOTES, "clips": CLIPS_NOTES}
 
 
 # ======================== 做法 ========================
@@ -258,6 +376,42 @@ def _checked_items(root, files) -> list[dict]:
     return items
 
 
+def annotated_items(root, kind: str, files: list[str] | None = None) -> list[dict]:
+    """有人工标注的录音（kind 为 "speakers" 说话人标注，或 "clips" 疑似片段标注），按文件编号排好。
+
+    每项和 pool_items 一样，另加 annotation_path（标注表格的路径）和 annotation（读出来的标注）：
+        speakers：[(开始秒, 结束秒, 角色名), ...]（pipeline.annotations.read_turns_csv）
+        clips：   [(开始秒, 结束秒, 类别名), ...]（read_clips_csv；"消费施压"已换成"威胁消费"）
+    没有标注的录音不评。files 里指定了没有标注的录音、一段有标注的录音也没有、找不到录音、
+    标注表格有错时，在开始识别之前就报错（中文说明怎么办），不白等。
+    """
+    from pipeline.annotations import read_clips_csv, read_turns_csv
+    from pipeline.pool import pool_paths
+
+    key, title = ANNOTATION_KINDS[kind]
+    folder = pool_paths(root)[key]
+    candidates = pool_items(root, files)
+    if not candidates:
+        raise ValueError(f"数据池里还没有入池的录音（{pool_paths(root)['manifest']} 不存在或是空的）。"
+                         f"请先把录音放进 raw 文件夹，运行 tools/ingest_pool.py")
+    how = "标注方法见 docs/guides/annotation.md，用 tools/labels_to_csv.py 把 Audacity 导出的标签转成表格放进去"
+    items = [dict(item, annotation_path=folder / f"{item['stem']}.csv") for item in candidates]
+    missing = [item["stem"] for item in items if not item["annotation_path"].is_file()]
+    if files and missing:
+        raise ValueError(f"这些录音没有{title}：{'、'.join(missing)}（应该在 {folder} 里，文件名如 {missing[0]}.csv）。{how}")
+    items = [item for item in items if item["annotation_path"].is_file()]
+    if not items:
+        raise ValueError(f"数据池里还没有{title}（{folder} 里没有和入池录音同名的表格）。{how}")
+    no_wav = [item["stem"] for item in items if not item["wav"].is_file()]
+    if no_wav:
+        raise FileNotFoundError(f"清单里有、但找不到转换后的录音：{'、'.join(no_wav)}（应该在 normalized 文件夹里）。"
+                                f"请检查数据池是否拷全了")
+    read = read_turns_csv if kind == "speakers" else read_clips_csv
+    for item in items:
+        item["annotation"] = read(item["annotation_path"])  # 表格有错时抛 ValueError，说明是哪个文件的哪一行
+    return items
+
+
 def read_reference(path) -> str:
     """读参考文本。记事本存的 UTF-8（带不带 BOM 都行）或 GBK 都能读。"""
     data = Path(path).read_bytes()
@@ -365,12 +519,12 @@ def recognize_item(root, item: dict, cfg: dict, use_cache: bool = True) -> tuple
     return segments, {"seconds": seconds, "cached": False, "elapsed": elapsed}
 
 
-def _run_audio_eval(root, cfg: dict, files, progress, use_cache: bool,
-                    score: Callable[[str, str, list[dict], str], tuple[dict, str]]) -> list[dict]:
-    """cer 和 hotwords 共用的流程：逐段录音 识别（或用缓存）→ 热词纠错 → score 算这一段的指标。
+def _run_items(root, cfg: dict, items: list[dict], progress, use_cache: bool,
+               score: Callable[[dict, list[dict]], tuple[dict, str]]) -> list[dict]:
+    """所有录音指标共用的流程：逐段录音 识别（或用缓存）→ score 算这一段的指标，并显示进度。
 
-    score(参考文本, 识别文字, 纠错后的段落, 纠错前的识别文字) 返回 (指标字典, 进度里显示的一句话)。
-    识别文字 = 各段 text_raw 连起来。返回每段录音一行：stem、group、condition、指标……、seconds。
+    score(录音, 识别出的段落) 返回 (指标字典, 进度里显示的一句话)。段落是测评模式的（有 text_raw），
+    score 可以随意改它（每次都是从缓存新读出来的）。返回每段录音一行：stem、group、condition、指标……、seconds。
     """
     def say(message: str) -> None:
         if progress is not None:
@@ -378,8 +532,6 @@ def _run_audio_eval(root, cfg: dict, files, progress, use_cache: bool,
         else:
             logger.info(message)
 
-    items = _checked_items(root, files)
-    hotword = _get_method(cfg, "hotword")
     rows = []
     cached = 0
     started = time.perf_counter()
@@ -387,12 +539,7 @@ def _run_audio_eval(root, cfg: dict, files, progress, use_cache: bool,
         head = f"[{n}/{len(items)}] {item['stem']}"
         say(f"{head}：处理中……")
         segments, info = recognize_item(root, item, cfg, use_cache)
-        # 和 run_pipeline 的测评模式一样：纠错之前先把 text 设成 text_raw（有的做法可能只看 text）
-        segments = [dict(seg, text=seg.get("text_raw") or "") for seg in segments]
-        before = "".join(seg["text"] for seg in segments)  # 纠错之前的识别文字（数过度纠正要用）
-        segments = hotword(segments, None, cfg)  # 热词纠错（hotwords=None 表示用 data/hotwords.txt）
-        hypothesis = "".join(seg.get("text_raw") or "" for seg in segments)
-        values, text = score(read_reference(item["reference"]), hypothesis, segments, before)
+        values, text = score(item, segments)
         rows.append({"stem": item["stem"], "group": item["group"], "condition": item["condition"],
                      **values, "seconds": info["seconds"]})
         if info["cached"]:
@@ -404,6 +551,27 @@ def _run_audio_eval(root, cfg: dict, files, progress, use_cache: bool,
     minutes = (time.perf_counter() - started) / 60
     say(f"全部完成：{len(items)} 段录音，用时 {minutes:.1f} 分钟（其中 {cached} 段用了缓存的识别结果）")
     return rows
+
+
+def _run_audio_eval(root, cfg: dict, files, progress, use_cache: bool,
+                    score: Callable[[str, str, list[dict], str], tuple[dict, str]]) -> list[dict]:
+    """cer 和 hotwords 共用的流程：逐段录音 识别（或用缓存）→ 热词纠错 → score 算这一段的指标。
+
+    score(参考文本, 识别文字, 纠错后的段落, 纠错前的识别文字) 返回 (指标字典, 进度里显示的一句话)。
+    识别文字 = 各段 text_raw 连起来。返回每段录音一行：stem、group、condition、指标……、seconds。
+    """
+    items = _checked_items(root, files)
+    hotword = _get_method(cfg, "hotword")
+
+    def score_item(item: dict, segments: list[dict]) -> tuple[dict, str]:
+        # 和 run_pipeline 的测评模式一样：纠错之前先把 text 设成 text_raw（有的做法可能只看 text）
+        segments = [dict(seg, text=seg.get("text_raw") or "") for seg in segments]
+        before = "".join(seg["text"] for seg in segments)  # 纠错之前的识别文字（数过度纠正要用）
+        segments = hotword(segments, None, cfg)  # 热词纠错（hotwords=None 表示用 data/hotwords.txt）
+        hypothesis = "".join(seg.get("text_raw") or "" for seg in segments)
+        return score(read_reference(item["reference"]), hypothesis, segments, before)
+
+    return _run_items(root, cfg, items, progress, use_cache, score_item)
 
 
 # ======================== 汇总 ========================
@@ -436,22 +604,23 @@ def _summarize(rows: list[dict], sum_keys: list[str], add_rates: Callable[[dict]
     return summary
 
 
-def _key_params(cfg: dict) -> dict:
-    """报告里写的关键参数：端点检测、识别、热词纠错的参数和识别模型。"""
+def _key_params(cfg: dict, sections=("vad", "asr", "hotword")) -> dict:
+    """报告里写的关键参数：config.yaml 里 sections 这几节的参数（默认端点检测、识别、热词纠错）和识别模型。"""
     from pipeline.models import model_path
 
     params = {}
-    for section in ("vad", "asr", "hotword"):
+    for section in sections:
         for key, value in (cfg.get(section) or {}).items():
             params[f"{section}.{key}"] = value
     params["识别模型"] = model_path(cfg, "sense_voice_model").parent.name
     return params
 
 
-def _audio_info(root, cfg: dict) -> dict:
+def _audio_info(root, cfg: dict, slots=AUDIO_SLOTS, sections=("vad", "asr", "hotword")) -> dict:
+    """录音指标报告开头用的信息：数据池、数据池版本、slots 这几个槽位用的做法、关键参数。"""
     return {"pool": str(root), "pool_version": pool_version(root),
-            "methods": {slot: _method_name(cfg, slot) for slot in AUDIO_SLOTS},
-            "params": _key_params(cfg)}
+            "methods": {slot: _method_name(cfg, slot) for slot in slots},
+            "params": _key_params(cfg, sections)}
 
 
 # ======================== 字错率 ========================
@@ -677,9 +846,377 @@ def eval_numbers_lines(cfg: dict, methods: dict | None = None) -> dict:
     result["overview"] = ([{"分组项": "主指标", **result["main"]}, {"分组项": "次要指标", **result["secondary"]}]
                           + [{"分组项": kind, **result["by_type"][kind]} for kind in NUMBER_TYPES])
     result["tables"] = []
-    result["info"] = {"pool": None, "pool_version": "不用数据池（在剧本台词文字上测）",
+    result["info"] = {"pool": None, "pool_version": NO_POOL,
                       "methods": {"normalize": name}, "params": {"台词句数": len(lines)}}
     return result
+
+
+# ======================== 做法发出的提示 ========================
+
+
+def _capture_warnings(func: Callable, *args):
+    """调用 func(*args)，把它发出的警告收集起来，返回 (结果, 警告文字列表（去掉重复）)。
+
+    例如第 6、7 组的做法在没装 TensorFlow、没有训练好的模型时会退回关键词规则，并发出一句中文警告；
+    测评报告开头要写明，不然会把关键词规则的结果当成模型的结果。
+    """
+    import warnings
+
+    with warnings.catch_warnings(record=True) as records:
+        warnings.simplefilter("always")
+        result = func(*args)
+    return result, list(dict.fromkeys(str(record.message) for record in records))
+
+
+def _add_new(found: list[str], messages: list[str]) -> None:
+    """把 messages 里还没有的提示加进 found（保持先后顺序）。"""
+    for message in messages:
+        if message not in found:
+            found.append(message)
+
+
+# ======================== 说话人标错的时长比例 ========================
+
+
+def parse_num_speakers(value) -> int | str:
+    """命令行 --speakers 的值 → eval_speakers 的 num_speakers。
+
+    auto 或 自动（以及 0、负数）→ -1（工具自己判断人数）；ref 或 标注 → "ref"（每段录音按标注里的人数，即设对人数）；
+    正整数（如 4）→ 这个人数。别的写法抛 ValueError（中文说明能写什么）。
+    """
+    text = str(value).strip()
+    if text.lower() in ("auto", "自动"):
+        return -1
+    if text.lower() in (SPEAKERS_BY_ANNOTATION, "标注"):
+        return SPEAKERS_BY_ANNOTATION
+    try:
+        number = int(text)
+    except ValueError:
+        raise ValueError(f"--speakers 的写法：auto（自动判断人数）、ref（每段录音按标注里的人数，即设对人数）"
+                         f"或一个正整数（如 4）；现在写的是“{text}”") from None
+    return number if number > 0 else -1
+
+
+def describe_num_speakers(value) -> str:
+    """说话人数设置的中文说明（命令行里打印）：-1 → 自动；"ref" → 按标注里的人数；4 → 4 人。"""
+    if value == SPEAKERS_BY_ANNOTATION:
+        return "每段录音按标注里的人数（设对人数）"
+    value = int(value) if value is not None else -1
+    return "自动（工具自己判断人数）" if value <= 0 else f"{value} 人"
+
+
+def speaker_details(ref_turns, hyp_turns, step: float = 0.01) -> dict:
+    """一段录音的说话人标错比例，以及汇总时要用的分母、分子（秒）。
+
+    ref_turns：标注的 [(开始秒, 结束秒, 角色名)]；hyp_turns：工具的 [(开始秒, 结束秒, "说话人N")]。
+    返回：
+        speaker_error_rate  说话人标错比例（pipeline.metrics.speaker_error_rate，算法见那里的说明）
+        scored_seconds      比对的时长：两边都有人说话的时间（每一格取 min(标注里说话的人数, 工具里说话的人数)，
+                            加起来 × 格宽；两人同时说话时按人数算）
+        error_seconds       标错的时长 = 标错比例 × 比对的时长
+    用和 speaker_error_rate 一模一样的格子（同一个画格子的函数），所以几段录音加起来再除，结果和逐格算的一致。
+    """
+    import numpy as np
+
+    from pipeline.metrics import _activity, _turn, speaker_error_rate
+
+    ref = [_turn(item) for item in ref_turns]
+    hyp = [_turn(item) for item in hyp_turns]
+    rate = speaker_error_rate(ref, hyp, step)
+    scored = 0.0
+    if ref and hyp:
+        n_frames = int(round(max(end for _, end, _ in ref + hyp) / step))
+        if n_frames > 0:
+            _, ref_active = _activity(ref, step, n_frames)
+            _, hyp_active = _activity(hyp, step, n_frames)
+            frames = np.minimum(ref_active.sum(axis=0), hyp_active.sum(axis=0)).sum()
+            scored = round(float(frames) * step, 3)
+    return {"speaker_error_rate": rate, "scored_seconds": scored, "error_seconds": round(rate * scored, 3)}
+
+
+def _speaker_rates(stats: dict) -> dict:
+    """汇总：标错比例 = 标错的时长之和 ÷ 比对的时长之和。标错比例放在录音数后面（表格里排第一列数字）。"""
+    rate = stats["error_seconds"] / stats["scored_seconds"] if stats["scored_seconds"] else 0.0
+    return {"files": stats["files"], "speaker_error_rate": rate, **{k: v for k, v in stats.items() if k != "files"}}
+
+
+def eval_speakers(root, cfg: dict, methods: dict | None = None, files: list[str] | None = None,
+                  progress: Callable[[str], None] | None = None, use_cache: bool = True,
+                  num_speakers: int | str | None = None) -> tuple[list[dict], dict]:
+    """说话人标错的时长比例测评（第 3 组主指标）。返回 (每段录音一行, 汇总)。
+
+    只评有说话人标注（annotations/speakers/<文件编号>.csv）的录音。methods、files、progress、use_cache 同 eval_cer。
+    num_speakers：说话人数。不填就按 cfg["diarize"]["num_speakers"]（config.yaml，-1 表示自动）；
+        填正整数就每段录音都按这个人数；填 -1 表示自动；填 "ref" 表示每段录音按它的标注里有几个人（设对人数）。
+    流程：识别结果（和字错率共用缓存）→ diarize 做法用原始录音（没降噪的）给段落配说话人 → speaker_details 和标注比。
+    配成"未知"的段落不算工具分出的说话人。
+    每行：stem、group、condition、speaker_error_rate、annotated_seconds（标注覆盖的秒数，重叠只算一次）、
+    scored_seconds、error_seconds、ref_speakers（标注的人数）、hyp_speakers（分出的人数）、num_speakers（人数设置）、seconds。
+    汇总同 eval_cer（全体、按录音条件、按组），标错比例 = 标错的时长之和 ÷ 比对的时长之和。
+    """
+    from pipeline.annotations import annotated_seconds
+    from pipeline.audio import SR, read_wav
+
+    cfg = with_methods(cfg, methods)
+    cfg["diarize"] = dict(cfg.get("diarize") or {})
+    by_annotation = num_speakers == SPEAKERS_BY_ANNOTATION
+    if num_speakers is not None and not by_annotation:
+        cfg["diarize"]["num_speakers"] = int(num_speakers) if int(num_speakers) > 0 else -1
+    items = annotated_items(root, "speakers", files)
+    diarize = _get_method(cfg, "diarize")
+
+    def score(item: dict, segments: list[dict]) -> tuple[dict, str]:
+        turns = item["annotation"]
+        ref_count = len({speaker for _, _, speaker in turns})
+        run_cfg = cfg
+        if by_annotation:  # 设对人数：这段录音的标注里有几个人就设几个人
+            run_cfg = copy.deepcopy(cfg)
+            run_cfg["diarize"]["num_speakers"] = ref_count or -1
+        setting = int(run_cfg["diarize"].get("num_speakers") or -1)
+        result = diarize(read_wav(item["wav"]), SR, segments, run_cfg)  # 用原始录音
+        hyp = [(seg["start"], seg["end"], seg["speaker"]) for seg in result
+               if seg.get("speaker") and seg["speaker"] != UNKNOWN_SPEAKER]
+        details = speaker_details(turns, hyp)
+        values = {
+            "speaker_error_rate": details["speaker_error_rate"],
+            "annotated_seconds": round(annotated_seconds(turns), 3),
+            "scored_seconds": details["scored_seconds"],
+            "error_seconds": details["error_seconds"],
+            "ref_speakers": ref_count,
+            "hyp_speakers": len({speaker for _, _, speaker in hyp}),
+            "num_speakers": "自动" if setting <= 0 else str(setting),
+        }
+        text = (f"说话人标错比例 {values['speaker_error_rate']:.4f}（比对 {values['scored_seconds']:.0f} 秒；"
+                f"标注 {values['ref_speakers']} 人，分出 {values['hyp_speakers']} 人）")
+        return values, text
+
+    rows = _run_items(root, cfg, items, progress, use_cache, score)
+    summary = _summarize(rows, ["annotated_seconds", "scored_seconds", "error_seconds"], _speaker_rates)
+    summary["info"] = _audio_info(root, cfg, SPEAKER_SLOTS, ("vad", "asr", "diarize"))
+    if by_annotation:
+        summary["info"]["params"]["diarize.num_speakers"] = "按标注里的人数（设对人数，每段录音不同）"
+    summary["tables"] = [{"title": "汇总（全体、按录音条件、按组）", "rows": summary["overview"]}]
+    return rows, summary
+
+
+# ======================== 话术分类（剧本文字） ========================
+
+
+def _ratio_row(label: str, count: int, n: int) -> dict:
+    """对比表、汇总表的一行：比例 = 分子 ÷ 分母（分母为 0 时记 0.0）。"""
+    return {"分组项": label, "rate": count / n if n else 0.0, "count": count, "n": n}
+
+
+def eval_classify_rules(cfg: dict, method: str = "baseline") -> dict:
+    """在剧本 1055 句台词上测话术分类（第 6、7、8 组），不用录音。
+
+    method：classify 槽位的做法名（baseline 关键词规则、tf_model、g6、g7……）。
+    没装 TensorFlow 或没有训练好的模型时，g6、g7、tf_model 会退回关键词规则并发出提示，提示收进 warnings。
+    返回：
+        method、n（句数）、correct（分对的句数）、accuracy（7 类正确率）、labels（7 个类别名）、
+        confusion（7×7 混淆矩阵，行是标准答案、列是预测）、per_class（各类 precision、recall、tp、n_pred、n_gold）、
+        fp_rate、fp_count、normal_count（误报率：全部剧本）、fp_rate_g8、fp_count_g8、normal_count_g8（只看第 8 组剧本）、
+        by_group（各组的句数、分对句数、正确率）、warnings（做法发出的提示）、predictions（每句台词一行）、
+        overview（比例表：分组项、rate、count、n，对比表用）、tables、info（报告开头用）。
+    误报率、准确率、召回率都用类别名算（pipeline.metrics）。做法返回的不是 7 个类别名
+    （如返回了"疑似·费用"这样的显示标签）、或者句数不对时抛 ValueError。
+    """
+    from pipeline.data import FLAG_LABELS, LABEL_NAMES, load_lines
+    from pipeline.metrics import NORMAL_LABEL, confusion_matrix, false_positive_rate, per_class_pr
+
+    cfg = with_methods(cfg, {"classify": method})
+    classify = _get_method(cfg, "classify")
+    lines = load_lines()
+    texts = [line["text"] for line in lines]
+    pred, warnings_found = _capture_warnings(classify, texts, cfg)
+    pred = list(pred)
+    if len(pred) != len(texts):
+        raise ValueError(f"话术分类做法“{method}”返回了 {len(pred)} 个类别，但台词有 {len(texts)} 句，两者必须一样多")
+    unknown = sorted({str(p) for p in pred if p not in LABEL_NAMES})
+    if unknown:
+        raise ValueError(f"话术分类做法“{method}”返回了不认识的类别：{'、'.join(unknown)}。"
+                         f"做法要返回类别名（{'、'.join(LABEL_NAMES)}），不是显示的标签（如“疑似·费用”）")
+    gold = [line["label"] for line in lines]
+
+    def fp_counts(indices: list[int]) -> tuple[int, int]:
+        """(被预测成疑似类别的"正常讲解"句数, "正常讲解"句数)，只看 indices 这些句子。"""
+        normal = [i for i in indices if gold[i] == NORMAL_LABEL]
+        return sum(1 for i in normal if pred[i] in FLAG_LABELS), len(normal)
+
+    everything = list(range(len(lines)))
+    in_g8 = [i for i in everything if lines[i]["group"] == FP_GROUP]
+    fp_count, normal_count = fp_counts(everything)
+    fp_count_g8, normal_count_g8 = fp_counts(in_g8)
+    correct = sum(1 for g, p in zip(gold, pred) if g == p)
+    per_class = per_class_pr(gold, pred, LABEL_NAMES)
+    by_group = []
+    for group in sorted({line["group"] for line in lines}):
+        indices = [i for i in everything if lines[i]["group"] == group]
+        right = sum(1 for i in indices if gold[i] == pred[i])
+        by_group.append({"group": group, "n": len(indices), "correct": right, "accuracy": right / len(indices)})
+
+    predictions = []
+    for line, p in zip(lines, pred):
+        predictions.append({
+            "script_id": line["script_id"], "group": line["group"], "line_no": line["line_no"],
+            "speaker": line["speaker"], "text": line["text"], "label": line["label"], "predicted": p,
+            "correct": "对" if p == line["label"] else "错",
+            "false_positive": "是" if line["label"] == NORMAL_LABEL and p in FLAG_LABELS else "",
+        })
+
+    # 比例表：总体 3 行 → 各类准确率、召回率 → 各组正确率（对比表 compare.py 按这个顺序比）
+    overview = [
+        _ratio_row("7 类正确率", correct, len(lines)),
+        _ratio_row("误报率（全部剧本）", fp_count, normal_count),
+        _ratio_row(f"误报率（第 {FP_GROUP} 组剧本）", fp_count_g8, normal_count_g8),
+    ]
+    for label in LABEL_NAMES:
+        item = per_class[label]
+        overview.append(_ratio_row(f"{label}·准确率", item["tp"], item["n_pred"]))
+        overview.append(_ratio_row(f"{label}·召回率", item["tp"], item["n_gold"]))
+    overview += [_ratio_row(f"第 {item['group']} 组·7 类正确率", item["correct"], item["n"]) for item in by_group]
+
+    matrix = confusion_matrix(gold, pred, LABEL_NAMES)
+    class_rows = [{"类别": label, "标准答案句数": per_class[label]["n_gold"], "预测成该类的句数": per_class[label]["n_pred"],
+                   "分对的句数": per_class[label]["tp"], "准确率": per_class[label]["precision"],
+                   "召回率": per_class[label]["recall"]} for label in LABEL_NAMES]
+    matrix_rows = [{"标准答案 \\ 预测": label, **dict(zip(LABEL_NAMES, row)), "合计": sum(row)}
+                   for label, row in zip(LABEL_NAMES, matrix)]
+    fp_rows = [{"剧本编号": row["script_id"], "行号": row["line_no"], "台词": row["text"], "预测": row["predicted"]}
+               for row in predictions if row["false_positive"]]
+    return {
+        "method": method,
+        "n": len(lines),
+        "correct": correct,
+        "accuracy": correct / len(lines) if lines else 0.0,
+        "labels": list(LABEL_NAMES),
+        "confusion": matrix,
+        "per_class": per_class,
+        "fp_rate": false_positive_rate(gold, pred),
+        "fp_count": fp_count,
+        "normal_count": normal_count,
+        "fp_rate_g8": false_positive_rate([gold[i] for i in in_g8], [pred[i] for i in in_g8]),
+        "fp_count_g8": fp_count_g8,
+        "normal_count_g8": normal_count_g8,
+        "by_group": by_group,
+        "warnings": warnings_found,
+        "predictions": predictions,
+        "overview": overview,
+        "tables": [
+            {"title": "总体（比例 = 分子 ÷ 分母）", "rows": overview[:3]},
+            {"title": "各类准确率与召回率", "rows": class_rows},
+            {"title": "混淆矩阵（行是标准答案，列是预测，对角线上是分对的句数）", "rows": matrix_rows},
+            {"title": "各组的 7 类正确率", "rows": overview[3 + 2 * len(LABEL_NAMES):]},
+            {"title": "误报的句子（标准答案是正常讲解，被预测成疑似类别）", "rows": fp_rows},
+        ],
+        "rows_title": "每句台词的预测",
+        "rows_in_markdown": False,  # 1055 行太长，只写进 CSV
+        "info": {"pool": None, "pool_version": NO_POOL, "methods": {"classify": method},
+                 "params": {"台词句数": len(lines)}},
+    }
+
+
+# ======================== 疑似片段起止误差 ========================
+
+
+def clip_details(ref_clips, tool_clips) -> dict:
+    """一段录音的片段起止误差：标注片段 [(开始, 结束, 类别名)] 和工具片段 [(开始, 结束, 类别名)] 比。
+
+    先用 pipeline.metrics.clip_boundary_error 按重叠最多一一配对，得到起点、终点平均误差和没配上的个数；再数两样：
+        tool_outside    和任何标注片段都不重叠的工具片段（标注人认为没有纠纷的地方被剪成了疑似片段）
+        wrong_category  和它重叠最多的标注片段类别不一样的工具片段（时间对上了，类别标错了）
+    返回 start_mae、end_mae（起点、终点平均误差，秒；一对也没配上时是 None）、ref_clips（标注片段数）、
+    tool_clips（工具片段数）、matched（配上的对数）、unmatched_ref、unmatched_hyp、unmatched、tool_outside、wrong_category。
+    """
+    from pipeline.metrics import clip_boundary_error
+
+    result = clip_boundary_error(ref_clips, tool_clips)
+    outside = wrong = 0
+    for start, end, category in tool_clips:
+        best, best_overlap = None, 0.0
+        for ref_start, ref_end, ref_category in ref_clips:
+            overlap = min(float(end), float(ref_end)) - max(float(start), float(ref_start))
+            if overlap > best_overlap:
+                best, best_overlap = ref_category, overlap
+        if best is None:
+            outside += 1
+        elif best != category:
+            wrong += 1
+    return {
+        "start_mae": result["start_mae"],
+        "end_mae": result["end_mae"],
+        "ref_clips": result["n_ref"],
+        "tool_clips": result["n_hyp"],
+        "matched": result["n_matched"],
+        "unmatched_ref": result["unmatched_ref"],
+        "unmatched_hyp": result["unmatched_hyp"],
+        "unmatched": result["unmatched"],
+        "tool_outside": outside,
+        "wrong_category": wrong,
+    }
+
+
+def _clip_rates(stats: dict) -> dict:
+    """汇总：平均误差 = 各段录音误差之和 ÷ 配上的对数之和（一对也没配上时是 None）。"""
+    start_total = stats.pop("start_total")
+    end_total = stats.pop("end_total")
+    matched = stats["matched"]
+    return {"files": stats.pop("files"),  # 平均误差放在录音数后面（表格里排第一列数字）
+            "start_mae": start_total / matched if matched else None,
+            "end_mae": end_total / matched if matched else None,
+            **stats}
+
+
+def eval_clips(root, cfg: dict, methods: dict | None = None, files: list[str] | None = None,
+               progress: Callable[[str], None] | None = None, use_cache: bool = True) -> tuple[list[dict], dict]:
+    """疑似片段起止误差测评（第 8 组主指标）。返回 (每段录音一行, 汇总)。参数同 eval_cer。
+
+    只评有片段标注（annotations/clips/<文件编号>.csv）的录音。流程和整理录音的测评模式一样：
+    识别结果（和字错率共用缓存）→ 热词纠错 → 数字规范化（mode="spoken"）→ 话术分类 → clips 做法定起止
+    （用原始录音；只算起止，不剪音频、不写文件）→ clip_details 和标注比。不做说话人分离（省时间）。
+    工具片段的类别 = 做法返回的段落序号对应段落的 category。
+    每行：stem、group、condition、clip_details 的各项、seconds。
+    汇总同 eval_cer，平均误差 = 误差之和 ÷ 配上的对数之和；warnings 是话术分类做法发出的提示（如退回关键词规则）。
+    """
+    from pipeline.audio import SR, read_wav
+    from pipeline.step6_classify import classify_segments
+
+    cfg = with_methods(cfg, methods)
+    items = annotated_items(root, "clips", files)
+    hotword, normalize, classify, clips = (_get_method(cfg, slot) for slot in ("hotword", "normalize", "classify", "clips"))
+    warnings_found: list[str] = []
+
+    def score(item: dict, segments: list[dict]) -> tuple[dict, str]:
+        samples = read_wav(item["wav"])  # 原始录音（片段从原始录音剪）
+        # 和 run_pipeline 的测评模式一样：text 先设成 text_raw，再热词纠错、数字规范化、分类
+        segments = [dict(seg, text=seg.get("text_raw") or "") for seg in segments]
+        segments = hotword(segments, None, cfg)
+        segments = [normalize(seg, "spoken", cfg) for seg in segments]
+        segments, messages = _capture_warnings(classify_segments, segments, cfg, classify)
+        _add_new(warnings_found, messages)
+        for seg in segments:
+            seg["source"] = "asr"
+        tool = []
+        for start, end, index in clips(segments, samples, SR, cfg):
+            if not 0 <= index < len(segments):
+                raise ValueError(f"片段做法返回的段落序号 {index} 超出范围（一共 {len(segments)} 段，序号从 0 开始）")
+            tool.append((float(start), float(end), segments[index].get("category") or ""))
+        details = clip_details(item["annotation"], tool)
+        text = (f"标注片段 {details['ref_clips']} 个，工具片段 {details['tool_clips']} 个，"
+                f"配上 {details['matched']} 对，和标注都不重叠的工具片段 {details['tool_outside']} 个")
+        return details, text
+
+    rows = _run_items(root, cfg, items, progress, use_cache, score)
+    # 汇总平均误差要先把误差加起来：每段录音的误差之和 = 平均误差 × 配上的对数
+    with_totals = [dict(row, start_total=(row["start_mae"] or 0.0) * row["matched"],
+                        end_total=(row["end_mae"] or 0.0) * row["matched"]) for row in rows]
+    summary = _summarize(with_totals, ["ref_clips", "tool_clips", "matched", "unmatched_ref", "unmatched_hyp",
+                                       "unmatched", "tool_outside", "wrong_category", "start_total", "end_total"],
+                         _clip_rates)
+    summary["info"] = _audio_info(root, cfg, CLIP_SLOTS, ("vad", "asr", "hotword", "clips"))
+    summary["warnings"] = warnings_found
+    summary["tables"] = [{"title": "汇总（全体、按录音条件、按组）", "rows": summary["overview"]}]
+    return rows, summary
 
 
 # ======================== 对比 ========================
@@ -688,8 +1225,13 @@ def eval_numbers_lines(cfg: dict, methods: dict | None = None) -> dict:
 def compare_rows(metric: str, base_summary: dict, new_summary: dict) -> list[dict]:
     """把基线和改进两次测评的汇总排成对比表：每行 分组项、基线、改进、差值（= 改进 − 基线）。
 
-    分组项的顺序和汇总一样：字错率等是 全体 → Q/N/F → 各组；数字提取是 主指标 → 次要指标 → 各类型。
+    分组项的顺序和汇总一样：字错率、说话人、片段是 全体 → Q/N/F → 各组；数字提取是 主指标 → 次要指标 → 各类型；
+    话术分类是 7 类正确率 → 误报率（全部剧本、第 8 组剧本）→ 各类准确率、召回率 → 各组正确率。
+    没有值的格子（如一对片段也没配上时的平均误差）写空，差值也写空。
     """
+    def rounded(value):
+        return None if value is None else round(value, 4)
+
     values = COMPARE_VALUES[metric]
     new_rows = {row["分组项"]: row for row in new_summary["overview"]}
     rows = []
@@ -700,8 +1242,9 @@ def compare_rows(metric: str, base_summary: dict, new_summary: dict) -> list[dic
             continue
         for key, title in values:
             base, new = base_row[key], new_row[key]
+            diff = None if base is None or new is None else new - base
             rows.append({"分组项": f"{label}·{title}" if len(values) > 1 else label,
-                         "基线": round(base, 4), "改进": round(new, 4), "差值": round(new - base, 4)})
+                         "基线": rounded(base), "改进": rounded(new), "差值": rounded(diff)})
     return rows
 
 
@@ -719,11 +1262,11 @@ def _columns(rows: list[dict]) -> list[str]:
 
 
 def _cell(key: str, value) -> str:
-    """表格里一格的写法：小数保留 4 位（录音时长保留 1 位），没有值写空。"""
+    """表格里一格的写法：小数保留 4 位（时长 seconds、…_seconds 保留 1 位），没有值写空。"""
     if value is None:
         return ""
     if isinstance(value, float):
-        return f"{value:.1f}" if key == "seconds" else f"{value:.4f}"
+        return f"{value:.1f}" if key == "seconds" or key.endswith("_seconds") else f"{value:.4f}"
     return str(value)
 
 
@@ -761,8 +1304,10 @@ def write_report(out_dir, name: str, rows: list[dict], summary: dict, notes: lis
     """写测评报告：<out_dir>/<name>.csv（rows，UTF-8 带 BOM、中文表头）和 <out_dir>/<name>.md。
 
     Markdown 的内容依次是：标题；数据池版本、做法、关键参数、生成时间、局限说明（取自 summary["info"]）；
+    运行时的提示（summary["warnings"]，如第 6、7 组的模型用不了、退回了关键词规则；没有就不写）；
     说明（notes，一条一行）；summary["tables"] 里的各张表（每张 {"title", "rows"}）；
     最后是 rows 这张表（标题用 summary["rows_title"]，没有就写"明细"）。
+    summary["rows_in_markdown"] 为 False 时（如话术分类每句一行，太长）rows 只写进 CSV，Markdown 里只写一句去哪里看。
     返回 (CSV 路径, Markdown 路径)。文件正用 Excel 打开着时，Windows 会报 PermissionError。
     """
     out_dir = Path(out_dir)
@@ -782,11 +1327,18 @@ def write_report(out_dir, name: str, rows: list[dict], summary: dict, notes: lis
         title = f"对比 · {title}"
     lines = [f"# 测评报告：{title}", ""]
     lines += _header_lines(summary.get("info") or {})
+    warnings = summary.get("warnings") or []
+    if warnings:
+        lines += ["", "## 运行时的提示（请先看）", ""] + [f"- {message}" for message in warnings]
     if notes:
         lines += ["", "## 说明", ""] + [f"- {note}" for note in notes]
     for table in summary.get("tables") or []:
         lines += ["", f"## {table['title']}", ""] + _markdown_table(table["rows"])
     rows_title = summary.get("rows_title") or "明细"
-    lines += ["", f"## {rows_title}（和 {csv_path.name} 的内容相同）", ""] + _markdown_table(rows)
+    if summary.get("rows_in_markdown", True):
+        lines += ["", f"## {rows_title}（和 {csv_path.name} 的内容相同）", ""] + _markdown_table(rows)
+    else:
+        lines += ["", f"## {rows_title}", "",
+                  f"共 {len(rows)} 行，太长，没有放进本文件，见同一文件夹里的 {csv_path.name}（用 Excel 打开可以筛选）。"]
     md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return csv_path, md_path
