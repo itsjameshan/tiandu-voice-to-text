@@ -112,3 +112,7 @@
   录音 59.7 分钟（四人测试音频重复拼接），397 段；总用时 712 秒（11.9 分钟），实时率 0.20；最大内存约 2.0 GB。
   各步用时（秒）：统一格式 8.6，降噪与端点检测 21.9，识别与热词 227，说话人分离 454，其余不到 0.1。说话人分离占了六成多时间，用时和录音长度大致成正比（10 分钟时 81 秒）。
   这只是开发环境的数字：机房电脑要用 `python\python.exe tools\long_audio_test.py --minutes 10` 另测（第 0 周清单里有），实测之前不要对外说处理时长。内存约 2 GB，8 GB 内存的电脑够用；4 GB 内存的电脑处理一小时录音前要先实测。
+
+- 任务 23 完成：README 和数据池说明里的命令逐条核对。在开发环境用临时数据池（模型自带四人测试音频改名为 G1-S1-Q 入池，手写一份说话人标注和片段标注）按文档顺序运行了 19 条命令：
+  export_references → ingest_pool → show_spectrogram → labels_to_csv（speakers、clips）→ check_pool → freeze_pool → evaluate（cer 基线和 denoise=g1、hotwords 关和 g5、numbers g4、speakers --speakers ref、classify、clips g8）→ compare（cer、speakers --speakers auto、clips）→ selfcheck --quick，全部退出码 0，报告开头都写明"数据池版本：v1"。
+  测试音频不是剧本录音，所以不报告任何数字。README 第 9 节已改成"基线 reports\gN、本组做法 reports\gN\after、对比表单独文件夹"的写法。
