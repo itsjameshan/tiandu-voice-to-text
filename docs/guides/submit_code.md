@@ -28,6 +28,7 @@
 1. **注册 GitHub 账号**：浏览器打开 https://github.com ，点 Sign up，用邮箱注册。用户名用英文，**不要用真实姓名**（例如 `tiandu-g1-lead`）。把用户名告诉老师，老师会把你加为仓库协作者；你的邮箱里会收到邀请邮件，点里面的 **Accept invitation** 接受。
 2. **安装 GitHub Desktop**：老师 U 盘里有安装包（`GitHubDesktopSetup-x64.exe`），或从 https://desktop.github.com 下载。双击安装。
 3. **登录**：打开 GitHub Desktop → File（文件）→ Options（选项）→ Accounts（账户）→ Sign in（登录），浏览器里确认授权。
+   > **仓库是公开的，提交记录谁都能看到**：每次提交会记下作者名字和邮箱。先在 GitHub 网页右上角头像 → Settings → Emails 里勾选 **Keep my email addresses private**，记下下面显示的 `……@users.noreply.github.com` 邮箱；再在 GitHub Desktop → File → Options → Git 里，Name 填你的英文用户名（不要填真实姓名），Email 选这个 noreply 邮箱。
 4. **把仓库下载到电脑（clone）**：File → Clone repository → 选 **URL** 标签 → 填 `https://github.com/itsjameshan/tiandu-voice-to-text` → Local path 选一个**纯英文路径**，如 `D:\asr\repo` → Clone。
    > 机房电脑会还原的话，Local path 选 U 盘（如 `E:\asr\repo`）。
 
