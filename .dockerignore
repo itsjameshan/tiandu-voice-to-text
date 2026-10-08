@@ -1,0 +1,10 @@
+.git
+.venv
+handoff
+models/*
+!models/download_models.py
+data_pool
+outputs
+tmp
+dist
+**/__pycache__

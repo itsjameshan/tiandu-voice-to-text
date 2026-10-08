@@ -167,7 +167,7 @@ CSV 导出用 UTF-8 带 BOM（`utf-8-sig`），Excel 直接双击打开不乱码
 
 ### 6.1 包版本（当天 PyPI 最新）
 
-gradio 6.29.1、sherpa-onnx 1.13.8、tensorflow-cpu 2.21.0、python-docx 1.2.0、jiwer 4.0.0、noisereduce 3.0.3、pypinyin 0.55.0、cn2an 0.5.24、soundfile 0.14.0、openpyxl 3.1.5、funasr 1.4.16（需 PyTorch，可选）、funasr-onnx 0.4.3（可选）。建议 Python 3.11 或 3.12（以后要做 Windows 离线包，3.11 最稳）。`requirements.txt` 里写兼容范围，不要把版本锁得太死（例如 `gradio>=5,<7`）；Gradio 6 改过一些用法（例如主题、CSS 不再建议传给 `Blocks()`），参数名以安装的版本为准，用之前先查文档或 `help()`，不要凭记忆写。托管平台支持的 Gradio 版本可能比最新版旧，部署前先确认。
+gradio 6.29.1、sherpa-onnx 1.13.8、tensorflow-cpu 2.21.0、python-docx 1.2.0、jiwer 4.0.0、noisereduce 3.0.3、pypinyin 0.55.0、cn2an 0.5.24、soundfile 0.14.0、openpyxl 3.1.5、funasr 1.4.16（需 PyTorch，可选）、funasr-onnx 0.4.3（可选）。建议 Python 3.11 或 3.12（以后要做 Windows 离线包，3.11 最稳）。`requirements.txt` 里写兼容范围，不要把版本锁得太死（例如 `gradio>=6,<7`：代码用了 Gradio 6 才有的写法，下限要写 6）；Gradio 6 改过一些用法（例如主题、CSS 不再建议传给 `Blocks()`），参数名以安装的版本为准，用之前先查文档或 `help()`，不要凭记忆写。托管平台支持的 Gradio 版本可能比最新版旧，部署前先确认。
 
 ### 6.2 模型（都从 sherpa-onnx 的 GitHub Releases 下载，链接当天都能打开）
 

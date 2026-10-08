@@ -1,0 +1,13 @@
+# 运行依赖（不含 PyTorch、不含 TensorFlow）。写兼容范围，不锁死版本。
+gradio>=6,<7  # app.py 用了 Gradio 6 才有的写法（gr.Audio 的 buttons、launch 的 theme 和 css）
+sherpa-onnx>=1.12,<2
+numpy
+soundfile
+PyYAML
+python-docx>=1.1
+pypinyin
+cn2an
+rapidfuzz
+noisereduce
+matplotlib
+imageio-ffmpeg

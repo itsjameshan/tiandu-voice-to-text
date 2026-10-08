@@ -1,0 +1,87 @@
+"""整条流程 run_pipeline 的测试。"""
+from pathlib import Path
+
+from conftest import FOUR_SPEAKERS_WAV, requires_models
+
+from pipeline import run_pipeline
+from pipeline.data import FLAG_OUTPUTS
+
+LEGAL_LABELS = {""} | set(FLAG_OUTPUTS)
+
+
+def test_pipeline_silence(make_audio, tmp_path):
+    """没有人声的录音：返回空列表和提示，不报错（Review Focus 第 2 条）。"""
+    wav = make_audio("silence", "wav", seconds=2.0, sr=16000, channels=1)
+    segments, meta = run_pipeline(str(wav), {"out_dir": str(tmp_path / "run")})
+    assert segments == []
+    assert meta["message"] == "没有检测到人声，请检查录音"
+    assert meta["duration"] > 1.5
+    assert meta["notice"]
+
+
+@requires_models
+def test_pipeline_four_speakers(tmp_path):
+    segments, meta = run_pipeline(str(FOUR_SPEAKERS_WAV), {"num_speakers": 4, "out_dir": str(tmp_path / "run")})
+    assert len(segments) >= 5
+    for seg in segments:
+        for key in ["start", "end", "speaker", "text", "label"]:
+            assert key in seg
+        assert seg["end"] > seg["start"]
+        assert seg["label"] in LEGAL_LABELS
+        assert seg["source"] == "asr"
+    assert len({s["speaker_id"] for s in segments if s.get("speaker_id")}) == 4
+    assert meta["rtf"] > 0
+    assert len(meta["timings"]) >= 6
+    assert meta["methods"]["denoise"] == "baseline"
+    assert len(meta["sha256"]) == 64
+    for seg in segments:
+        if seg.get("clip"):
+            assert (Path(meta["work_dir"]) / "clips" / seg["clip"]).is_file()
+
+
+@requires_models
+def test_pipeline_method_override_and_eval_mode(tmp_path):
+    segments, meta = run_pipeline(
+        str(FOUR_SPEAKERS_WAV),
+        {"num_speakers": 4, "methods": {"denoise": "g1", "classify": "g6"}, "asr_mode": "both",
+         "out_dir": str(tmp_path / "run")})
+    assert meta["methods"]["denoise"] == "g1"
+    assert meta["methods"]["classify"] == "g6"
+    assert all(s.get("text_raw") for s in segments)
+    # 没装 TensorFlow 或没训练模型时，g6 退回规则，并把原因写进 meta["warnings"]
+    assert isinstance(meta["warnings"], list)
+
+
+def test_pipeline_silence_with_noisereduce(make_audio, tmp_path):
+    """全静音时 noisereduce 会算出 NaN，不能因此"检测到人声"（降噪开关打开时）。"""
+    wav = make_audio("silence", "wav", seconds=2.0, sr=16000, channels=1)
+    segments, meta = run_pipeline(str(wav), {"methods": {"denoise": "noisereduce"}, "out_dir": str(tmp_path / "run")})
+    assert segments == []
+    assert meta["message"] == "没有检测到人声，请检查录音"
+
+
+def test_capture_warnings_keeps_only_notices():
+    """capture_warnings 只收集工具自己发的提示（UserWarning，如"改用关键词规则"），去掉重复；
+    第三方库的 RuntimeWarning 这类不收，免得混进摘要。"""
+    import warnings
+
+    from pipeline import capture_warnings
+
+    def work(x):
+        warnings.warn("分类模型用不了，改用关键词规则", UserWarning)
+        warnings.warn("分类模型用不了，改用关键词规则", UserWarning)
+        warnings.warn("invalid value encountered in divide", RuntimeWarning)
+        return x * 2
+
+    assert capture_warnings(work, 21) == (42, ["分类模型用不了，改用关键词规则"])
+
+
+def test_pipeline_records_hotword_list(make_audio, tmp_path):
+    """开了热词纠错时，元信息里记下这次用的热词表（网页上可以改热词表），导出的 JSON、Word 才能说清结果是怎么来的。"""
+    wav = make_audio("silence", "wav", seconds=1.0, sr=16000, channels=1)
+    _, meta = run_pipeline(str(wav), {"out_dir": str(tmp_path / "a"), "hotword_fix": True, "hotwords": ["雾隐行舟旅行社", "石林"]})
+    assert meta["options"]["hotwords"] == ["雾隐行舟旅行社", "石林"]
+    _, meta = run_pipeline(str(wav), {"out_dir": str(tmp_path / "b"), "hotword_fix": True})
+    assert "data/hotwords.txt" in meta["options"]["hotwords"]
+    _, meta = run_pipeline(str(wav), {"out_dir": str(tmp_path / "c"), "hotword_fix": False})
+    assert "hotwords" not in meta["options"]  # 没开纠错：热词表没用上，不写

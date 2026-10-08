@@ -1,0 +1,55 @@
+# 第 0 周（开课前）准备清单
+
+按顺序做，大约需要半天到一天。做完每一项打勾。更完整的"还差什么"见 [gaps.md](gaps.md)。
+
+## 1. 下载便携包（需要联网，约 20 分钟）
+
+- [ ] 打开 https://github.com/itsjameshan/tiandu-voice-to-text/releases ，下载最新版本里的 `tiandu-portable-win64-*.zip`（约 400 MB）。
+- [ ] 另外下载（放进同一个 U 盘，给机房没网时用）：
+  - [ ] GitHub Desktop 安装包（https://desktop.github.com ，给组长第 7 周用）；
+  - [ ] Audacity 安装包（https://www.audacityteam.org ，免费，标注说话人时间用）。
+- [ ] 全部拷进 U 盘。详见 [portable_package.md](portable_package.md)。
+
+## 2. 机房实测（一台电脑，约 1 小时）
+
+- [ ] 把便携包解压到 `D:\asr`（纯英文路径；压缩包里自带一层 `tiandu` 文件夹，解压后就是 `D:\asr\tiandu`）。
+- [ ] 双击 `selfcheck.bat`，等约 1 分钟，最后一行应是"全部通过"。记下"完整流程"那一行的用时和实时率：________
+- [ ] （可选，约 5—10 分钟）测长录音：在便携包文件夹打开命令行，运行 `python\python.exe tools\long_audio_test.py --minutes 10`，记下总用时、实时率和最大内存：________。实时率 × 录音分钟数 ≈ 处理要几分钟（开发电脑上一小时录音约 12 分钟、内存约 2 GB，机房电脑以这里测的为准）。Windows 上没装 psutil 时显示"最大内存未测"，可以同时开任务管理器看。
+- [ ] 双击 `start.bat`，浏览器自动打开（没打开就手动输入 `http://127.0.0.1:7860`）。
+- [ ] 用手机录自己朗读 1 分钟（任选一个剧本的几句），用数据线拷到电脑，在网页"整理录音"页上传、开始整理。记下处理用时：________
+- [ ] 点"剧本文本演示"页，选 G8-S1，运行，能看到结果表格。
+- [ ] 重启电脑，看 `D:\asr\tiandu` 还在不在：☐ 在（D 盘不还原，以后放 D 盘）　☐ 不在（以后放 U 盘或每次课前从共享文件夹拷）
+- [ ] 在另一台机房电脑的浏览器打开 `http://这台电脑的IP:7860`（IP 用 `ipconfig` 查），能不能访问：☐ 能　☐ 不能（防火墙拦了，那就每人用自己的电脑开）
+- [ ] 机房自带 TensorFlow 版本：命令行运行 `python -c "import tensorflow as tf; print(tf.__version__)"`，结果：________（给第 6、7 组）
+- [ ] （只在做第 3 周选做的数字小实验时需要）机房 Python 有没有 matplotlib：`python -c "import matplotlib"` 不报错就有。没有时 `tools/tf_lab/mfcc_compare.py` 照样算出相关系数，只是不画图。
+- [ ] （同上）自己按 `docs/guides/recording.md` 第六节录一遍"零一二三四五六七八九"×5，用便携包运行 `python\python.exe tools\tf_lab\split_digits.py 录音文件 --speaker 0000`，看能不能切出 50 段。切分用的端点检测参数还没有在真人数字录音上试过（开发环境不允许用真人录音）；如果段数经常偏少，在 `tools/tf_lab/split_digits.py` 的 `VAD_OVERRIDES` 里加 `"threshold": 0.4` 再试。
+- [ ] U 盘能不能用：☐ 能　☐ 不能；老师电脑的共享文件夹能不能访问：☐ 能　☐ 不能
+
+## 3. 便携包分发给 31 台电脑
+
+- 共享文件夹能用：把 zip 放在共享文件夹，第 1 周上课时每人自己拷、解压（约 2—5 分钟）。
+- 共享文件夹不能用：准备几个 U 盘轮流拷。
+- D 盘会还原：每次课前都要重新解压，或者让学生直接从自己的 U 盘运行（U 盘建议 USB 3.0、8 GB 以上）。
+
+## 4. 数据池
+
+- [ ] 在老师电脑上建文件夹 `D:\data_pool`（或 U 盘），把 `config.yaml` 里 `paths.data_pool` 改成这个路径。
+- [ ] 运行 `python\python.exe tools\export_references.py --pool D:\data_pool`，生成 72 份待校对的参考文本。
+- 详见 [data_pool.md](data_pool.md)。
+
+## 5. 纸质材料
+
+- [ ] 录音同意书（[../guides/consent_form.md](../guides/consent_form.md)），打印约 40 份（含客串）。
+- [ ] 分组名单和角色表（线下保存，不进仓库）：8 组，第 2 组 3 人，其余各 4 人；每组定组长、数据、算法、测评。
+- [ ] 每组的任务书（`docs/groups/g1.md`…`g8.md`）可以打印发给各组，或者让学生在便携包的 `docs\groups\` 里看。
+
+## 6. 录音设备
+
+- [ ] 每组至少一部安卓手机和一根能连电脑的数据线（苹果手机的录音拷到 Windows 比较麻烦）。
+- [ ] 自己先试一次：手机录音 → 数据线拷到机房电脑 → 文件名改成 `G1-S1-Q.m4a` 这样的格式。
+
+## 7. 课程内容
+
+- [ ] 看一遍项目介绍视频（`handoff/04_项目介绍视频/`，第 1 周课上播放）。
+- [ ] 过一遍剧本里需要老师过目的 3 处（`data/README.md` 末尾）。
+- [ ] 读一遍 README 的"每组每周做什么"总表，按实际周数（8/10/12 周）调整。

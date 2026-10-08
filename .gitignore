@@ -33,3 +33,10 @@ venv/
 # 系统文件
 .DS_Store
 Thumbs.db
+
+# 数据池里的缓存、测评临时输出
+reports/*/outputs/
+dist/
+
+# 便携包里的 Python 运行环境（组长把便携包和仓库放在一起时，防止误提交）
+python/
