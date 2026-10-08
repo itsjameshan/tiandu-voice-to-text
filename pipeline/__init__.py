@@ -160,6 +160,9 @@ def run_pipeline(path, options: dict | None = None, progress=None, cfg: dict | N
         "warnings": caught_warnings,
         "message": "",
     }
+    if cfg["hotword"]["enabled"]:  # 开了热词纠错：记下这次用的热词表（网页上可以改），结果才说得清是怎么来的
+        hotwords = opts.get("hotwords")
+        meta["options"]["hotwords"] = list(hotwords) if hotwords is not None else "data/hotwords.txt（默认热词表）"
 
     # 2. 降噪与端点检测
     report(0.05, "2/7 降噪与端点检测")

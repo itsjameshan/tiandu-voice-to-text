@@ -74,3 +74,14 @@ def test_capture_warnings_keeps_only_notices():
         return x * 2
 
     assert capture_warnings(work, 21) == (42, ["分类模型用不了，改用关键词规则"])
+
+
+def test_pipeline_records_hotword_list(make_audio, tmp_path):
+    """开了热词纠错时，元信息里记下这次用的热词表（网页上可以改热词表），导出的 JSON、Word 才能说清结果是怎么来的。"""
+    wav = make_audio("silence", "wav", seconds=1.0, sr=16000, channels=1)
+    _, meta = run_pipeline(str(wav), {"out_dir": str(tmp_path / "a"), "hotword_fix": True, "hotwords": ["雾隐行舟旅行社", "石林"]})
+    assert meta["options"]["hotwords"] == ["雾隐行舟旅行社", "石林"]
+    _, meta = run_pipeline(str(wav), {"out_dir": str(tmp_path / "b"), "hotword_fix": True})
+    assert "data/hotwords.txt" in meta["options"]["hotwords"]
+    _, meta = run_pipeline(str(wav), {"out_dir": str(tmp_path / "c"), "hotword_fix": False})
+    assert "hotwords" not in meta["options"]  # 没开纠错：热词表没用上，不写

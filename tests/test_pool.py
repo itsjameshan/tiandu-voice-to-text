@@ -584,3 +584,42 @@ def test_cli_uses_config_pool_by_default(tmp_path, monkeypatch, capsys):
     assert len(list((tmp_path / "cfg_pool" / "references").glob("*.txt"))) == 72
     assert _load_tool("ingest_pool.py").main([]) == 0
     assert str(tmp_path / "cfg_pool") in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("locked", ["qc_report.csv", "manifest.csv"])
+def test_rerecord_interrupted_keeps_old_wav(make_audio, pool, cfg, monkeypatch, locked):
+    """复录时写表格出错（如 manifest.csv 正用 Excel 打开着）：normalized 里要换回旧录音，
+    和清单里记的指纹、时长一致；关掉 Excel 再运行一次，新录音才正式换上。"""
+    import pipeline.pool
+    from pipeline.audio import sha256_file
+
+    _put_raw(pool, make_audio("tone", "wav", seconds=2, name="a.wav"), "G1-S1-Q.wav")
+    ingest_pool(pool, cfg)
+    paths = pool_paths(pool)
+    wav = paths["normalized"] / "G1-S1-Q.wav"
+    old_sha = sha256_file(wav)
+    old_manifest = _read_dicts(paths["manifest"])
+
+    old_raw = paths["raw"] / "G1-S1-Q.wav"  # 复录：先把旧文件移走，新录音用同一个名字放进去
+    os.chmod(old_raw, stat.S_IREAD | stat.S_IWRITE)
+    old_raw.unlink()
+    _put_raw(pool, make_audio("tone", "wav", seconds=4, name="b.wav"), "G1-S1-Q.wav")
+    real_write = pipeline.pool.write_csv_rows
+
+    def write_but_locked(path, columns, rows):
+        if os.path.basename(path) == locked:
+            raise PermissionError(13, "Permission denied", str(path))
+        real_write(path, columns, rows)
+
+    monkeypatch.setattr(pipeline.pool, "write_csv_rows", write_but_locked)
+    with pytest.raises(PermissionError):
+        ingest_pool(pool, cfg)
+    assert sha256_file(wav) == old_sha, "写表格失败时要换回旧录音，和清单一致"
+    assert _read_dicts(paths["manifest"]) == old_manifest
+    assert not list(paths["normalized"].glob("*.tmp.wav")), "临时文件要删掉"
+
+    monkeypatch.setattr(pipeline.pool, "write_csv_rows", real_write)  # 关掉 Excel 后再运行
+    result = ingest_pool(pool, cfg)
+    assert [a["stem"] for a in result["added"]] == ["G1-S1-Q"]
+    assert sha256_file(wav) != old_sha
+    assert float(_read_dicts(paths["manifest"])[0]["时长（秒）"]) == pytest.approx(4, abs=0.1)

@@ -32,3 +32,10 @@ def test_config_keys():
         assert key in cfg, key
     assert set(cfg["methods"]) == {"denoise", "enhance", "vad", "hotword", "diarize", "normalize", "classify", "clips"}
     assert set(cfg["methods"].values()) == {"baseline"}
+
+
+def test_requirements_need_gradio_6():
+    """app.py 用了 Gradio 6 才有的写法（gr.Audio 的 buttons、launch 的 theme/css）：依赖要写 gradio>=6，
+    不然已经装了 Gradio 5 的电脑 pip install 不会升级，网页工具启动就出错。"""
+    line = next(l for l in (ROOT / "requirements.txt").read_text(encoding="utf-8").splitlines() if l.startswith("gradio"))
+    assert line.replace(" ", "").startswith("gradio>=6"), line

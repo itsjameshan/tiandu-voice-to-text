@@ -309,21 +309,19 @@ def _check_raw_files(raw: Path, errors: list[dict]) -> dict[str, list[Path]]:
     return by_stem
 
 
-def _convert_to_pool_wav(src: Path, wav: Path):
-    """把原始录音转成 normalized/<文件编号>.wav，返回读出来的采样（float32 数组）。
+def _convert_to_tmp_wav(src: Path, tmp: Path):
+    """把原始录音转成临时文件 normalized/<文件编号>.tmp.wav，返回读出来的采样（float32 数组）。
 
-    先转到临时文件 <文件编号>.tmp.wav，转换和读取都成功了，才把它改名成正式的文件名。
-    这样复录时如果新文件转到一半失败，旧的 normalized/<文件编号>.wav 还完好（清单里记的也还是它）。
+    转换或读取出错时删掉转了一半的临时文件。正式文件 normalized/<文件编号>.wav 要等表格都写好了才换上
+    （见 _ingest_one），这样复录时中途出错，旧录音和清单里记的指纹、时长还是一致的。
     """
-    tmp = wav.with_name(f"{wav.stem}.tmp.wav")
     try:
         convert_to_wav(src, tmp)
-        samples = read_wav(tmp)
-        os.replace(tmp, wav)  # 改名；正式文件已经存在时直接替换（Windows 上也可以）
-    finally:
-        if tmp.exists():  # 出错时删掉转了一半的临时文件
+        return read_wav(tmp)
+    except BaseException:
+        if tmp.exists():
             tmp.unlink()
-    return samples
+        raise
 
 
 def _ingest_one(path: Path, stem: str, sha: str, paths: dict, cfg: dict) -> dict:
@@ -342,14 +340,44 @@ def _ingest_one(path: Path, stem: str, sha: str, paths: dict, cfg: dict) -> dict
     for cache in paths["asr_cache"].glob(f"{stem}.*"):
         cache.unlink()
 
-    # 1. 读原始采样率，转成 16000 Hz 单声道 16 位 WAV，质检（只报告、不修改）
+    # 1. 读原始采样率，转成 16000 Hz 单声道 16 位 WAV（先放在临时文件里），质检（只报告、不修改）
     info = probe(path)
-    samples = _convert_to_pool_wav(path, paths["normalized"] / f"{stem}.wav")
+    wav = paths["normalized"] / f"{stem}.wav"
+    tmp = wav.with_name(f"{stem}.tmp.wav")
+    backup = wav.with_name(f"{stem}.old.tmp.wav")  # 复录时旧录音先挪到这里，出错时换回去
+    samples = _convert_to_tmp_wav(path, tmp)
     duration = round(len(samples) / SR, 2)
     problems = quality_check(samples, info["sample_rate"], cfg, expected)
     qc_text = "；".join(problems) if problems else QC_OK
     now = _now()
 
+    try:
+        # 换上新录音（旧录音先挪开，后面写表格出错时换回去）；旧录音正被别的程序打开着时这里就会报错，什么都没改
+        if wav.exists():
+            os.replace(wav, backup)
+        os.replace(tmp, wav)
+        _write_ingest_rows(path, stem, name, info, duration, expected, qc_text, now, sha, problems, paths)
+    except BaseException:
+        if backup.exists():
+            os.replace(backup, wav)  # 换回旧录音：和清单里记的指纹、时长一致
+        elif wav.exists() and not _in_manifest(paths, stem):
+            wav.unlink()  # 第一次入池就出错：不留没进清单的录音
+        raise
+    finally:
+        for leftover in (tmp, backup):
+            if leftover.exists():
+                leftover.unlink()
+    return {"file": path.name, "stem": stem, "duration": duration, "qc": problems}
+
+
+def _in_manifest(paths: dict, stem: str) -> bool:
+    """清单里有没有这个文件编号。"""
+    return any((row.get("文件编号") or "").strip() == stem for row in read_csv_rows(paths["manifest"]))
+
+
+def _write_ingest_rows(path: Path, stem: str, name: dict, info: dict, duration: float, expected,
+                       qc_text: str, now: str, sha: str, problems: list[str], paths: dict) -> None:
+    """入池的后几步：写质检报告、原始文件设只读、最后写清单（写进清单了才算入池）。"""
     # 2. 写质检报告（复录或上次中途出错时，替换这段录音的旧行）
     _replace_row(paths["qc_report"], QC_COLUMNS, {
         "文件编号": stem,
@@ -378,7 +406,6 @@ def _ingest_one(path: Path, stem: str, sha: str, paths: dict, cfg: dict) -> dict
         "上传时间": now,
         "SHA-256": sha,
     })
-    return {"file": path.name, "stem": stem, "duration": duration, "qc": problems}
 
 
 def ingest_pool(root, cfg: dict) -> dict:

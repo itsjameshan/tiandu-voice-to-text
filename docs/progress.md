@@ -134,3 +134,5 @@
 - 发布便携包预览版 v0.2.0-pre（提交 e32cb9b，"构建 Windows 便携包"手动触发、填发布版本号）：自检和网页启动检查通过，zip 约 416 MB，未登录可下载：
   https://github.com/itsjameshan/tiandu-voice-to-text/releases/download/v0.2.0-pre/tiandu-portable-win64-v0.2.0-pre.zip
   比 v0.1.0-pre 多了"数据校对""录音质检"两页、说话人/分类/片段三项测评、数字小实验和审查后的全部修改。
+- 合并到 main 之前（PR #1）：README 上主页前的独立审查（5 个维度、65 处、核实 53 处）全部修改；组测试改成接口测试（各组改进后不会因为结果和基线不同而变红）；合并 main 上的开发资料提交。
+  PR 上 Codex 自动审查提的 3 处都核实、修好：requirements 要求 gradio>=6（代码用了 Gradio 6 的写法）；复录入池时新录音等表格都写好了才换上，中途出错换回旧录音；开了热词纠错时元信息里记下这次用的热词表。
