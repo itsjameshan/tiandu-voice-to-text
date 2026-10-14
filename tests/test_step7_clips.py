@@ -65,6 +65,8 @@ def test_clip_filename():
     assert clip_filename(3, 12.4, 18.9) == "clip_003_000012.4-000018.9.wav"
     assert clip_filename(12, 0.0, 3605.5) == "clip_012_000000.0-003605.5.wav"
     assert clip_filename(1, 1.0, 2.0).isascii()
+    # 从 AI 合成的录音里剪的片段，文件名也带 -TTS（片段里听不到开头的声明）
+    assert clip_filename(3, 12.4, 18.9, ai_synthesized=True) == "clip_003_000012.4-000018.9-TTS.wav"
 
 
 def test_baseline_registered():

@@ -43,13 +43,14 @@ CLIPS_INDEX_HEADERS = ["序号", "开始", "结束", "说话人", "文字", "标
 DEFAULT_PADDING = 1.0
 
 
-def clip_filename(n: int, start: float, end: float) -> str:
+def clip_filename(n: int, start: float, end: float, ai_synthesized: bool = False) -> str:
     """片段文件名，只用英文字母和数字（Windows 解压不乱码）。
 
     例：clip_filename(3, 12.4, 18.9) → "clip_003_000012.4-000018.9.wav"
     （第 3 个片段，从第 12.4 秒到第 18.9 秒；时间补零到 8 位，文件按名字排序就是按时间排序）
+    ai_synthesized=True（原录音是 AI 合成的）时末尾加 -TTS："clip_003_000012.4-000018.9-TTS.wav"
     """
-    return f"clip_{n:03d}_{start:08.1f}-{end:08.1f}.wav"
+    return f"clip_{n:03d}_{start:08.1f}-{end:08.1f}{'-TTS' if ai_synthesized else ''}.wav"
 
 
 @register("clips", "baseline")
@@ -78,13 +79,14 @@ def _remove_old_clips(out_dir: Path) -> None:
 
 
 def export_clips(segments: list[dict], samples: np.ndarray, sr: int, out_dir, cfg: dict,
-                 method: Callable | None = None) -> list[dict]:
+                 method: Callable | None = None, ai_synthesized: bool = False) -> list[dict]:
     """按做法 method 定好的起止时间剪出疑似片段，写到 out_dir，返回写上 clip 字段的新段落列表。
 
     method：片段做法 (段落列表, 采样数组, 采样率, 配置) → [(开始, 结束, 段落序号)]；不填就用基线。
             整条流程里由 pipeline.methods.resolve(cfg)["clips"] 按配置选好再传进来。
     samples：要剪的录音（应该用步骤 1 转好的原始录音，不要用降噪后的，复核时要听原声）。
     out_dir 里上一次导出的 clip_*.wav 和 clips_index.csv 会先被删掉。传进来的段落不会被修改。
+    ai_synthesized：原录音是 AI 合成的（文件名带 -TTS）时为 True，片段文件名也带 -TTS。
     """
     method = method or clips_baseline
     out_dir = Path(out_dir)
@@ -108,7 +110,7 @@ def export_clips(segments: list[dict], samples: np.ndarray, sr: int, out_dir, cf
             logger.warning("片段 (%.2f, %.2f) 没有长度，跳过", start, end)
             continue
         n = len(index_rows) + 1
-        name = clip_filename(n, start, end)
+        name = clip_filename(n, start, end, ai_synthesized)
         write_wav(out_dir / name, samples[first:last], sr)
 
         segment = result[index]

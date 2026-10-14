@@ -104,6 +104,7 @@ def run_pipeline(path, options: dict | None = None, progress=None, cfg: dict | N
     from pipeline.step2_vad import detect_speech
     from pipeline.step3_asr import recognize
     from pipeline.step6_classify import classify_segments
+    from pipeline.schema import is_ai_synthesized_name
     from pipeline.step7_clips import export_clips
 
     log = logging.getLogger("pipeline")
@@ -212,7 +213,8 @@ def run_pipeline(path, options: dict | None = None, progress=None, cfg: dict | N
     t = time.time()
     for seg in segments:
         seg["source"] = "asr"
-    segments = export_clips(segments, samples, SR, out_dir / "clips", cfg, method=funcs["clips"])
+    segments = export_clips(segments, samples, SR, out_dir / "clips", cfg, method=funcs["clips"],
+                            ai_synthesized=is_ai_synthesized_name(info["file"]))
     timed("7 疑似片段", t, duration)
 
     total = time.time() - t_all

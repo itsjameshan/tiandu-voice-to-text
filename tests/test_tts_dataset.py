@@ -32,6 +32,12 @@ def _voices(script):
     ("（用车载扩音器）", lambda fx: fx["megaphone"]),
     ("（放下扩音器，对司机说）", lambda fx: not fx["megaphone"]),
     ("（电话外放）", lambda fx: fx["phone"]),
+    ("（电话免提，声音较远）", lambda fx: fx["phone"]),
+    ("（从免提里传出，声音较小，有车流声）", lambda fx: fx["phone"]),
+    # 打电话、发语音的人自己说话是正常的声音，只有从手机里放出来的声音才是电话音质
+    ("（拨通电话，开免提）", lambda fx: not fx["phone"]),
+    ("（打电话，开着免提）", lambda fx: not fx["phone"]),
+    ("（用自己的手机发语音，离录音手机较近）", lambda fx: not fx["phone"] and fx["near"]),
     ("（离手机较远）", lambda fx: fx["far"] and not fx["near"]),
     ("（靠近手机小声说）", lambda fx: fx["near"] and not fx["far"] and fx["gain_db"] == -5),
     ("（提高音量）", lambda fx: fx["gain_db"] == 4),

@@ -34,7 +34,7 @@
 1. 组长发 PR 后，老师会收到通知（GitHub 网页右上角铃铛和邮箱）。
 2. 打开 PR → **Files changed** 标签：**先看改动的文件是不是只有本组文件**（`pipeline/groups/gN_*.py`、`reports/gN/`、`tests/test_gN_*.py`）。改了别的文件就请组长撤回那部分。
 3. 看 PR 下方的自动测试是否都是绿色对勾。红色叉就请组长按错误信息修改。
-4. 看代码和报告：是否遵守红线（只用虚构材料、没有联网调用、没有真实姓名）；对比数据是不是用冻结的数据池版本测的。
+4. 看代码和报告：是否遵守红线（只用虚构材料、没有联网调用、没有真实姓名、没有提交录音）；对比数据是不是用冻结的数据池版本测的；报告有没有写明"测评数据是 AI 按剧本合成的，结果偏乐观"。
 5. 没问题：右上角 **Review changes** → 选 **Approve** → Submit review → 回到 Conversation 标签点 **Merge pull request**（建议选 **Squash and merge**，主分支历史更清楚）。
 6. 有问题：**Review changes** → 选 **Request changes**，写清楚要改什么。
 

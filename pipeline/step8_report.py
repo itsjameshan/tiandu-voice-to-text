@@ -38,7 +38,8 @@ from pathlib import Path
 
 from pipeline.data import FLAG_OUTPUTS
 from pipeline.methods import SLOT_TITLES
-from pipeline.schema import GENERATED_BY, LIST_SEP, NOTICE, REVIEW_CHOICES, write_csv, write_json
+from pipeline.schema import (AI_SOURCE_NOTE, GENERATED_BY, LIST_SEP, NOTICE, REVIEW_CHOICES,
+                             is_ai_synthesized_name, write_csv, write_json)
 from pipeline.step7_clips import CLIPS_INDEX_NAME
 
 TITLE = "旅游纠纷录音材料核查初稿（疑似、待核查）"
@@ -211,6 +212,8 @@ def _file_info_rows(meta: dict) -> list[tuple[str, str]]:
         ("各步骤做法", _format_mapping(meta.get("methods"), SLOT_TITLES)),
         ("生成方式", f"{DOC_COMMENTS}（{AUTHOR}）"),
     ]
+    if meta.get("source_note"):
+        rows.append(("录音来源", meta["source_note"]))
     if meta.get("demo_notice"):
         rows.append(("说明", meta["demo_notice"]))
     if meta.get("message"):
@@ -349,6 +352,7 @@ def _readme_text(meta: dict, clip_count: int) -> str:
         DISCLAIMER,
         "",
         f"原始文件：{meta.get('file') or MISSING}",
+        *([f"录音来源：{meta['source_note']}"] if meta.get("source_note") else []),
         f"原始文件 SHA-256：{meta.get('sha256') or MISSING}",
         f"导出时间：{meta.get('exported_at') or MISSING}",
         "",
@@ -376,6 +380,8 @@ def export_bundle(segments: list[dict], meta: dict, out_dir, clips_dir: str | No
     meta = dict(meta or {})
     meta["notice"] = NOTICE
     meta.setdefault("generated_by", GENERATED_BY)
+    if is_ai_synthesized_name(meta.get("file")):  # AI 合成的测评录音：初稿、说明、JSON 都写明
+        meta["source_note"] = AI_SOURCE_NOTE
     meta["exported_at"] = datetime.now().astimezone().isoformat(timespec="seconds")
 
     docx_path = out_dir / DOCX_NAME

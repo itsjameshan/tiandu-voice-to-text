@@ -1,5 +1,7 @@
 # 开发规格：旅游纠纷录音材料整理（教学原型）
 
+> **2026-10-14 变更：测评录音改为 AI 合成，学生不再录音。** 72 段测评录音（24 个剧本 × Q、N、F）全部由 AI 按剧本离线合成（sherpa-onnx + Kokoro v1.1，不做声音克隆），每段开头念 AI 合成声明，文件名带 `-TTS`。详见 `docs/adr/0006-ai-synthesized-recordings.md` 和本文第 4.1 节。本文里凡是和"学生录音""不用语音合成生成录音"冲突的说法，以 ADR 0006 为准；数据来源、测试音频规矩、测评说明已按它改过。
+
 本文件是给开发者（Claude Code 或老师）看的详细规格。项目背景、决策理由和课程安排见 `docs/handoff_slim.md`；最重要的规则摘要在仓库根目录的 `CLAUDE.md`。
 
 > 第 6 节里的模型、版本和代码，2026-10-07 在一台 Linux 云端容器（2 核 CPU、Python 3.13、sherpa-onnx 1.13.8）上实测过。其他版本号和平台说明是当天查到的，用之前请再核实一遍。
@@ -71,13 +73,39 @@ CSV 导出用 UTF-8 带 BOM（`utf-8-sig`），Excel 直接双击打开不乱码
 见 `data/README.md`。要点：
 
 - `data/scripts/group_1.json`—`group_8.json` 是 24 个剧本的源数据，`data/lines.csv` 是同样内容的扁平表（1055 行），多了有效字数和标注备注。
-- 参考文本（算 CER 用）= 一个剧本所有台词的 `text` 按顺序拼起来；不含说话人、不含 `direction`（动作提示，不念）。
+- 参考文本（算 CER 用）= 一个剧本所有台词的 `text` 按顺序拼起来；不含说话人、不含 `direction`（动作提示，不念）。AI 录音的参考文本第一行另加开头那句声明（见 4.1）。
 - 台词里的数字都是汉字读法（"两千八百块"），`numbers` 字段是规范写法（"2800元"）。
 - `data/hotwords.txt` 只含正确名称；第 5 组剧本里故意让人物说错或简称的变体在 `data/hotword_variants.csv`，用来检验热词会不会"过度纠正"——参考文本以人物实际说的为准。
 - 7 个类别的定义和是否标"疑似"见 `data/labels.json`。类别分布很不均：威胁消费只有 41 行，其中 35 行在第 6 组；第 4、7 组没有"购物安排"；第 8 组（正常讲解对照组）也有 39 行标为费用、行程变更或购物安排。测评设计要考虑这些（见 5.6）。
 - `numbers` 里有不少是数量和时长（如"1盒""40分钟"），测评时按类型分开统计（见 5.5）。
+- 测评录音：72 段，2026-10-14 起由 AI 按剧本合成（见 4.1），学生不录音。
 
-**测试用音频的规矩**（与 CLAUDE.md 红线一致）：开发和云端测试只用模型自带的公开测试音频（可以拼接成长音频测速度和内存）和 ffmpeg 生成的纯音、静音；模型自带测试音频只用于自动测试，不放进演示界面。学生按剧本录的录音只在本地（机房或老师电脑）处理，不上传到云端开发环境或公网演示；老师本人自愿录的虚构剧本录音可以用于演示。不用语音合成生成任何"人说话"的音频。
+**测试用音频的规矩**（与 CLAUDE.md 红线一致）：自动测试和便携包自检只用模型自带的公开测试音频（可以拼接成长音频测速度和内存）和 ffmpeg 生成的纯音、静音；这些测试音频不放进演示界面。自动测试不用语音合成的"人说话"音频（合成模块的测试用假的合成函数）。测评录音由 AI 按虚构剧本合成，发布在 GitHub Releases，不进 git；课堂演示、答辩、核查初稿样例都用 AI 录音（开头的声明保留）。万一有真人录音（例如老师自己试的），只在本地处理，不上传到云端开发环境或公网演示，也不进仓库。
+
+### 4.1 AI 合成测评录音（2026-10-14 起，见 ADR 0006）
+
+学生不再按剧本录音。72 段测评录音（24 个剧本 × Q 安静、N 嘈杂教室、F 口袋或远距离）全部由 AI 按剧本离线合成，为什么这样定见 `docs/adr/0006-ai-synthesized-recordings.md`。
+
+- **工具**：`tools/synthesize_recordings.py`（合成规则在 `pipeline/tts_dataset.py`，只用 numpy、scipy，合成函数由工具加载模型后传进去，测试时传假的合成函数）。老师一般不用自己跑：GitHub Actions 的"合成 AI 测评录音"工作流（`.github/workflows/build-ai-recordings.yml`）生成并发布。自己跑时：
+  - `python models/download_models.py --optional kokoro_tts` 先下载语音合成模型；
+  - `python tools/synthesize_recordings.py` 合成全部 72 段，放在项目里的 `ai_recordings/`（不进 git）；`--scripts G1-S1 --conditions Q` 只合成一段；
+  - `--digits` 生成选做数字实验的录音；`--make-voice-plan` 重新给每个角色挑声音（改写 `data/tts_voice_plan.csv`）。
+- **模型**：sherpa-onnx + Kokoro v1.1 中文多说话人模型（`kokoro-multi-lang-v1_1`，Apache-2.0 许可），自带 100 个中文合成声音：3—57 号女声、58—102 号男声。全程离线，不联网、不调用云服务。选模型时用 SenseVoice 回听比较过 vits-aishell3，它念错得多，不用。
+- **不做声音克隆**：只用模型自带的合成声音，不用任何真人（学生、老师、网上的人）的声音做参考。网页工具本身不做声音合成。
+- **声音分配表** `data/tts_voice_plan.csv`（Excel 能打开；列：script_id、role、sid、gender、speed、note；`*` 那一行是开头声明用的声音）：每个剧本的角色用不同声音，改 `sid`、`speed` 后重新合成。按剧本挑（`pipeline/tts_dataset.py` 的 `VOICE_RULES`）：第 3 组三个剧本里"声线相近"的游客甲、乙故意选相近的声音；从称呼看得出的性别（大姐、大哥、阿姨、老公、闺女）、孩子（G7-S3 游客乙，音调最高、稍快）、老人（G7-S2 游客丙，稍慢）都按剧本挑；开头的声明用一个单独的声音，不给任何角色用。
+- **舞台说明做成声音效果**：台词的 `direction` 字段（不念）变成与上一句部分重叠、打断、停顿几秒、车载扩音器（带一点失真和回声）、电话外放（电话音质）、离手机远、靠近手机小声说、提高音量、隧道回声、提示音、扩音器尖啸、发动机声等。车上的场景一直有发动机声。
+- **三种录音条件**，都用同一份合成台词渲染（每个条件的停顿、重叠时间不同）：
+  - Q：安静房间，一点混响和底噪；
+  - N：叠加别的剧本的合成人声当嘈杂声（模拟教室，信噪比约 8—12 dB），偶尔有桌椅碰撞声；
+  - F：组号 + 剧本号是单数的剧本模拟"手机在口袋里"（2800 Hz 以上被滤掉、声音发闷、偶尔有衣服摩擦声），双数的模拟"手机在 2—3 米外"（音量小、混响大）。
+- **标明是 AI 合成**：每段录音开头念声明"以下为人工智能合成的虚构教学录音，不是真实录音。"（`pipeline.data.AI_DISCLAIMER`）；文件名带 `-TTS`（如 `G1-S1-Q-TTS.m4a`）；文件信息（标题、注释、作者）写明 AI 合成。不得剪掉声明，不得当作真实录音使用或传播。
+- **输出格式**：每段约 4—6 分钟，24000 Hz 单声道 AAC（m4a）；入池时照常转成 16kHz 单声道 16 位 WAV。
+- **入池**：`tools/ingest_pool.py` 认 `-TTS` 后缀，`G1-S1-Q-TTS.m4a` 入池后编号仍是 `G1-S1-Q`（`normalized/G1-S1-Q.wav`、`references/G1-S1-Q.txt`、标注都用这个编号）；同一段录音既有带 `-TTS` 又有不带的文件会报错，不猜用哪个。
+- **参考文本**：`config.yaml` 里 `recordings.ai_synthesized: true`，所以 `tools/export_references.py` 生成的初稿第一行是那句声明，后面是剧本台词；"数据校对"页没有参考文本文件时也一样先照抄（含声明）。学生按"实际说了什么"校对：合成确实念错了的，按录音改。
+- **说话人标注**：开头的声明标说话人"声明"（`pipeline.data.AI_DISCLAIMER_SPEAKER`），`tools/labels_to_csv.py` 不会把它当成写错的角色名。`tools/evaluate.py speakers --speakers ref` 按标注里的人数设人数，声明算一个人（它用单独的合成声音）。
+- **标准答案**：合成时同时得到，放在 `answer_key/`：`references/`（参考文本，第一行是声明）、`annotations/speakers/`（start,end,speaker）、`annotations/clips/`（start,end,label，连续几句同一个疑似类别的台词连成一个片段）、`audacity_labels/`（`G1-S1-Q.speakers.txt`、`G1-S1-Q.clips.txt`，Audacity "文件 → 导入 → 标签"能直接导入）、`timeline/`（每句台词：序号、说话人、开始、结束、类别、声音编号、舞台说明、台词）、`summary.csv`（每段：时长、计划时长、F 条件是口袋还是 2—3 米外、句数、说话人数（含声明）、片段数、声音编号）、`voice_plan.csv`。标准答案的参考文本是照剧本写的，不知道合成念错的地方；**数据池里用的是学生校对、标注的结果**，标准答案只在学生交了以后（第 6 周）拿来对照。
+- **发布**：GitHub Releases 标签 `ai-recordings-v1`（预发布，不顶替便携包；便携包仍在原来 `v` 开头的 Release 里），三个压缩包：`tiandu-ai-recordings-v1.zip`（`ai_recordings/README.txt` + `ai_recordings/recordings/` 下 72 段）、`tiandu-ai-answer-key-v1.zip`（`ai_recordings/answer_key/`）、`tiandu-ai-digits-v1.zip`（`ai_recordings/digits/<数字>/tts<声音编号>_<第几遍>.wav`，100 个合成声音 × 零到九 × 3 遍，16000 Hz 单声道 16 位；`python tools/tf_lab/train_digits.py --data 解压后的digits文件夹` 直接训练，文件名"_"前面算一个人）。录音、标准答案都不进 git。
+- **测评提醒**（报告里必须写）：合成语音比真人干净、发音标准，嘈杂和远距离是模拟出来的，字错率、说话人分离结果会偏乐观，只能当作方法练习，不代表工具在真实录音上的效果；报告写明"测评数据是 AI 合成的"。
 
 ## 5. 各步骤要点
 
@@ -88,8 +116,8 @@ CSV 导出用 UTF-8 带 BOM（`utf-8-sig`），Excel 直接双击打开不乱码
 - 转换：`ffmpeg -y -i 输入 -vn -ac 1 -ar 16000 -sample_fmt s16 输出.wav`。原始文件原样保存并设为只读，转换结果另存。
 - 对原始文件算 SHA-256，写进清单和初稿（证明处理的是哪一份文件、文件没被改过）。
 - 质检只报告、不修改：时长与剧本预计时长差太多、音量太小、削波、大段无声、原始采样率低于 16kHz。**这一步不要降噪、不要调音量**，否则分不清第 1、2 组的改进是谁带来的。阈值做成配置项，先给保守的默认值。
-- 批量模式（给课程数据池用）：`tools/ingest_pool.py` 处理 `data_pool/raw/` 里的文件，检查文件名是否符合"剧本编号-条件代码.wav"（如 `G1-S1-Q.wav`，条件代码 Q 安静、N 嘈杂教室、F 口袋或远距离），不符合就报错提示改名，不要自动猜。输出 `data_pool/normalized/`、`data_pool/manifest.csv`（文件编号、剧本编号、录音条件、原始文件、转换后文件、时长、原始采样率、质检结果、上传时间、SHA-256）、`data_pool/qc_report.csv`。这些目录对应交接文档里的"数据池/原始、标准化、参考文本、清单.csv、质检报告.csv"。
-- `tools/export_references.py`：从 `data/scripts/*.json` 导出 `data_pool/references/G1-S1.txt` 等 24 个参考文本。
+- 批量模式（给课程数据池用）：`tools/ingest_pool.py` 处理 `data_pool/raw/` 里的文件，检查文件名是否符合"剧本编号-条件代码.wav"（如 `G1-S1-Q.wav`，条件代码 Q 安静、N 嘈杂教室、F 口袋或远距离；AI 录音多一个 `-TTS` 后缀，如 `G1-S1-Q-TTS.m4a`，编号仍是 `G1-S1-Q`，见 4.1），不符合就报错提示改名，不要自动猜。输出 `data_pool/normalized/`、`data_pool/manifest.csv`（文件编号、剧本编号、录音条件、原始文件、转换后文件、时长、原始采样率、质检结果、上传时间、SHA-256）、`data_pool/qc_report.csv`。这些目录对应交接文档里的"数据池/原始、标准化、参考文本、清单.csv、质检报告.csv"。
+- `tools/export_references.py`：从 `data/scripts/*.json` 导出 `data_pool/references/G1-S1.txt` 等 24 个参考文本。（设计文档第 5.10 节改成按录音导出 72 份，如 `G1-S1-Q.txt`；`recordings.ai_synthesized: true` 时第一行是 AI 合成声明，见 4.1。）
 
 ### 5.2 步骤 2：端点检测与降噪
 
@@ -183,6 +211,8 @@ gradio 6.29.1、sherpa-onnx 1.13.8、tensorflow-cpu 2.21.0、python-docx 1.2.0�
 | 可选：对照识别模型 | `sherpa-onnx-paraformer-zh-small-2024-03-09.tar.bz2` | 78 MB | asr-models 发布页（不带标点，要配标点模型） |
 | 可选：标点模型 | `sherpa-onnx-punct-ct-transformer-zh-en-vocab272727-2024-04-12.tar.bz2` | 279 MB | punctuation-models 发布页 |
 | 可选：热词实验（第 5 组） | `sherpa-onnx-conformer-zh-stateless2-2023-05-23.tar.bz2` | 456 MB | asr-models 发布页（transducer，支持热词） |
+
+2026-10-14 加了可选模型 `kokoro_tts`（Kokoro v1.1 语音合成，只用来生成 AI 测评录音，`python models/download_models.py --optional kokoro_tts`，见 4.1）；网页工具和便携包不用它。
 
 `models/download_models.py`：下载必需模型到 `models/`，已存在就跳过，解压后检查关键文件存在；可选模型用参数开启。`models/` 不进 git。下载失败时打印清楚的提示（国内网络访问 GitHub 可能慢，可以先在别处下载好再拷进 `models/`）。
 
@@ -302,20 +332,20 @@ def attach_speakers(rows, turns):
 ## 8. 测评工具 `tools/evaluate.py`
 
 - CER：只保留汉字、字母、数字（去标点和空格），全角转半角，字母统一大写；用测评模式结果对比参考文本（两边都是汉字读法，不需要再做数字归一）；按文件、按录音条件（Q/N/F）、按组汇总。可用 jiwer 的 `cer`，或自己写编辑距离。
-- 学生录音只在本地（机房、老师电脑）跑测评。在云端开发环境里没有学生录音，只用测试音频改名（如复制成 `G1-S1-Q.wav`）检验批量流程能跑通，不报告任何 CER 数字。
+- 测评录音（AI 合成，见 4.1）只在本地（机房、老师电脑）跑测评。在云端开发环境里只用测试音频改名（如复制成 `G1-S1-Q.wav`）检验批量流程能跑通，不报告任何 CER 数字（包括 AI 录音上测的）。
 - 专名正确率：参考文本里出现的 `data/hotwords.txt` 名称，在识别结果里有多少被正确识别；同时统计"过度纠正"（参考文本里是说错的变体，结果被改成了正确名称）。
 - 数字正确率：剧本文本演示时按行比对 `numbers`；录音按文件比对。
 - 说话人标错的时长比例：需要人工标注"谁在什么时间说话"（每组约 10 分钟，CSV：start, end, speaker），按最优对应计算。
 - 分类：见 5.6。
 - 片段起止误差：需要人工标注的疑似片段起止时间。
-- 输出 CSV 和一份简短的 Markdown 报告；报告里写明数据来源（虚构剧本、哪种录音条件）和局限。
+- 输出 CSV 和一份简短的 Markdown 报告；报告里写明数据来源（虚构剧本、哪种录音条件）和局限，并写明"测评数据是 AI 合成的"：合成语音偏干净，嘈杂和远距离是模拟的，结果偏乐观，不代表真人录音。
 
 ## 9. 测试与验收
 
 `pytest` 测试（必须能在没有 GPU、没有真实录音的环境里跑）：
 
 - 中间格式：读写 JSON/CSV 往返一致，中文表头和顺序正确。
-- 步骤 1：用 ffmpeg 生成几秒的正弦波或静音（44.1kHz 立体声 mp3、m4a、mp4），检查转出来是 16kHz 单声道 16 位、原始文件未被修改、SHA-256 正确、质检能报出"大段无声"。**不要用语音合成生成"人说话"的测试音频**。
+- 步骤 1：用 ffmpeg 生成几秒的正弦波或静音（44.1kHz 立体声 mp3、m4a、mp4），检查转出来是 16kHz 单声道 16 位、原始文件未被修改、SHA-256 正确、质检能报出"大段无声"。**不要用语音合成生成"人说话"的测试音频**（AI 合成录音只用于测评，见 4.1；合成模块的测试用假的合成函数）。
 - 步骤 5：用剧本里有 `numbers` 的句子测提取，报告正确率（不要求 100%，已知失败的写成 xfail 并注明原因）。
 - 步骤 6：输出只可能是 5 个"疑似·类别"或空字符串。
 - 剧本文本演示：G8（正常讲解对照组）跑完整流程，生成 Word 初稿，检查声明文字在、所有标签合法，并打印误报率。

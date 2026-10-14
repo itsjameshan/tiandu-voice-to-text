@@ -53,6 +53,19 @@ NOTICE = "识别可能有误；所有标注均为疑似、待核查，必须人�
 # 写进 JSON 的 meta，标明这是机器生成的（红线第 6 条）
 GENERATED_BY = "由人工智能技术自动生成（旅游纠纷录音材料整理工具·教学原型）"
 
+# AI 合成的测评录音（docs/adr/0006）：文件名去掉扩展名以 -TTS 结尾，如 G1-S1-Q-TTS.m4a。
+# 处理这样的录音时，初稿、说明.txt、JSON 都写上这句，剪出来的片段文件名也带 -TTS（片段里听不到开头的声明）
+AI_SOURCE_NOTE = "原录音是 AI 按虚构剧本合成的教学录音（文件名带 -TTS），不是真实录音；疑似片段音频也是合成的声音"
+
+
+def is_ai_synthesized_name(name) -> bool:
+    """文件名（不管前面有没有文件夹）去掉扩展名后以 -TTS 结尾：是 AI 合成的测评录音。"""
+    if not name:
+        return False
+    stem = str(name).replace("\\", "/").rsplit("/", 1)[-1].rsplit(".", 1)[0]
+    return stem.endswith("-TTS")
+
+
 # CSV 最后一列的表头：单独下载的 CSV 也写明要人工复核、由人工智能生成（这一列的格子空着，读回时忽略）
 CSV_NOTICE_HEADER = f"说明：{NOTICE}。{GENERATED_BY}"
 

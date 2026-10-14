@@ -60,7 +60,7 @@ from pipeline.evaluation import read_reference, recognize_item
 from pipeline.features import plot_recording
 from pipeline.methods import SLOT_TITLES, SLOTS
 from pipeline.pool import log_proofread, parse_recording_name, pool_paths, read_csv_rows
-from pipeline.schema import NOTICE
+from pipeline.schema import NOTICE, is_ai_synthesized_name
 from pipeline.script_demo import run_script_demo
 from pipeline.step1_ingest import SUPPORTED_EXTS, quality_check
 from pipeline.step4_diarize import apply_speaker_map, speaker_durations
@@ -71,7 +71,7 @@ from pipeline.table import TABLE_HEADERS, rows_to_segments, segments_to_rows
 logger = logging.getLogger("app")
 
 # 说话人数下拉框的选项（“自动”＝ -1）
-SPEAKER_CHOICES = ["自动", "2", "3", "4", "5"]
+SPEAKER_CHOICES = ["自动", "2", "3", "4", "5", "6"]  # AI 录音最多 5 个角色 + 开头声明的声音
 SWITCH_CHOICES = ["关", "开"]
 
 # 核查表每一列的类型；序号、开始、结束、数字这 4 列不让改（改了也不会写回段落）
@@ -358,7 +358,8 @@ def export_files(state, rows) -> list[str]:
         run_cfg = dict(cfg, methods={**(cfg.get("methods") or {}), **(meta.get("methods") or {})})
         clips_dir = out_dir / "clips"
         segments = export_clips(segments, read_wav(meta["wav"]), SR, clips_dir, run_cfg,
-                                method=method_registry.resolve(run_cfg)["clips"])
+                                method=method_registry.resolve(run_cfg)["clips"],
+                                ai_synthesized=is_ai_synthesized_name(meta.get("file")))
     zip_path = export_bundle(segments, meta, out_dir, clips_dir=str(clips_dir) if clips_dir else None)
     files = [Path(zip_path), out_dir / DOCX_NAME, out_dir / CSV_NAME, out_dir / JSON_NAME]
     return serve_copies(files, cfg)

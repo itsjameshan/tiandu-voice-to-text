@@ -1,5 +1,7 @@
 # 教学模板实施计划
 
+> **2026-10-14 起测评录音改为 AI 合成，见 [ADR 0006](../../adr/0006-ai-synthesized-recordings.md)；本计划里关于学生录音（试录、复录、客串、同意书、"不做语音合成"等）的内容已过时。** 本计划是历史记录，正文不改。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 在本仓库做出可运行的"旅游纠纷录音材料整理"教学模板（八步流程、Gradio 界面、数据池与测评工具、Windows 便携包、CI）和全部中文课程文档（README、8 份组任务书、指南、老师文档）。

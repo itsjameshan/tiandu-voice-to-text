@@ -1,12 +1,13 @@
 """选做实验 · MFCC 对照：同一段录音，用 numpy 和 TensorFlow 各算一遍 MFCC，看结果是不是一样。
 
 用法（在项目文件夹里运行）：
-    python tools/tf_lab/mfcc_compare.py data_pool/digits/3/0123_1.wav   图片存到 outputs/tf_lab/3_0123_1_mfcc_compare.png
+    python tools/tf_lab/mfcc_compare.py digits/3/tts23_1.wav   图片存到 outputs/tf_lab/3_tts23_1_mfcc_compare.png
+                                                               （digits 是 AI 合成的数字录音包解压出来的文件夹）
     python tools/tf_lab/mfcc_compare.py 切好的.wav --out 图.png           指定图片保存位置
 
 用哪个 Python：
     - 机房自带的 Python（装了 TensorFlow）：能看到两种算法的对照。它可能没有 ffmpeg、soundfile、PyYAML，
-      所以请对照 split_digits.py 切好的文件（16000 Hz、单声道、16 位的 WAV）——这种文件用 Python 自带的
+      所以请对照 AI 合成的数字录音或 split_digits.py 切好的文件（16000 Hz、单声道、16 位的 WAV）——这种文件用 Python 自带的
       wave 模块直接读，不需要 ffmpeg 和 soundfile；读不了 config.yaml 时，图片存到项目文件夹的 outputs/tf_lab/。
       画图要用 matplotlib；没有它时照样打印相关系数，只是不画图。
     - 便携包的 Python（没装 TensorFlow）：什么格式的录音都能读（m4a、mp3 等先用 ffmpeg 转格式），
@@ -68,7 +69,7 @@ EPS = 1e-10  # 取对数前加的一个很小的数，避免 log(0)
 CONVERT_HINT = (
     "这个文件不是 16000 Hz、单声道、16 位的 WAV，要先用 ffmpeg 转格式、再用 soundfile 读；"
     "便携包的 Python 都有，机房自带的 Python 不一定有。\n"
-    "办法：对照 split_digits.py 切好的 WAV（例如 data_pool\\digits\\3\\0123_1.wav），"
+    "办法：对照 AI 合成的数字录音（例如 digits\\3\\tts23_1.wav）或 split_digits.py 切好的 WAV，"
     "或者用便携包的 Python 运行本脚本（只画 numpy 版）。"
 )
 

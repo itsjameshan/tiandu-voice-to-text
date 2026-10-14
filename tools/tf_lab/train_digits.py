@@ -1,11 +1,13 @@
-"""选做实验 · 第 2 步：用全班的数字录音训练一个小卷积网络，认"零到九"。
+"""选做实验 · 第 2 步：用 AI 合成的数字录音训练一个小卷积网络，认"零到九"。
 
 用法（在项目文件夹里运行；要用装了 TensorFlow 的 Python，即机房自带的 Python）：
     python tools/tf_lab/train_digits.py                          数据默认在数据池的 digits 文件夹
     python tools/tf_lab/train_digits.py --data D:/digits         指定数据文件夹
     python tools/tf_lab/train_digits.py --epochs 50              多训练几轮
 
-数据：tools/tf_lab/split_digits.py 切好的文件，<data>/<数字>/<学号后四位>_<第几遍>.wav。
+数据：AI 合成的数字录音（Release 页面 ai-recordings-v1 的 tiandu-ai-digits-v1.zip，解压出来的 digits 文件夹），
+    <data>/<数字>/tts<声音编号>_<第几遍>.wav，每个合成声音算一个"人"（见 tools/tf_lab/README.md）；
+    格式一样的其他录音（例如 split_digits.py 切好的 <编号>_<第几遍>.wav）也能用。
 只需要 numpy 和 TensorFlow（读 WAV 用 Python 自带的 wave 模块，不需要 soundfile、sherpa-onnx、gradio）。
 
 做了什么（对应教材项目 4：用神经网络认数字命令）：
@@ -32,7 +34,7 @@
 测评指标：
     测试集（没参加训练的人）的准确率；混淆矩阵。人数越多结果越可信；只有三四个人时，结果起伏会很大。
 
-隐私：录音只放在本机，不上传网络、不进代码仓库；文件名只用学号后四位。
+录音只放在本机，不进代码仓库。
 """
 import argparse
 import random
@@ -77,7 +79,8 @@ def read_wav16(path: Path) -> np.ndarray:
     """用 Python 自带的 wave 模块读 16000 Hz、单声道、16 位的 WAV，返回 -1 到 1 之间的 float32 数组。"""
     with wave.open(str(path), "rb") as f:
         if f.getframerate() != SR or f.getnchannels() != 1 or f.getsampwidth() != 2:
-            raise ValueError("不是 16000 Hz 单声道 16 位的 WAV，请用 split_digits.py 重新切")
+            raise ValueError("不是 16000 Hz 单声道 16 位的 WAV：请用 AI 合成的数字录音包（tiandu-ai-digits-v1.zip）"
+                             "里的文件，或用 split_digits.py 切好的文件")
         data = f.readframes(f.getnframes())
     return np.frombuffer(data, dtype="<i2").astype(np.float32) / 32768.0
 
@@ -167,7 +170,8 @@ def main(argv=None) -> int:
         print(f"数据文件夹：{data_dir}")
         print(f"找到 {len(labels)} 段录音、{len(people)} 个人。至少需要 {MIN_SPEAKERS} 个人的数字录音：")
         print("  测试用的人不能出现在训练集里，所以要留 1 个人测试、至少 2 个人训练。")
-        print("  请先让更多同学用 tools/tf_lab/split_digits.py 切好自己的录音，存到同一个文件夹。")
+        print("  请下载并解压 Release 页面 ai-recordings-v1 的 tiandu-ai-digits-v1.zip（100 个合成声音），")
+        print("  再用 --data 指向解压出来的 digits 文件夹。")
         return 1
 
     try:
