@@ -380,7 +380,8 @@ def export_bundle(segments: list[dict], meta: dict, out_dir, clips_dir: str | No
     meta = dict(meta or {})
     meta["notice"] = NOTICE
     meta.setdefault("generated_by", GENERATED_BY)
-    if is_ai_synthesized_name(meta.get("file")):  # AI 合成的测评录音：初稿、说明、JSON 都写明
+    # AI 合成的测评录音：初稿、说明、JSON 都写明（run_pipeline 已经按 is_ai_recording 写好的，这里再按文件名补一次）
+    if meta.get("source_note") or is_ai_synthesized_name(meta.get("file")):
         meta["source_note"] = AI_SOURCE_NOTE
     meta["exported_at"] = datetime.now().astimezone().isoformat(timespec="seconds")
 

@@ -283,3 +283,12 @@ def test_is_ai_synthesized_name(name, ai):
     from pipeline.schema import is_ai_synthesized_name
 
     assert is_ai_synthesized_name(name) is ai
+
+
+def test_bundle_marked_when_pipeline_says_ai(tmp_path):
+    """数据池 normalized 里复制出来的 G1-S1-Q.wav 文件名不带 -TTS：run_pipeline 已经在元信息里写了录音来源，照样标明。"""
+    from pipeline.schema import AI_SOURCE_NOTE
+
+    zip_path = export_bundle(_segments(), dict(_meta(), file="G1-S1-Q.wav", source_note=AI_SOURCE_NOTE), tmp_path / "out")
+    with zipfile.ZipFile(zip_path) as zf:
+        assert AI_SOURCE_NOTE in zf.read("说明.txt").decode("utf-8-sig")

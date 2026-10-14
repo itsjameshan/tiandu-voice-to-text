@@ -359,7 +359,7 @@ def export_files(state, rows) -> list[str]:
         clips_dir = out_dir / "clips"
         segments = export_clips(segments, read_wav(meta["wav"]), SR, clips_dir, run_cfg,
                                 method=method_registry.resolve(run_cfg)["clips"],
-                                ai_synthesized=is_ai_synthesized_name(meta.get("file")))
+                                ai_synthesized=bool(meta.get("source_note")) or is_ai_synthesized_name(meta.get("file")))
     zip_path = export_bundle(segments, meta, out_dir, clips_dir=str(clips_dir) if clips_dir else None)
     files = [Path(zip_path), out_dir / DOCX_NAME, out_dir / CSV_NAME, out_dir / JSON_NAME]
     return serve_copies(files, cfg)
