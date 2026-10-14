@@ -1,4 +1,7 @@
-"""选做实验 · 第 1 步：把"零到九念 5 遍"的录音自动切成 50 段，按数字分好文件夹。
+"""选做实验的备用工具：把"零到九念 5 遍"的录音自动切成 50 段，按数字分好文件夹。
+
+本课程不用它：同学不再录音，数字录音已经由 AI 合成好（tiandu-ai-digits-v1.zip，见 tools/tf_lab/README.md）。
+留着给以后想用一段连续念数字的录音做实验的情况。
 
 用法（在项目文件夹里运行，用便携包的 Python 或装好 requirements.txt 的 Python）：
     python tools/tf_lab/split_digits.py digits-0123.m4a --speaker 0123
@@ -10,7 +13,7 @@
     --speaker   学号后四位（只能是数字或英文字母，不要写姓名），用作文件名
     --out       存到哪个文件夹，默认是数据池里的 digits 文件夹（config.yaml 的 paths.data_pool 下面）
 
-怎么录（详见 docs/guides/recording.md 第六节）：
+怎么录（如果要自己录）：
     安静环境，手机离嘴约 30 厘米，按顺序念"零、一、二、三、四、五、六、七、八、九"，
     每个字之间停顿约 1 秒，连念 5 遍，中间不要说别的话。
 

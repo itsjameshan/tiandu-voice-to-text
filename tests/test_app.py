@@ -419,6 +419,14 @@ def test_denoise_switch_reaches_pipeline(app_cfg, make_audio):
 
 
 @requires_models
+def test_speaker_choices_cover_ai_recordings():
+    """AI 录音里说话人最多的剧本（第 3、8 组）有 5 个角色 + 开头声明的声音 = 6 个：下拉框要能选到。"""
+    from pipeline.data import load_scripts
+
+    most = max(len(s["roles"]) for s in load_scripts()) + 1
+    assert str(most) in app.SPEAKER_CHOICES and app.parse_num_speakers(str(most)) == most
+
+
 def test_process_file_four_speakers(app_cfg):
     summary, rows, state = app.process_file(str(FOUR_SPEAKERS_WAV), "4", "关", "", *(["baseline"] * len(SLOTS)))
     assert len(rows) >= 5
@@ -685,7 +693,8 @@ def test_comparison_cache_follows_wav(tmp_path, make_audio, monkeypatch, app_cfg
 
     # 还没有参考文本文件：先照抄剧本台词，并提示保存后才写进 references
     summary, rows, reference, state = app.generate_comparison(str(root), "G1-S1-Q")
-    assert reference == script_reference_text("G1-S1")
+    # config.yaml 里 recordings.ai_synthesized: true：第一行是录音开头的 AI 合成声明
+    assert reference == script_reference_text("G1-S1", ai_disclaimer=True)
     assert "还没有参考文本文件" in summary
     assert state["meta"]["stem"] == "G1-S1-Q" and Path(state["meta"]["wav"]) == wav
     assert calls == ["eval"]

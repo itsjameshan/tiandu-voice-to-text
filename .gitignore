@@ -40,3 +40,6 @@ dist/
 
 # 便携包里的 Python 运行环境（组长把便携包和仓库放在一起时，防止误提交）
 python/
+
+# AI 合成的测评录音（发到 GitHub Releases，不进 git）
+/ai_recordings/

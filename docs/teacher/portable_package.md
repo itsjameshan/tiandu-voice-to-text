@@ -11,12 +11,16 @@
 - 项目代码、数据（虚构剧本）、文档；
 - `start.bat`（启动网页工具）、`selfcheck.bat`（自检）、`README.txt`（中文使用说明）。
 
+便携包**不含** 72 段 AI 测评录音，它们单独发布（见第二节）。
+
 便携包是 GitHub 在一台真实的 Windows 电脑上自动构建的，构建完会用测试音频跑一遍完整流程，**自检通过才会生成 zip**。
 
 ## 二、去哪里下载
 
 - **正式发布的版本**：仓库页面右侧 **Releases** → 选最新版本 → 下面的 Assets 里点 `tiandu-portable-win64-版本号.zip`。不需要登录。
   地址：https://github.com/itsjameshan/tiandu-voice-to-text/releases
+  便携包在 `v` 开头的版本里。**要用 2026-10-14 以后发布的版本**：v0.2.1-pre 和更早的版本是改用 AI 录音以前做的，不认 AI 录音文件名里的 `-TTS`（入池会被拒），参考文本初稿第一行也没有声明，不能用于本课的 AI 录音。Releases 页面上还有"AI 合成测评录音 ai-recordings-v1"（标着"预发布"），那是测评录音，不是便携包。
+- **AI 测评录音**：https://github.com/itsjameshan/tiandu-voice-to-text/releases/tag/ai-recordings-v1 ，三个压缩包（录音、标准答案、数字实验），第 0 周和便携包一起下载、拷进 U 盘。怎么用见 [data_pool.md](data_pool.md)。
 - **每次改动后的测试版**：仓库上方 **Actions** → 左边"构建 Windows 便携包" → 点最新一次运行 → 页面最下面 Artifacts 里的 `tiandu-portable-win64`（需要登录 GitHub，保留 30 天）。
 
 国内下载 GitHub 文件有时很慢，可以用手机热点或换个时间；下载一次后拷进 U 盘，在机房里传播就不需要网络了。

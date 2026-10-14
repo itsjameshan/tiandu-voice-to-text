@@ -247,3 +247,48 @@ def test_bundle_does_not_change_input(tmp_path):
 def test_labels_used_are_legal():
     """示例数据里用到的标签都在合法范围内（防止测试本身写错标签）。"""
     assert {seg["label"] for seg in _segments()} <= {""} | set(FLAG_OUTPUTS)
+
+
+def test_ai_recording_marked_in_bundle(tmp_path):
+    """原录音是 AI 合成的（文件名带 -TTS）：说明.txt、Word 文件信息、JSON 都写明，片段文件名也带 -TTS。"""
+    from pipeline.schema import AI_SOURCE_NOTE, is_ai_synthesized_name
+
+    meta = dict(_meta(), file="G1-S1-Q-TTS.m4a")
+    clips_dir = tmp_path / "clips"
+    segments = export_clips(_segments(), _tone(140.0), SR, clips_dir, {"clips": {"padding": 1.0}},
+                            ai_synthesized=is_ai_synthesized_name(meta["file"]))
+    zip_path = export_bundle(segments, meta, tmp_path / "out", clips_dir=str(clips_dir))
+    with zipfile.ZipFile(zip_path) as zf:
+        clip_names = [n for n in zf.namelist() if n.startswith("clips/clip_")]
+        assert clip_names and all(n.endswith("-TTS.wav") for n in clip_names)
+        assert AI_SOURCE_NOTE in zf.read("说明.txt").decode("utf-8-sig")
+        assert json.loads(zf.read("segments.json").decode("utf-8"))["meta"]["source_note"] == AI_SOURCE_NOTE
+    assert AI_SOURCE_NOTE in _all_text(docx.Document(str(tmp_path / "out" / "review_draft.docx")))
+
+
+def test_real_recording_not_marked(tmp_path):
+    from pipeline.schema import AI_SOURCE_NOTE
+
+    zip_path = export_bundle(_segments(), _meta(), tmp_path / "out")
+    with zipfile.ZipFile(zip_path) as zf:
+        assert AI_SOURCE_NOTE not in zf.read("说明.txt").decode("utf-8-sig")
+        assert "source_note" not in json.loads(zf.read("segments.json").decode("utf-8"))["meta"]
+
+
+@pytest.mark.parametrize("name, ai", [
+    ("G1-S1-Q-TTS.m4a", True), ("G1-S1-Q-TTS.wav", True), ("D:/data/G3-S2-F-TTS.m4a", True),
+    ("G1-S1-Q.m4a", False), ("TTS.m4a", False), ("G1-S1-Q-tts.m4a", False), ("", False), (None, False),
+])
+def test_is_ai_synthesized_name(name, ai):
+    from pipeline.schema import is_ai_synthesized_name
+
+    assert is_ai_synthesized_name(name) is ai
+
+
+def test_bundle_marked_when_pipeline_says_ai(tmp_path):
+    """数据池 normalized 里复制出来的 G1-S1-Q.wav 文件名不带 -TTS：run_pipeline 已经在元信息里写了录音来源，照样标明。"""
+    from pipeline.schema import AI_SOURCE_NOTE
+
+    zip_path = export_bundle(_segments(), dict(_meta(), file="G1-S1-Q.wav", source_note=AI_SOURCE_NOTE), tmp_path / "out")
+    with zipfile.ZipFile(zip_path) as zf:
+        assert AI_SOURCE_NOTE in zf.read("说明.txt").decode("utf-8-sig")

@@ -238,6 +238,16 @@ def test_cli_warns_unknown_role(tmp_path):
     assert (pool_paths(root)["annotations_speakers"] / "G3-S1-Q.csv").is_file()
 
 
+def test_cli_accepts_ai_disclaimer_speaker(tmp_path):
+    """AI 合成的录音开头有一句声明，说话人标"声明"：不算写错的角色名。"""
+    root = tmp_path / "pool"
+    init_pool(root)
+    labels = _write(tmp_path / "s.txt", "0.3\t3.2\t声明\n4\t6\t导游\n")
+    proc = _run_tool(labels, "--pool", root, "--file", "G3-S1-Q")
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "角色表" not in proc.stdout
+
+
 def test_cli_bad_clip_label_fails_in_chinese(tmp_path):
     labels = _write(tmp_path / "c.txt", "1\t5\t投诉\n")
     out = tmp_path / "c.csv"

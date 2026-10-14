@@ -163,3 +163,38 @@ def test_light_import():
     )
     result = subprocess.run([sys.executable, "-c", code], cwd=ROOT, capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
+
+
+# ---------- 太长的段切开（嘈杂、远距离录音里端点检测找不到停顿时，段会长到一两分钟，识别时非常占内存） ----------
+
+def _noise(seconds, quiet_at=()):
+    """一直有声音的录音（像远距离录音里混响和发动机声连成一片），quiet_at 处有 0.2 秒很安静。"""
+    rng = np.random.default_rng(0)
+    x = (0.1 * rng.standard_normal(int(seconds * SR))).astype(np.float32)
+    for t in quiet_at:
+        x[int(t * SR): int((t + 0.2) * SR)] *= 0.01
+    return x
+
+
+def test_split_long_spans_cuts_at_quietest_point():
+    samples = _noise(70.0, quiet_at=(20.0, 45.0))
+    spans = step2_vad.split_long_spans(samples, SR, [(0.0, 70.0)])
+    assert all(end - start <= step2_vad.MAX_SEGMENT_SECONDS + 1e-6 for start, end in spans)
+    assert spans[0][0] == 0.0 and spans[-1][1] == 70.0
+    assert all(a[1] == b[0] for a, b in zip(spans, spans[1:]))  # 首尾相接，不丢声音
+    assert 20.0 <= spans[0][1] <= 20.2 and 45.0 <= spans[1][1] <= 45.2  # 在最安静的地方切
+
+
+def test_split_long_spans_keeps_normal_spans():
+    samples = _noise(40.0)
+    spans = [(0.5, 3.0), (4.0, 18.5), (19.0, 39.0)]
+    assert step2_vad.split_long_spans(samples, SR, spans) == spans
+
+
+def test_detect_speech_splits_long_segments_from_any_method(cfg):
+    """不管端点检测用哪种做法（各组可以换），交给识别的段都不超过 MAX_SEGMENT_SECONDS。"""
+    samples = _noise(95.0)
+    _, segments = detect_speech(samples, SR, cfg, methods={"vad": lambda s, sr, c: [(1.0, 95.0)]})
+    assert len(segments) >= 4
+    assert all(seg["end"] - seg["start"] <= step2_vad.MAX_SEGMENT_SECONDS + 1e-6 for seg in segments)
+    assert segments[0]["start"] == 1.0 and segments[-1]["end"] == 95.0

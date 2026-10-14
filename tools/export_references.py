@@ -7,6 +7,7 @@
 
 每段录音一份 数据池/references/G1-S1-Q.txt，内容先照抄剧本台词（不含说话人和动作提示），
 再由同学对照录音改成"实际说了什么"（见 docs/guides/proofreading.md）。
+录音是 AI 合成的（config.yaml 里 recordings.ai_synthesized: true）时，第一行是录音开头念的那句 AI 合成声明。
 已经存在的文件默认不覆盖，校对过的不会丢，可以放心重复运行。详见 docs/teacher/data_pool.md。
 """
 import argparse
@@ -31,13 +32,15 @@ def main(argv=None) -> int:
     from pipeline.data import load_recording_plan
     from pipeline.pool import export_references, pool_paths
 
-    root = Path(args.pool) if args.pool else Path(load_config()["paths"]["data_pool"])
+    cfg = load_config()
+    root = Path(args.pool) if args.pool else Path(cfg["paths"]["data_pool"])
+    ai_disclaimer = bool((cfg.get("recordings") or {}).get("ai_synthesized", False))
     folder = pool_paths(root)["references"]
     print("== 生成待校对的参考文本 ==")
     print(f"数据池：{root}")
 
     try:
-        written = export_references(root, overwrite=args.overwrite)
+        written = export_references(root, overwrite=args.overwrite, ai_disclaimer=ai_disclaimer)
     except PermissionError as e:
         print(f"没有权限写入：{e.filename or root}。如果这个文件正用记事本或别的软件打开着，请先关闭再运行。")
         return 1
@@ -46,6 +49,8 @@ def main(argv=None) -> int:
         return 1
 
     total = len(load_recording_plan())
+    if ai_disclaimer:
+        print("录音是 AI 合成的（config.yaml 里 recordings.ai_synthesized: true）：每份参考文本第一行是开头那句声明。")
     kept = total - len(written)
     if args.overwrite:
         print(f"按剧本重新写了 {len(written)} 份参考文本（原有内容已覆盖）：{folder}")

@@ -15,7 +15,8 @@ from pipeline.config import load_config
 from pipeline.models import MODEL_SPECS, missing_models, model_path
 
 REQUIRED_NAMES = ["sense_voice", "silero_vad", "pyannote", "campplus", "test_wav"]
-OPTIONAL_NAMES = ["eres2net", "itn_fst", "paraformer_small", "punct", "conformer_hotword"]
+# 可选模型：计划里的 5 个 + 语音合成 kokoro_tts（只用来生成 AI 测评录音，见 docs/adr/0006）
+OPTIONAL_NAMES = ["eres2net", "itn_fst", "paraformer_small", "punct", "conformer_hotword", "kokoro_tts"]
 
 
 def load_download_script():
@@ -79,7 +80,7 @@ def test_models_present():
 
 
 def test_spec_fields_and_names():
-    """每项都有计划规定的 6 个键；名字不重复；URL 的文件名就是 archive；可选项是计划里那 5 个。"""
+    """每项都有计划规定的 6 个键；名字不重复；URL 的文件名就是 archive；可选项是计划里那 5 个加上 kokoro_tts。"""
     names = [s["name"] for s in MODEL_SPECS]
     assert len(names) == len(set(names))
     assert sorted(n for n in names if n not in REQUIRED_NAMES) == sorted(OPTIONAL_NAMES)

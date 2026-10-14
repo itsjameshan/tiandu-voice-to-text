@@ -234,6 +234,22 @@ def test_cache_key(tmp_path, cfg):
     assert cache_key(wav, cfg) != key
 
 
+def test_cache_key_covers_shared_pipeline_code(tmp_path, cfg, monkeypatch):
+    """各槽位都换成各组的做法时，公共代码（detect_speech 把长段切开、识别）改了也要换缓存，
+    不然会接着用改之前识别的结果（例如没切开的一分多钟的长段）。"""
+    import pipeline.evaluation as E
+
+    wav = tmp_path / "a.wav"
+    sf.write(wav, np.zeros(1600, dtype=np.float32), 16000, subtype="PCM_16")
+    shared = tmp_path / "shared.py"
+    shared.write_text("A = 1\n", encoding="utf-8")
+    monkeypatch.setattr(E, "SHARED_CODE_FILES", (shared,))
+    key = cache_key(wav, cfg)
+    shared.write_text("A = 2\n", encoding="utf-8")
+    assert cache_key(wav, cfg) != key
+    assert {p.name for p in E.DEFAULT_SHARED_CODE_FILES} >= {"step2_vad.py", "step3_asr.py"}
+
+
 def test_count_names_longest_first():
     names = ["雾隐", "雾隐行舟", "雾隐行舟旅行社"]
     counts = count_names("雾隐行舟旅行社和雾隐，还有雾隐行舟旅行社", names)

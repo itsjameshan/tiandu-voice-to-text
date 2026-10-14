@@ -104,6 +104,7 @@ def run_pipeline(path, options: dict | None = None, progress=None, cfg: dict | N
     from pipeline.step2_vad import detect_speech
     from pipeline.step3_asr import recognize
     from pipeline.step6_classify import classify_segments
+    from pipeline.schema import AI_SOURCE_NOTE, is_ai_recording
     from pipeline.step7_clips import export_clips
 
     log = logging.getLogger("pipeline")
@@ -160,6 +161,8 @@ def run_pipeline(path, options: dict | None = None, progress=None, cfg: dict | N
         "warnings": caught_warnings,
         "message": "",
     }
+    if is_ai_recording(info["file"], cfg):  # AI 合成的测评录音：初稿、说明、JSON 写明，片段文件名带 -TTS
+        meta["source_note"] = AI_SOURCE_NOTE
     if cfg["hotword"]["enabled"]:  # 开了热词纠错：记下这次用的热词表（网页上可以改），结果才说得清是怎么来的
         hotwords = opts.get("hotwords")
         meta["options"]["hotwords"] = list(hotwords) if hotwords is not None else "data/hotwords.txt（默认热词表）"
@@ -212,7 +215,8 @@ def run_pipeline(path, options: dict | None = None, progress=None, cfg: dict | N
     t = time.time()
     for seg in segments:
         seg["source"] = "asr"
-    segments = export_clips(segments, samples, SR, out_dir / "clips", cfg, method=funcs["clips"])
+    segments = export_clips(segments, samples, SR, out_dir / "clips", cfg, method=funcs["clips"],
+                            ai_synthesized=bool(meta.get("source_note")))
     timed("7 疑似片段", t, duration)
 
     total = time.time() - t_all

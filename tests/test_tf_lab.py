@@ -397,7 +397,7 @@ def test_train_digits_empty_folder(tmp_path, capsys):
     train = _load("train_digits")
     rc = train.main(["--data", str(tmp_path / "no_such_folder")])
     assert rc == 1
-    assert "split_digits.py" in capsys.readouterr().out
+    assert "tiandu-ai-digits" in capsys.readouterr().out  # 提示下载 AI 合成的数字录音包
 
 
 def test_train_digits_without_tf(tmp_path, monkeypatch, capsys):
@@ -445,6 +445,6 @@ def test_tf_lab_scripts_import_light():
 
 def test_readme_handout():
     text = (TF_LAB / "README.md").read_text(encoding="utf-8")
-    for words in ("选做", "学号后四位", "MFCC", "项目 2", "项目 4", "split_digits.py", "train_digits.py",
-                  "mfcc_compare.py", "用机房自带的 Python"):
+    for words in ("选做", "AI 合成", "tiandu-ai-digits", "MFCC", "项目 2", "项目 4", "split_digits.py",
+                  "train_digits.py", "mfcc_compare.py", "用机房自带的 Python"):
         assert words in text, words

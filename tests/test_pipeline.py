@@ -1,6 +1,7 @@
 """整条流程 run_pipeline 的测试。"""
 from pathlib import Path
 
+import pytest
 from conftest import FOUR_SPEAKERS_WAV, requires_models
 
 from pipeline import run_pipeline
@@ -85,3 +86,23 @@ def test_pipeline_records_hotword_list(make_audio, tmp_path):
     assert "data/hotwords.txt" in meta["options"]["hotwords"]
     _, meta = run_pipeline(str(wav), {"out_dir": str(tmp_path / "c"), "hotword_fix": False})
     assert "hotwords" not in meta["options"]  # 没开纠错：热词表没用上，不写
+
+
+@pytest.mark.parametrize("name, ai_config, marked", [
+    ("G1-S1-Q-TTS.wav", False, True),   # 文件名带 -TTS：一定是 AI 录音
+    ("G1-S1-Q.wav", True, True),        # 本课程录音都是 AI 合成的：从数据池 normalized 复制的录音也算
+    ("G1-S1-Q.wav", False, False),      # 老师关掉了 recordings.ai_synthesized（例如用真人录音）
+    ("talk.wav", True, False),          # 不是录音编号的文件不算
+])
+def test_pipeline_marks_ai_recordings(make_audio, tmp_path, name, ai_config, marked):
+    """AI 合成的测评录音：元信息里写上录音来源，导出的初稿、片段都会标明（见 pipeline/schema.py 的 is_ai_recording）。"""
+    import shutil
+
+    from pipeline.config import load_config
+    from pipeline.schema import AI_SOURCE_NOTE
+
+    wav = tmp_path / name
+    shutil.copy(make_audio("silence", "wav", seconds=1.0, sr=16000, channels=1), wav)
+    cfg = load_config(overrides={"recordings": {"ai_synthesized": ai_config}})
+    _, meta = run_pipeline(str(wav), {"out_dir": str(tmp_path / "run")}, cfg=cfg)
+    assert (meta.get("source_note") == AI_SOURCE_NOTE) is marked
