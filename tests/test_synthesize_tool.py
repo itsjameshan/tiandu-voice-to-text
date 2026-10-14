@@ -111,8 +111,11 @@ def test_seed_for_differs_by_condition():
 
 
 def test_cli_rejects_unknown_script():
+    import os
+
+    env = dict(os.environ, PYTHONIOENCODING="utf-8")  # 中文 Windows 默认 GBK，这里统一按 UTF-8 读输出
     proc = subprocess.run([sys.executable, str(ROOT / "tools" / "synthesize_recordings.py"), "--scripts", "G9-S1"],
-                          capture_output=True, text=True, encoding="utf-8")
+                          capture_output=True, text=True, encoding="utf-8", env=env)
     assert proc.returncode == 2 and "G9-S1" in proc.stdout
 
 
