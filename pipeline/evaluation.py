@@ -17,10 +17,11 @@ tools/evaluate.py（测一种做法）和 tools/compare.py（基线和改进各�
 基线做法：
     1. 要测哪些录音：只看数据池清单 manifest.csv（入池时写的），不去翻 normalized/ 文件夹，
        这样没入池、入池失败的文件不会混进来。可以用 files 只测其中几段。
-    2. 识别结果缓存：72 段录音约 5.4 小时，在 4 核电脑上识别一遍要 40 分钟左右。识别结果（带 text_raw 的段落）
+    2. 识别结果缓存：72 段 AI 录音约 6 小时，在 4 核电脑上识别一遍要 40 分钟左右。识别结果（带 text_raw 的段落）
        存进 数据池/asr_cache/<文件编号>.eval-<钥匙>.json。"钥匙"是下面这些东西合起来算的一个短指纹：
          - 录音文件本身的 SHA-256（复录换了文件 → 指纹变了）；
          - 降噪、增强、端点检测三个槽位用的做法名字，以及这三个做法所在代码文件的指纹（改了代码就重新识别）；
+         - 不管用哪种做法都会经过的公共代码（step2_vad.py、step3_asr.py）的指纹；
          - config.yaml 的 vad、asr 两节参数，以及与这三个做法同名的一节参数（如各组自己加的 g1: 一节）；
          - 识别模型的文件夹名。
        只要这些都没变，就直接用缓存，不再识别；所以只换热词纠错（hotword）做法、开关热词纠错时，
@@ -444,6 +445,22 @@ def _source_hash(func: Callable) -> str:
     return hashlib.sha256(source).hexdigest()[:12]
 
 
+# 不管各槽位用哪种做法都会经过的公共代码：detect_speech（串起三步、把太长的段切开）和识别。
+# 它们改了，以前的识别结果就不能再用（例如改之前没切开的一分多钟的长段），所以也算进缓存的钥匙
+DEFAULT_SHARED_CODE_FILES = tuple(Path(__file__).resolve().parent / name for name in ("step2_vad.py", "step3_asr.py"))
+SHARED_CODE_FILES = DEFAULT_SHARED_CODE_FILES
+
+
+def _files_hash(paths) -> str:
+    digest = hashlib.sha256()
+    for path in paths:
+        try:
+            digest.update(Path(path).read_bytes())
+        except OSError:  # 找不到文件（很少见）：只用文件名
+            digest.update(str(path).encode("utf-8"))
+    return digest.hexdigest()[:12]
+
+
 def cache_key(wav, cfg: dict) -> str:
     """识别结果缓存的"钥匙"：12 位的短指纹。会影响识别结果的东西变了，钥匙就变（见本文件开头的说明）。
 
@@ -461,6 +478,7 @@ def cache_key(wav, cfg: dict) -> str:
         "methods": {},
         "code": {},
         "group_params": {},
+        "shared_code": _files_hash(SHARED_CODE_FILES),
     }
     for slot in ASR_SLOTS:
         name = _method_name(cfg, slot)
