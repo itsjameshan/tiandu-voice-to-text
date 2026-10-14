@@ -71,7 +71,8 @@ jobs:
 
       - name: 打包
         run: |
-          VERSION="${RELEASE_TAG:-dev}"
+          VERSION="${RELEASE_TAG#ai-recordings-}"   # ai-recordings-v1 → v1，文件名如 tiandu-ai-recordings-v1.zip
+          VERSION="${VERSION:-dev}"
           mkdir -p dist
           # m4a 已经压缩过，录音包只存不压（-0）
           zip -r -0 "dist/tiandu-ai-recordings-${VERSION}.zip" ai_recordings/README.txt ai_recordings/recordings
