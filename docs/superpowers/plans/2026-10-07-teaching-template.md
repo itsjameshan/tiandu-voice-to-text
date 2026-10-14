@@ -1,6 +1,6 @@
 # 教学模板实施计划
 
-> **2026-10-14 起测评录音改为 AI 合成，见 [ADR 0006](../../adr/0006-ai-synthesized-recordings.md)；本计划里关于学生录音（试录、复录、客串、同意书、"不做语音合成"等）的内容已过时。** 本计划是历史记录，正文不改。
+> **2026-10-14 起测评录音改为 AI 合成，见 [ADR 0006](../../adr/0006-ai-synthesized-recordings.md)；本计划里关于学生录音（试录、复录、客串、同意书、"不做语音合成"等）的内容已过时。** 本计划是历史记录，正文不改；后来代码改过的地方（如文件名可带 `-TTS`、网页说话人数可选到 6、AI 录音导出的片段文件名带 `-TTS`）以代码和 [build_spec](../../build_spec.md) 为准。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

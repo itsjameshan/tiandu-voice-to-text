@@ -86,7 +86,7 @@ def export_clips(segments: list[dict], samples: np.ndarray, sr: int, out_dir, cf
             整条流程里由 pipeline.methods.resolve(cfg)["clips"] 按配置选好再传进来。
     samples：要剪的录音（应该用步骤 1 转好的原始录音，不要用降噪后的，复核时要听原声）。
     out_dir 里上一次导出的 clip_*.wav 和 clips_index.csv 会先被删掉。传进来的段落不会被修改。
-    ai_synthesized：原录音是 AI 合成的（文件名带 -TTS）时为 True，片段文件名也带 -TTS。
+    ai_synthesized：原录音是 AI 合成的（run_pipeline 用 pipeline.schema.is_ai_recording 判断）时为 True，片段文件名也带 -TTS。
     """
     method = method or clips_baseline
     out_dir = Path(out_dir)

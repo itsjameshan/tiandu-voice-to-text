@@ -42,4 +42,4 @@
 
 ## 四、本仓库现在的分支
 
-- 开发阶段的代码在分支 `claude/voice-recognition-deployment-rnnh1u` 上。老师确认后，在仓库页面点 **Compare & pull request**（或 Pull requests → New pull request，base 选 `main`，compare 选这个分支）建一个 PR，检查后合并到 `main`。**组长开始提交之前（第 7 周前）要先把它合并到 main**，组长都从 main 开始建自己的分支。
+- 开发阶段的代码在分支 `claude/voice-recognition-deployment-rnnh1u` 上。老师确认后，在仓库页面点 **Compare & pull request**（或 Pull requests → New pull request，base 选 `main`，compare 选这个分支）建一个 PR，检查后合并到 `main`。**组长开始提交之前（第 7 周前）要先把它合并到 main**，组长都从 main 开始建自己的分支。AI 测评录音的改动（[ADR 0006](../adr/0006-ai-synthesized-recordings.md)）也在这个分支上：合并以后才能发布 AI 测评录音 `ai-recordings-v1` 和带这些改动的新便携包，第 0 周就要下载，所以这一次要在**开课前**合并。

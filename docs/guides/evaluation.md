@@ -116,7 +116,7 @@ python\python.exe tools\compare.py --slot denoise --method g1 --metric cer --poo
 
 第 5 组比较热词做法时加 `--hotword on`：`python\python.exe tools\compare.py --slot hotword --method g5 --metric hotwords --pool D:\data_pool --hotword on --out reports\g5`。
 
-所有测评命令都可以加 `--files G1-S1-Q G1-S1-N` 只测几段录音（先试一下、很快；写入池后的编号，不带 `-TTS`），确认没问题再全部跑。全部 72 段录音（每段约 4—6 分钟）识别一遍要很久，看电脑快慢；先用 `--files` 试几段，估一估全部要多久。
+所有测评命令都可以加 `--files G1-S1-Q G1-S1-N` 只测几段录音（先试一下、很快；写入池后的编号，不带 `-TTS`），确认没问题再全部跑。全部 72 段录音（每段约 4—6 分钟，共约 6 小时）识别一遍要很久，看电脑快慢；先用 `--files` 试几段，估一估全部要多久。
 
 | 组 | `--slot` | `--metric` |
 |---|---|---|

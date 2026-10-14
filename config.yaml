@@ -50,7 +50,8 @@ qc:                       # 入池质检（只报告、不修改录音）
   min_sample_rate: 16000
 
 recordings:               # 测评录音（数据池里的 72 段）
-  ai_synthesized: true    # 录音是 AI 按剧本合成的（docs/adr/0006）：参考文本初稿第一行是录音开头念的声明
+  ai_synthesized: true    # 录音是 AI 按剧本合成的（docs/adr/0006）：参考文本初稿第一行是录音开头念的声明；
+                          # 整理录音时，文件名带 -TTS 或是录音编号（如 G1-S1-Q.wav）的都标明是 AI 录音
 
 clips:
   padding: 1.0            # 疑似片段前后各多留几秒

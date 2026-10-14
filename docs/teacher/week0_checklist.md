@@ -6,7 +6,7 @@
 
 ## 1. 下载便携包和 AI 测评录音（需要联网，下载时间看网速）
 
-- [ ] 打开 https://github.com/itsjameshan/tiandu-voice-to-text/releases ，在 `v` 开头的版本下面下载 `tiandu-portable-win64-*.zip`（约 400 MB）。
+- [ ] 打开 https://github.com/itsjameshan/tiandu-voice-to-text/releases ，在 `v` 开头的版本下面下载 `tiandu-portable-win64-*.zip`（约 400 MB）。**要用 2026-10-14 以后发布的版本**：v0.2.1-pre 和更早的版本是改用 AI 录音以前做的，不认 AI 录音文件名里的 `-TTS`（入池会被拒），参考文本初稿第一行也没有声明，不能用于本课的 AI 录音。
 - [ ] 打开 AI 测评录音的发布页 https://github.com/itsjameshan/tiandu-voice-to-text/releases/tag/ai-recordings-v1 （标着"预发布"，和便携包不在同一个 Release 里），下载三个压缩包：
   - [ ] `tiandu-ai-recordings-v1.zip`：72 段 AI 测评录音（`ai_recordings\recordings\G1-S1-Q-TTS.m4a` ……）和说明 `ai_recordings\README.txt`；
   - [ ] `tiandu-ai-answer-key-v1.zip`：标准答案（参考文本、说话人时间、疑似片段起止、Audacity 标签、`summary.csv` 等）。**老师自己保管**，第 6 周同学交了校对和标注以后再拿出来对照（见 [data_pool.md](data_pool.md) 第三节）；
@@ -25,7 +25,7 @@
 - [ ] （可选，约 5—10 分钟）测长录音：在便携包文件夹打开命令行，运行 `python\python.exe tools\long_audio_test.py --minutes 10`，记下总用时、实时率和最大内存：________。实时率 × 录音分钟数 ≈ 处理要几分钟（开发电脑上一小时录音约 12 分钟、内存约 2 GB，机房电脑以这里测的为准）。Windows 上没装 psutil 时显示"最大内存未测"，可以同时开任务管理器看。
 - [ ] **放一段听听开头的声明**：用播放器打开 `D:\asr\ai_recordings\recordings\G8-S1-Q-TTS.m4a`，开头应先听到"以下为人工智能合成的虚构教学录音，不是真实录音。"再顺便听听机房电脑能不能出声、耳机能不能用。
 - [ ] 双击 `start.bat`，浏览器自动打开（没打开就手动输入 `http://127.0.0.1:7860`）。
-- [ ] 在网页"整理录音"页上传同一段 AI 录音（`G8-S1-Q-TTS.m4a`），开始整理。结果表格第一句应是开头的声明（识别可能有个别错字），后面是剧本台词。记下处理用时：________
+- [ ] 在网页"整理录音"页上传同一段 AI 录音（`G8-S1-Q-TTS.m4a`），"说话人数"选 6（G8-S1 有 5 个角色，加上开头的声明是 6 个声音），开始整理。结果表格第一句应是开头的声明（识别可能有个别错字），后面是剧本台词。导出 Word 初稿，文件信息里应有"录音来源"一行。记下处理用时：________
 - [ ] **入池试一段**（用一个临时的试验数据池，不要用正式的 `D:\data_pool`）：
   1. 建文件夹 `D:\pool_test\raw`，把 `G8-S1-Q-TTS.m4a` 拷进去（不要改名）。
   2. 在便携包文件夹打开命令行，运行：
