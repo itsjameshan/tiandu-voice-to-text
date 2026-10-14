@@ -42,4 +42,4 @@ dist/
 python/
 
 # AI 合成的测评录音（发到 GitHub Releases，不进 git）
-ai_recordings/
+/ai_recordings/
