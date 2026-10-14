@@ -17,6 +17,8 @@ detect_speech() 把三步串起来，返回处理后的采样和段落列表（�
         max_speech_duration   一段话超过多少秒后，就在较短的停顿处切开，默认 15
                               （不是严格的上限：超过这个时长后会在更短的停顿处切开，但没有停顿时段落可能明显更长，实测设 3 秒时最长约 8.9 秒）。
       录音按 512 个采样（0.032 秒）一小块喂给检测器，每检测完一段话就取出来。
+    - 不管端点检测用哪种做法，超过 MAX_SEGMENT_SECONDS（30 秒）的段都在其中最安静的地方切开再交给识别：
+      嘈杂、远距离录音里端点检测可能一直找不到停顿，段会长到一两分钟，识别这样的长段非常占内存（可能占满机房电脑的内存）。
 可改进方向：
     第 1 组（pipeline/groups/g1_denoise.py）：换更好的降噪做法，调端点检测参数，减少漏切人声；
     第 2 组（pipeline/groups/g2_far_field.py）：给口袋、远距离录音做增益、均衡等增强。
@@ -139,6 +141,34 @@ def vad_baseline(samples: np.ndarray, sr: int, cfg: dict) -> list[tuple[float, f
     return spans
 
 
+# ---------- 太长的段切开 ----------
+
+MAX_SEGMENT_SECONDS = 30.0  # 交给识别的一段最长多少秒
+
+
+def split_long_spans(samples: np.ndarray, sr: int, spans: list, max_seconds: float = MAX_SEGMENT_SECONDS) -> list:
+    """把超过 max_seconds 的段切开：在这段的后一半（max_seconds 的一半到 max_seconds 之间）找最安静的 0.1 秒，
+    从那里切；切下来的剩余部分还太长就接着切。切出来的段首尾相接，不丢声音。不超过的段原样保留。"""
+    hop = max(1, int(0.1 * sr))
+    result = []
+    for start, end in spans:
+        start, end = float(start), float(end)
+        while end - start > max_seconds:
+            first, last = int((start + max_seconds / 2) * sr), int((start + max_seconds) * sr)
+            window = samples[first:last]
+            if len(window) < hop:
+                cut = start + max_seconds
+            else:
+                frames = window[: len(window) // hop * hop].reshape(-1, hop)
+                quietest = int(np.argmin(np.mean(np.square(frames, dtype=np.float64), axis=1)))
+                cut = (first + quietest * hop + hop / 2) / sr
+            cut = round(min(cut, start + max_seconds), 3)
+            result.append((start, cut))
+            start = cut
+        result.append((start, end))
+    return result
+
+
 # ---------- 把三步串起来 ----------
 
 def detect_speech(samples: np.ndarray, sr: int, cfg: dict,
@@ -170,7 +200,7 @@ def detect_speech(samples: np.ndarray, sr: int, cfg: dict,
                 f"降噪和增强必须返回同样长度的采样，否则时间轴会和原录音对不上"
             )
 
-    spans = funcs["vad"](samples, sr, cfg)
+    spans = split_long_spans(samples, sr, funcs["vad"](samples, sr, cfg))  # 太长的段切开，识别时不占满内存
     segments = [new_segment(start, end) for start, end in spans]
 
     seconds = time.perf_counter() - started
