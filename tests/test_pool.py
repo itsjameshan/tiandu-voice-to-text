@@ -145,7 +145,7 @@ def test_log_proofread(pool):
 
 
 def test_constants():
-    assert FILENAME_RE.pattern == r"^G([1-8])-S([1-3])-([QNF])\.([A-Za-z0-9]+)$"
+    assert FILENAME_RE.pattern == r"^G([1-8])-S([1-3])-([QNF])(-TTS)?\.([A-Za-z0-9]+)$"
     assert CONDITIONS == {"Q": "安静", "N": "嘈杂教室", "F": "口袋或远距离"}
     assert MANIFEST_COLUMNS == ["文件编号", "剧本编号", "录音条件", "原始文件", "转换后文件",
                                 "时长（秒）", "原始采样率", "质检结果", "上传时间", "SHA-256"]
@@ -159,6 +159,17 @@ def test_parse_fields():
     assert info["condition"] == "F"
     # 手机导出的文件常是大写扩展名，也算合格
     assert parse_recording_name("G8-S3-N.WAV")["stem"] == "G8-S3-N"
+    assert info["ai_synthesized"] is False
+
+
+def test_parse_ai_synthesized_name():
+    """AI 合成的录音文件名带 -TTS（如 G1-S1-Q-TTS.m4a）：编号不变，数据池里的其他文件照常用 G1-S1-Q 命名。"""
+    info = parse_recording_name("G1-S1-Q-TTS.m4a")
+    assert info["stem"] == "G1-S1-Q" and info["script_id"] == "G1-S1" and info["ext"] == ".m4a"
+    assert info["ai_synthesized"] is True
+    for bad in ("G1-S1-Q-tts.m4a", "G1-S1-Q-TTS2.m4a", "G1-S1-TTS.m4a", "G1-S1-Q-AI.m4a"):
+        with pytest.raises(ValueError):
+            parse_recording_name(bad)
 
 
 @pytest.mark.parametrize("name, hint", [
@@ -418,6 +429,34 @@ def test_ingest_empty_pool(tmp_path, cfg):
 # ---------- 补充的测试：参考文本、校对记录 ----------
 
 
+def test_export_references_ai_disclaimer(pool):
+    """录音是 AI 合成的：参考文本初稿第一行是录音开头念的那句声明。"""
+    from pipeline.data import AI_DISCLAIMER
+
+    written = export_references(pool, ai_disclaimer=True)
+    assert len(written) == 72
+    text = (pool_paths(pool)["references"] / "G2-S3-N.txt").read_text(encoding="utf-8")
+    assert text == script_reference_text("G2-S3", ai_disclaimer=True)
+    assert text.splitlines()[0] == AI_DISCLAIMER and text.splitlines()[1:] == script_reference_text("G2-S3").splitlines()
+
+
+def test_ingest_tts_and_plain_file_same_recording(make_audio, pool, cfg):
+    """同一段录音既有 G1-S1-Q-TTS.m4a 又有 G1-S1-Q.wav：两个都报错，不猜用哪个。"""
+    _put_raw(pool, make_audio("tone", "wav", seconds=1, name="a.wav"), "G1-S1-Q.wav")
+    _put_raw(pool, make_audio("tone", "m4a", seconds=1, name="b.m4a"), "G1-S1-Q-TTS.m4a")
+    result = ingest_pool(pool, cfg)
+    assert result["added"] == []
+    assert sorted(e["file"] for e in result["errors"]) == ["G1-S1-Q-TTS.m4a", "G1-S1-Q.wav"]
+
+
+def test_ingest_tts_name(make_audio, pool, cfg):
+    _put_raw(pool, make_audio("tone", "m4a", seconds=2, name="a.m4a"), "G4-S2-F-TTS.m4a")
+    result = ingest_pool(pool, cfg)
+    assert [item["stem"] for item in result["added"]] == ["G4-S2-F"]
+    assert (pool_paths(pool)["normalized"] / "G4-S2-F.wav").is_file()
+    assert _read_dicts(pool_paths(pool)["manifest"])[0]["原始文件"] == "raw/G4-S2-F-TTS.m4a"
+
+
 def test_export_references_overwrite(pool):
     export_references(pool)
     first = pool_paths(pool)["references"] / "G8-S3-F.txt"
@@ -562,6 +601,10 @@ def test_cli_export_references(pool):
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert "72" in proc.stdout
     assert len(list(pool_paths(pool)["references"].glob("*.txt"))) == 72
+    # config.yaml 里 recordings.ai_synthesized: true（录音是 AI 合成的）→ 第一行是声明
+    from pipeline.data import AI_DISCLAIMER
+    first = (pool_paths(pool)["references"] / "G1-S1-Q.txt").read_text(encoding="utf-8")
+    assert first.splitlines()[0] == AI_DISCLAIMER and "AI 合成" in proc.stdout
 
     proc = _run_tool("export_references.py", "--pool", str(pool))
     assert proc.returncode == 0

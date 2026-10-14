@@ -27,18 +27,19 @@ KIND_NAMES = {"speakers": "说话人标注", "clips": "疑似片段标注"}
 
 def _pool_warnings(labels, kind: str, root: Path, plan_item: dict) -> list[str]:
     """转到数据池时额外核对：角色名在不在剧本的角色表里、标签有没有超出录音时长。只提醒，不拦着。"""
-    from pipeline.data import get_script
+    from pipeline.data import AI_DISCLAIMER_SPEAKER, get_script
     from pipeline.pool import pool_paths, read_csv_rows
 
     stem = Path(plan_item["file_name"]).stem
     warnings = []
     if kind == "speakers":
         roles = get_script(plan_item["script_id"])["roles"]
-        unknown = sorted({label for _, _, label in labels if label not in roles})
+        # AI 合成的录音开头念的声明，说话人标"声明"（docs/adr/0006）
+        unknown = sorted({label for _, _, label in labels if label not in roles and label != AI_DISCLAIMER_SPEAKER})
         if unknown:
             warnings.append(f"这些角色名不在剧本 {plan_item['script_id']} 的角色表（{'、'.join(roles)}）里："
                             f"{'、'.join(unknown)}。如果是写错了（如\"导游\"写成\"导\"），请在 Audacity 里改好后"
-                            "重新导出、再转换；客串的同学也按剧本角色名写")
+                            f"重新导出、再转换；录音开头的 AI 合成声明标\"{AI_DISCLAIMER_SPEAKER}\"")
 
     # 录音已经入池的话，清单里有它的时长：标签超出录音时长，多半是标错了录音
     try:

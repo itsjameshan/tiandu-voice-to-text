@@ -35,6 +35,7 @@ TEST_WAV_FILE = "0-four-speakers-zh.wav"
 PARAFORMER_DIR = "sherpa-onnx-paraformer-zh-small-2024-03-09"
 PUNCT_DIR = "sherpa-onnx-punct-ct-transformer-zh-en-vocab272727-2024-04-12"
 CONFORMER_DIR = "sherpa-onnx-conformer-zh-stateless2-2023-05-23"
+KOKORO_DIR = "kokoro-multi-lang-v1_1"
 
 # 每个模型一项：
 #   name      名字（下载脚本的 --optional 后面写这个）
@@ -146,6 +147,15 @@ MODEL_SPECS = [
         "size_mb": 456,
         "required": False,
     },
+    {
+        "name": "kokoro_tts",
+        "title": "语音合成 Kokoro v1.1（中文多说话人，只用来生成 AI 测评录音）",
+        "url": f"{RELEASES}/tts-models/{KOKORO_DIR}.tar.bz2",
+        "archive": f"{KOKORO_DIR}.tar.bz2",
+        "check": [f"{KOKORO_DIR}/model.onnx", f"{KOKORO_DIR}/voices.bin", f"{KOKORO_DIR}/tokens.txt"],
+        "size_mb": 365,
+        "required": False,
+    },
 ]
 
 # model_path 能查的文件（相对于 models 文件夹）
@@ -157,6 +167,7 @@ _PATHS = {
     "pyannote": f"{PYANNOTE_DIR}/model.onnx",
     "campplus": CAMPPLUS_FILE,
     "test_wav": TEST_WAV_FILE,
+    "kokoro_tts": KOKORO_DIR,
 }
 
 

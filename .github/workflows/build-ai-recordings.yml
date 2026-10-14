@@ -1,0 +1,100 @@
+# 在 GitHub 的 Linux 机器上按剧本合成 72 段 AI 测评录音和标准答案（见 docs/adr/0006-ai-synthesized-recordings.md）
+# - 手动触发（Actions 页面 → 合成 AI 测评录音 → Run workflow）；
+#   Pull Request 改了合成代码或声音分配表时也会自动合成一遍（只上传为构建产物，不发布），检查改动没有弄坏合成
+# - 填了“发布版本号”（如 ai-recordings-v1）：发布到 Releases（预发布，不会顶替便携包成为“最新版本”），
+#   并在当前提交上自动建这个标签；留空只合成，上传为“构建产物”（Actions 页面下载，保留 30 天）
+# 全程离线语音合成（sherpa-onnx + Kokoro），不调用任何云服务，不做声音克隆；每段录音开头念 AI 合成声明。
+name: 合成 AI 测评录音
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "发布版本号（必须以 ai-recordings- 开头，如 ai-recordings-v1；留空只合成不发布）"
+        required: false
+        default: ""
+  pull_request:
+    paths:
+      - "pipeline/tts_dataset.py"
+      - "tools/synthesize_recordings.py"
+      - "data/tts_voice_plan.csv"
+      - ".github/workflows/build-ai-recordings.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  synthesize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      RELEASE_TAG: ${{ inputs.release_tag }}
+      PYTHONUTF8: "1"
+    steps:
+      - name: 检查发布版本号
+        if: env.RELEASE_TAG != '' && !startsWith(env.RELEASE_TAG, 'ai-recordings-')
+        run: |
+          echo "发布版本号要以 ai-recordings- 开头（如 ai-recordings-v1），现在是：$RELEASE_TAG"
+          exit 1
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: 缓存模型
+        uses: actions/cache@v4
+        with:
+          path: |
+            models/*.onnx
+            models/*.wav
+            models/sherpa-onnx-*
+            models/kokoro-multi-lang-v1_1
+          key: tts-models-${{ runner.os }}-${{ hashFiles('pipeline/models.py', 'models/download_models.py') }}
+
+      - name: 安装依赖
+        run: python -m pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: 下载模型（含语音合成模型 Kokoro；已缓存的会跳过）
+        run: python models/download_models.py --optional kokoro_tts
+
+      - name: 测试合成部分
+        run: pytest -q tests/test_tts_dataset.py tests/test_synthesize_tool.py
+
+      - name: 合成 72 段录音和标准答案
+        run: python tools/synthesize_recordings.py --threads 4
+
+      - name: 合成选做数字实验的录音（100 个声音 × 零到九 × 3 遍）
+        run: python tools/synthesize_recordings.py --digits --threads 4
+
+      - name: 打包
+        run: |
+          VERSION="${RELEASE_TAG:-dev}"
+          mkdir -p dist
+          # m4a 已经压缩过，录音包只存不压（-0）
+          zip -r -0 "dist/tiandu-ai-recordings-${VERSION}.zip" ai_recordings/README.txt ai_recordings/recordings
+          zip -r "dist/tiandu-ai-answer-key-${VERSION}.zip" ai_recordings/README.txt ai_recordings/answer_key
+          zip -r "dist/tiandu-ai-digits-${VERSION}.zip" ai_recordings/digits
+          ls -la dist
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: tiandu-ai-recordings
+          path: dist/*.zip
+          retention-days: 30
+          compression-level: 0
+
+      - name: 发布到 Releases
+        if: startsWith(env.RELEASE_TAG, 'ai-recordings-')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          target_commitish: ${{ github.sha }}
+          name: AI 合成测评录音 ${{ env.RELEASE_TAG }}（虚构教学材料）
+          files: dist/*.zip
+          prerelease: true
+          make_latest: "false"
+          body_path: packaging/ai_recordings/RELEASE_NOTES.md

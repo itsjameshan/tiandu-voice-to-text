@@ -685,7 +685,8 @@ def test_comparison_cache_follows_wav(tmp_path, make_audio, monkeypatch, app_cfg
 
     # 还没有参考文本文件：先照抄剧本台词，并提示保存后才写进 references
     summary, rows, reference, state = app.generate_comparison(str(root), "G1-S1-Q")
-    assert reference == script_reference_text("G1-S1")
+    # config.yaml 里 recordings.ai_synthesized: true：第一行是录音开头的 AI 合成声明
+    assert reference == script_reference_text("G1-S1", ai_disclaimer=True)
     assert "还没有参考文本文件" in summary
     assert state["meta"]["stem"] == "G1-S1-Q" and Path(state["meta"]["wav"]) == wav
     assert calls == ["eval"]

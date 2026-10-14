@@ -506,7 +506,8 @@ def _pool_reference(root: Path, stem: str) -> tuple[str, bool]:
     path = pool_paths(root)["references"] / f"{stem}.txt"
     if path.is_file():
         return read_reference(path).replace("\r\n", "\n"), True  # 记事本存的换行是 \r\n
-    return script_reference_text(parse_recording_name(f"{stem}.wav")["script_id"]), False
+    ai = bool((_config().get("recordings") or {}).get("ai_synthesized", False))  # AI 合成的录音：第一行是声明
+    return script_reference_text(parse_recording_name(f"{stem}.wav")["script_id"], ai_disclaimer=ai), False
 
 
 def proofread_rows(segments: list[dict], reference: str) -> list[list]:

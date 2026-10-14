@@ -54,6 +54,15 @@ def test_reference_text_excludes_direction():
     assert len(text.split("\n")) == 53
 
 
+def test_reference_text_with_ai_disclaimer():
+    """AI 合成的录音开头念一句声明，参考文本第一行也要有这一句，后面和剧本台词一样。"""
+    from pipeline.data import AI_DISCLAIMER
+
+    text = script_reference_text("G1-S1", ai_disclaimer=True)
+    assert text.split("\n")[0] == AI_DISCLAIMER and "人工智能合成" in AI_DISCLAIMER and "不是真实录音" in AI_DISCLAIMER
+    assert text.split("\n")[1:] == script_reference_text("G1-S1").split("\n")
+
+
 def test_recording_plan():
     plan = load_recording_plan()
     assert len(plan) == 72

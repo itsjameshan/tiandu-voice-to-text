@@ -102,13 +102,21 @@ def load_lines() -> list[dict]:
     return lines
 
 
-def script_reference_text(script_id: str) -> str:
+# AI 合成的测评录音开头都念这一句（见 docs/adr/0006-ai-synthesized-recordings.md）；
+# 参考文本、说话人标注也要包含这一句，说话人写 AI_DISCLAIMER_SPEAKER
+AI_DISCLAIMER = "以下为人工智能合成的虚构教学录音，不是真实录音。"
+AI_DISCLAIMER_SPEAKER = "声明"
+
+
+def script_reference_text(script_id: str, ai_disclaimer: bool = False) -> str:
     """一个剧本的参考文本：全部台词的 text 按顺序用换行连接。
 
     不含说话人，也不含 direction（动作、环境提示，录音时不念）。
+    ai_disclaimer=True 时第一行是 AI 合成录音开头念的声明 AI_DISCLAIMER。
     """
     script = get_script(script_id)
-    return "\n".join(line["text"] for line in script["lines"])
+    lines = [line["text"] for line in script["lines"]]
+    return "\n".join(([AI_DISCLAIMER] if ai_disclaimer else []) + lines)
 
 
 # ---------------- 话术类别 ----------------

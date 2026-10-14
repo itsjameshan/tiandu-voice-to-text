@@ -19,6 +19,7 @@
 
 基线做法：
     - 命名检查：文件名必须是"组号-剧本号-条件代码.扩展名"，如 G1-S1-Q.m4a，用正则表达式 FILENAME_RE 检查。
+      AI 合成的录音（docs/adr/0006）文件名多一个 -TTS，如 G1-S1-Q-TTS.m4a，编号仍是 G1-S1-Q。
       不合格就报错并说明原因（小写、空格、"(1)"、组号超出 1–8……），不自动猜、不自动改名。
     - 入池：用 SHA-256 指纹判断 raw/ 里哪些文件还没入池；新文件用 ffmpeg 转成 normalized/<编号>.wav，
       质检（只报告、不修改；阈值在 config.yaml 的 qc 下面，预计时长来自 data/recording_plan.csv），
@@ -60,8 +61,9 @@ from pipeline.step1_ingest import SUPPORTED_EXTS, _set_read_only, quality_check
 
 # ======================== 文件命名 ========================
 
-# 合格的文件名：G组号(1–8)-S剧本号(1–3)-条件代码(Q/N/F).扩展名，如 G1-S1-Q.m4a
-FILENAME_RE = re.compile(r"^G([1-8])-S([1-3])-([QNF])\.([A-Za-z0-9]+)$")
+# 合格的文件名：G组号(1–8)-S剧本号(1–3)-条件代码(Q/N/F).扩展名，如 G1-S1-Q.m4a；
+# AI 合成的录音多一个 -TTS 标记，如 G1-S1-Q-TTS.m4a（编号仍是 G1-S1-Q）
+FILENAME_RE = re.compile(r"^G([1-8])-S([1-3])-([QNF])(-TTS)?\.([A-Za-z0-9]+)$")
 
 # 录音条件代码 → 中文名称
 CONDITIONS = {"Q": "安静", "N": "嘈杂教室", "F": "口袋或远距离"}
@@ -124,8 +126,9 @@ def parse_recording_name(name: str) -> dict:
 
     例如 parse_recording_name("G3-S2-F.mp3") 返回
         {"stem": "G3-S2-F", "script_id": "G3-S2", "group": 3, "condition": "F",
-         "condition_name": "口袋或远距离", "ext": ".mp3"}
-    stem 是"文件编号"（去掉扩展名的文件名），数据池里这段录音的所有文件都用它命名。
+         "condition_name": "口袋或远距离", "ext": ".mp3", "ai_synthesized": False}
+    stem 是"文件编号"（去掉扩展名和 -TTS 的文件名），数据池里这段录音的所有文件都用它命名；
+    G3-S2-F-TTS.mp3（AI 合成的录音）的编号也是 G3-S2-F，ai_synthesized 是 True。
     扩展名大小写都可以（手机导出的文件常是 .WAV、.M4A）；扩展名是不是支持的格式由入池时检查。
     """
     name = str(name)
@@ -137,7 +140,7 @@ def parse_recording_name(name: str) -> dict:
             f"全部大写、用英文连字符，例如 {NAME_EXAMPLE}；条件代码 Q 安静、N 嘈杂教室、F 口袋或远距离。"
             "请改名后重新放进 raw 文件夹（工具不会自动猜）。"
         )
-    group, script, code, ext = found.groups()
+    group, script, code, tts, ext = found.groups()
     return {
         "stem": f"G{group}-S{script}-{code}",
         "script_id": f"G{group}-S{script}",
@@ -145,6 +148,7 @@ def parse_recording_name(name: str) -> dict:
         "condition": code,
         "condition_name": CONDITIONS[code],
         "ext": "." + ext.lower(),
+        "ai_synthesized": bool(tts),
     }
 
 
@@ -472,10 +476,12 @@ def ingest_pool(root, cfg: dict) -> dict:
 # ======================== 参考文本 ========================
 
 
-def export_references(root, overwrite: bool = False) -> list[Path]:
+def export_references(root, overwrite: bool = False, ai_disclaimer: bool = False) -> list[Path]:
     """为录音计划里的 72 段录音各写一份参考文本初稿 references/<文件编号>.txt（内容照抄剧本台词）。
 
     已经存在的文件默认不覆盖（可能已经校对过）；overwrite=True 时全部按剧本重新写（校对结果会丢失）。
+    ai_disclaimer=True（录音是 AI 合成的，config.yaml 里 recordings.ai_synthesized）时，
+    第一行是录音开头念的声明"以下为人工智能合成的虚构教学录音，不是真实录音。"
     返回这次写了的文件路径。
     """
     init_pool(root)
@@ -485,7 +491,7 @@ def export_references(root, overwrite: bool = False) -> list[Path]:
         path = folder / f"{stem}.txt"
         if path.exists() and not overwrite:
             continue
-        path.write_text(script_reference_text(item["script_id"]), encoding="utf-8")
+        path.write_text(script_reference_text(item["script_id"], ai_disclaimer=ai_disclaimer), encoding="utf-8")
         written.append(path)
     return written
 
@@ -567,7 +573,7 @@ def _loose_stem(name: str) -> str | None:
     base = text.partition(".")[0]
     base = re.sub(r"\(.*?\)", "", base)  # 去掉"(1)"这样的编号
     base = re.sub(r"\s", "", base).replace("_", "-")
-    found = re.fullmatch(r"G0*([1-8])-?S0*([1-3])-?([QNF])", base)
+    found = re.fullmatch(r"G0*([1-8])-?S0*([1-3])-?([QNF])(?:-?TTS)?", base)
     return f"G{found[1]}-S{found[2]}-{found[3]}" if found else None
 
 
